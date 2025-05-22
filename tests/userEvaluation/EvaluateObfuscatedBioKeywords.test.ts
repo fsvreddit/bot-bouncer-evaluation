@@ -1,6 +1,6 @@
 import { TriggerContext } from "@devvit/public-api";
-import { UserExtended } from "../types.js";
-import { EvaluateObfuscatedBioKeywords } from "./EvaluateObfuscatedBioKeywords.js";
+import { UserExtended } from "../../src/types.js";
+import { EvaluateObfuscatedBioKeywords } from "../../src/userEvaluation/EvaluateObfuscatedBioKeywords.js";
 
 function createFakeUser (bioText: string): UserExtended {
     return {

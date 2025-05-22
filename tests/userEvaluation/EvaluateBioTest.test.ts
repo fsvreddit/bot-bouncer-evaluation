@@ -1,7 +1,7 @@
 import { JSONValue, TriggerContext } from "@devvit/public-api";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../../src/types.js";
 import { subDays } from "date-fns";
-import { EvaluateBioText } from "./EvaluateBioText.js";
+import { EvaluateBioText } from "../../src/userEvaluation/EvaluateBioText.js";
 
 const variables = JSON.parse(`{
     "biotext:bantext": [

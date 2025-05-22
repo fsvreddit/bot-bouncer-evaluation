@@ -1,6 +1,6 @@
 import { Post, TriggerContext } from "@devvit/public-api";
-import { EvaluateInconsistentGenderBot } from "./EvaluateInconsistentGenderBot.js";
-import { UserExtended } from "../types.js";
+import { EvaluateInconsistentGenderBot } from "../../src/userEvaluation/EvaluateInconsistentGenderBot.js";
+import { UserExtended } from "../../src/types.js";
 
 const mockContext = {} as unknown as TriggerContext;
 

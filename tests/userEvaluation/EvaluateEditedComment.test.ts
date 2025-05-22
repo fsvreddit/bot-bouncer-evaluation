@@ -1,7 +1,7 @@
 import { Comment, Post, TriggerContext } from "@devvit/public-api";
 import { subDays } from "date-fns";
-import { EvaluateEditedComment } from "./EvaluateEditedComment.js";
-import { UserExtended } from "../types.js";
+import { EvaluateEditedComment } from "../../src/userEvaluation/EvaluateEditedComment.js";
+import { UserExtended } from "../../src/types.js";
 
 const mockContext = {} as unknown as TriggerContext;
 const evaluatorVariables = {

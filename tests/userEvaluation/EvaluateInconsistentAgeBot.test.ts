@@ -1,6 +1,6 @@
 import { JSONValue, Post, TriggerContext } from "@devvit/public-api";
-import { UserExtended } from "../types.js";
-import { EvaluateInconsistentAgeBot } from "./EvaluateInconsistentAgeBot.js";
+import { UserExtended } from "../../src/types.js";
+import { EvaluateInconsistentAgeBot } from "../../src/userEvaluation/EvaluateInconsistentAgeBot.js";
 
 const mockContext = {} as unknown as TriggerContext;
 const mockBasicHistory = [
