@@ -1,0 +1,1 @@
+Evaluation code for Bot Bouncer, a Dev Platform app designed to hunt bots on Reddit
