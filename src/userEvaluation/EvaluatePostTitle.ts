@@ -34,9 +34,10 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
             return false;
         }
 
-        if (user.commentKarma > 2000 || user.linkKarma > 2000) {
+        if (user.commentKarma > 1000 && user.linkKarma > 2000) {
             return false;
         }
+
         return true;
     }
 
