@@ -28,6 +28,7 @@ import { EvaluateAmazonSpam } from "./userEvaluation/EvaluateAmazonSpam.js";
 import { EvaluateSuspiciousFirstPostPhrase } from "./userEvaluation/EvaluateSuspiciousFirstPostPhrase.js";
 import { EvaluateTGGroup } from "./userEvaluation/EvaluateTGGroup.js";
 import { EvaluateCommentBotGroup } from "./userEvaluation/EvaluateCommentBotGroup.js";
+import { EvaluateFirstPostWithSelfComment } from "./userEvaluation/EvaluateFirstPostWithSelfComment.js";
 
 export const ALL_EVALUATORS = [
     EvaluateBadUsername,
@@ -60,4 +61,5 @@ export const ALL_EVALUATORS = [
     EvaluateSuspiciousFirstPostPhrase,
     EvaluateTGGroup,
     EvaluateCommentBotGroup,
+    EvaluateFirstPostWithSelfComment,
 ];
