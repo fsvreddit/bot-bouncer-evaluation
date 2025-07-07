@@ -32,7 +32,7 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
                 if (typeof group.usernameRegex === "string") {
                     usernameRegexes = [group.usernameRegex];
                 } else if (Array.isArray(group.usernameRegex)) {
-                    usernameRegexes = group.usernameRegex;
+                    usernameRegexes = group.usernameRegex as string[];
                 }
             }
 
