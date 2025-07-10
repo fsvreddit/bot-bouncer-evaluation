@@ -2,13 +2,14 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../types.js";
-import { endOfDay, parse } from "date-fns";
+import { endOfDay, parse, subDays } from "date-fns";
 
 interface BotGroup {
     name: string;
     usernameRegexes: RegExp[];
     dateFrom: Date;
     dateTo: Date;
+    maxAccountAge?: number;
     subreddits?: string[];
 }
 
@@ -25,6 +26,7 @@ export class EvaluateBotGroup extends UserEvaluatorBase {
             const name = group.name as string | undefined;
             const dateFrom = group.dateFrom as string | undefined;
             const dateTo = group.dateTo as string | undefined;
+            const maxAccountAge = group.maxAccountAge as number | undefined;
             const subreddits = group.subreddits as string[] | undefined;
             let usernameRegexes: string[] | undefined;
             if (group.usernameRegex) {
@@ -36,7 +38,7 @@ export class EvaluateBotGroup extends UserEvaluatorBase {
             }
 
             if (!name || !dateFrom || !usernameRegexes) {
-                throw new Error(`Bot group ${key} is missing required fields. Mandatory fields are name, dateFrom, dateTo, and usernameRegex.`);
+                throw new Error(`Bot group ${key} is missing required fields. Mandatory fields are name, dateFrom and usernameRegex.`);
             }
 
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -52,9 +54,16 @@ export class EvaluateBotGroup extends UserEvaluatorBase {
                 throw new Error(`dateFrom cannot be after dateTo in bot group ${key}.`);
             }
 
+            if (dateTo && maxAccountAge) {
+                throw new Error(`Cannot specify both dateFrom/dateTo and accountAge in bot group ${key}. Please use one or the other.`);
+            }
+
             try {
                 for (const usernameRegex of usernameRegexes) {
-                    new RegExp(usernameRegex);
+                    const regex = new RegExp(usernameRegex);
+                    if (regex.test("bot-bouncer")) {
+                        throw new Error(`Username regex is too greedy in bot group ${key}: ${usernameRegex}`);
+                    }
                 }
             } catch {
                 throw new Error(`Invalid regex for usernameRegex in bot group ${key}.`);
@@ -66,6 +75,7 @@ export class EvaluateBotGroup extends UserEvaluatorBase {
                     usernameRegexes: usernameRegexes.map(regex => new RegExp(regex)),
                     dateFrom: parse(dateFrom, "yyyy-MM-dd", new Date()),
                     dateTo: dateTo ? endOfDay(parse(dateTo, "yyyy-MM-dd", new Date())) : new Date(),
+                    maxAccountAge,
                     subreddits,
                 });
             } catch (error) {
@@ -100,15 +110,17 @@ export class EvaluateBotGroup extends UserEvaluatorBase {
 
     override preEvaluateUser (user: UserExtended): boolean {
         const botGroups = this.getBotGroups();
-        return botGroups.some(group => group.usernameRegexes.some(regex => regex.test(user.username) && user.createdAt > group.dateFrom && user.createdAt < group.dateTo));
+        return botGroups.some(group => group.usernameRegexes.some(regex => regex.test(user.username)
+            && (user.createdAt > group.dateFrom && user.createdAt < group.dateTo)
+            && (!group.maxAccountAge || user.createdAt > subDays(new Date(), group.maxAccountAge))));
     }
 
     override evaluate (user: UserExtended, history: (Post | Comment)[]): boolean {
         const botGroups = this.getBotGroups();
 
         const matchedGroup = botGroups.find(group => group.usernameRegexes.some(regex => regex.test(user.username))
-            && user.createdAt > group.dateFrom
-            && user.createdAt < group.dateTo
+            && (user.createdAt > group.dateFrom && user.createdAt < group.dateTo)
+            && (!group.maxAccountAge || user.createdAt > subDays(new Date(), group.maxAccountAge))
             && (!group.subreddits || history.some(item => group.subreddits?.some(subreddit => subreddit === item.subredditName))));
 
         if (!matchedGroup) {

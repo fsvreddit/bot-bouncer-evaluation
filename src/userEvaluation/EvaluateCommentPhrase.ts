@@ -11,6 +11,27 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
 
     public override banContentThreshold = 1;
 
+    override validateVariables (): string[] {
+        const results: string[] = [];
+        const regexes = this.getVariable<string[]>("phrases", []);
+
+        for (const regexVal of regexes) {
+            let regex: RegExp;
+            try {
+                regex = new RegExp(regexVal);
+            } catch {
+                results.push(`Invalid regex in biotext: ${regexVal}`);
+                continue;
+            }
+
+            if (regex.test("bot-bouncer")) {
+                results.push(`Bio Text regex is too greedy: ${regexVal}`);
+            }
+        }
+
+        return results;
+    }
+
     private eligibleComment (comment: Comment | CommentV2): boolean {
         const phrases = this.getVariable<string[]>("phrases", []);
         const maxCommentAgeInDays = this.getVariable<number>("maxcommentageindays", 30);

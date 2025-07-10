@@ -20,6 +20,30 @@ export class EvaluateBioText extends UserEvaluatorBase {
         return { bannableBioText, reportableBioText };
     }
 
+    override validateVariables (): string[] {
+        const results: string[] = [];
+        const regexes = [
+            ...this.getVariable<string[]>("bantext", []),
+            ...this.getVariable<string[]>("reporttext", []),
+        ];
+
+        for (const regexVal of regexes) {
+            let regex: RegExp;
+            try {
+                regex = new RegExp(regexVal);
+            } catch {
+                results.push(`Invalid regex in biotext: ${regexVal}`);
+                continue;
+            }
+
+            if (regex.test("bot-bouncer")) {
+                results.push(`Bio Text regex is too greedy: ${regexVal}`);
+            }
+        }
+
+        return results;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluatePost (_: Post): boolean {
         const { bannableBioText, reportableBioText } = this.getBioText();

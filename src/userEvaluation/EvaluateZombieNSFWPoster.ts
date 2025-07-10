@@ -15,6 +15,27 @@ export class EvaluateZombieNSFW extends UserEvaluatorBase {
         return regexList.map(regex => new RegExp(regex));
     }
 
+    override validateVariables (): string[] {
+        const results: string[] = [];
+        const regexes = this.getVariable<string[]>("regexes", []);
+
+        for (const regexVal of regexes) {
+            let regex: RegExp;
+            try {
+                regex = new RegExp(regexVal);
+            } catch {
+                results.push(`Invalid regex in Zombie NSFW Poster: ${regexVal}`);
+                continue;
+            }
+
+            if (regex.test("bot-bouncer")) {
+                results.push(`Zombie NSFW Poster regex is too greedy: ${regexVal}`);
+            }
+        }
+
+        return results;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
         return false;

@@ -9,6 +9,27 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
     override shortname = "tg-group";
     override banContentThreshold = 1;
 
+    override validateVariables (): string[] {
+        const results: string[] = [];
+        const regexes = this.getVariable<string[]>("bodyregex", []);
+
+        for (const regexVal of regexes) {
+            let regex: RegExp;
+            try {
+                regex = new RegExp(regexVal);
+            } catch {
+                results.push(`Invalid regex in TG Group: ${regexVal}`);
+                continue;
+            }
+
+            if (regex.test("bot-bouncer")) {
+                results.push(`TG Group regex is too greedy: ${regexVal}`);
+            }
+        }
+
+        return results;
+    }
+
     private eligiblePost (post: Post): boolean {
         if (!post.body) {
             return false;

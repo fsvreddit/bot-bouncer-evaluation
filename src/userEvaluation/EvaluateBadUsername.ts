@@ -24,6 +24,26 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
         return matchedRegex !== undefined;
     }
 
+    override validateVariables (): string[] {
+        const results: string[] = [];
+        const regexes = this.getVariable<string[]>("regexes", []);
+        for (const regexVal of regexes) {
+            let regex: RegExp;
+            try {
+                regex = new RegExp(regexVal);
+            } catch {
+                results.push(`Invalid regex in badusername: ${regexVal}`);
+                continue;
+            }
+
+            if (regex.test("bot-bouncer")) {
+                results.push(`Bad username regex is too greedy: ${regexVal}`);
+            }
+        }
+
+        return results;
+    }
+
     override preEvaluateComment (event: CommentCreate): boolean {
         return this.isBadUsername(event.author?.name);
     }

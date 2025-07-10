@@ -10,6 +10,30 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
     override shortname = "pinnedpost";
     override banContentThreshold = 1;
 
+    override validateVariables (): string[] {
+        const results: string[] = [];
+        const regexes = [
+            ...this.getVariable<string[]>("bantext", []),
+            ...this.getVariable<string[]>("reporttext", []),
+        ];
+
+        for (const regexVal of regexes) {
+            let regex: RegExp;
+            try {
+                regex = new RegExp(regexVal);
+            } catch {
+                results.push(`Invalid regex in sticky post title: ${regexVal}`);
+                continue;
+            }
+
+            if (regex.test("bot-bouncer")) {
+                results.push(`Sticky post title regex is too greedy: ${regexVal}`);
+            }
+        }
+
+        return results;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
         return false;

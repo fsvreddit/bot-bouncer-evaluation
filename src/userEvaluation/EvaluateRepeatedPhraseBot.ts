@@ -11,6 +11,19 @@ export class EvaluateRepeatedPhraseBot extends UserEvaluatorBase {
     override banContentThreshold = 3;
     override canAutoBan = true;
 
+    override validateVariables (): string[] {
+        const results: string[] = [];
+        const phrases = this.getVariable<string[]>("phrases", []);
+
+        for (const phrase of phrases) {
+            if ("bot-bouncer".includes(phrase)) {
+                results.push(`Phrase is too greedy: ${phrase}`);
+            }
+        }
+
+        return results;
+    }
+
     private eligibleComment (comment: Comment | CommentV2): boolean {
         const phrases = this.getVariable<string[]>("phrases", []);
         const caseSensitive = this.getVariable<boolean>("casesensitive", false);

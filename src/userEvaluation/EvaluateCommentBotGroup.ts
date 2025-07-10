@@ -2,13 +2,14 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../types.js";
-import { endOfDay, parse } from "date-fns";
+import { endOfDay, parse, subDays } from "date-fns";
 
 interface BotGroup {
     name: string;
     usernameRegexes?: RegExp[];
     dateFrom?: Date;
     dateTo?: Date;
+    maxAccountAge?: number;
     subreddits: string[];
     commentRegexes: RegExp[];
 }
@@ -26,6 +27,7 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
             const name = group.name as string | undefined;
             const dateFrom = group.dateFrom as string | undefined;
             const dateTo = group.dateTo as string | undefined;
+            const maxAccountAge = group.maxAccountAge as number | undefined;
             const subreddits = group.subreddits as string[] | undefined;
             let usernameRegexes: string[] | undefined;
             if (group.usernameRegex) {
@@ -62,9 +64,16 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
                 throw new Error(`dateFrom cannot be after dateTo in bot group ${key}.`);
             }
 
+            if (maxAccountAge && !dateFrom) {
+                throw new Error(`Cannot specify accountAge without dateFrom in bot group ${key} for backwards compatibility reasons.`);
+            }
+
             try {
                 for (const usernameRegex of usernameRegexes ?? []) {
-                    new RegExp(usernameRegex);
+                    const regex = new RegExp(usernameRegex);
+                    if (regex.test("bot-bouncer")) {
+                        throw new Error(`Username regex is too greedy in comment bot group ${key}: ${usernameRegex}`);
+                    }
                 }
             } catch {
                 throw new Error(`Invalid regex for usernameRegex in bot group ${key}.`);
@@ -76,6 +85,7 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
                     usernameRegexes: usernameRegexes ? usernameRegexes.map(regex => new RegExp(regex)) : undefined,
                     dateFrom: dateFrom ? parse(dateFrom, "yyyy-MM-dd", new Date()) : undefined,
                     dateTo: dateTo ? endOfDay(parse(dateTo, "yyyy-MM-dd", new Date())) : undefined,
+                    maxAccountAge,
                     subreddits,
                     commentRegexes: commentRegexes.map(regex => new RegExp(regex)),
                 });
@@ -136,6 +146,10 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
 
     private userMatchesGroup (user: UserExtended, group: BotGroup): boolean {
         if (group.usernameRegexes && !group.usernameRegexes.some(regex => regex.test(user.username))) {
+            return false;
+        }
+
+        if (group.maxAccountAge && user.createdAt < subDays(new Date(), group.maxAccountAge)) {
             return false;
         }
 

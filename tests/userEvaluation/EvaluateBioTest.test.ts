@@ -39,3 +39,15 @@ test("User with nonmatching bio", () => {
     const result = evaluator.evaluate(mockUser, []);
     expect(result).toBeFalsy();
 });
+
+test("Validation of regex", () => {
+    const variables = JSON.parse(`{
+        "biotext:bantext": [
+            "a||b"
+        ]
+    }`) as Record<string, JSONValue>;
+
+    const evaluator = new EvaluateBioText({} as unknown as TriggerContext, variables);
+    const validationResults = evaluator.validateVariables();
+    expect(validationResults.length).toEqual(1);
+});
