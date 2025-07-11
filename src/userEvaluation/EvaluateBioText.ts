@@ -7,7 +7,7 @@ import markdownEscape from "markdown-escape";
 export class EvaluateBioText extends UserEvaluatorBase {
     override name = "Bio Text Bot";
     override shortname = "biotext";
-    override banContentThreshold = 1;
+    override banContentThreshold = 0;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {

@@ -9,7 +9,7 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
     override name = "Social Links Bot";
     override shortname = "sociallinks";
 
-    override banContentThreshold = 1;
+    override banContentThreshold = 0;
 
     private getDomains (): string[] {
         const postDomains = this.getGenericVariable<string[]>("redditdomains", []);
@@ -34,7 +34,7 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
             return false;
         }
 
-        const accountEligible = (user.commentKarma < 50 && user.createdAt > subMonths(new Date(), 2))
+        const accountEligible = (user.commentKarma < 500 && user.createdAt > subMonths(new Date(), 2))
             || user.createdAt < subYears(new Date(), 5);
 
         if (!accountEligible) {
@@ -62,21 +62,8 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
         return false;
     }
 
-    override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
-        const userComments = this.getComments(history);
-        if (userComments.length > 0) {
-            return false;
-        }
-
-        const recentPosts = this.getPosts(history, { since: subMonths(new Date(), 1), omitRemoved: true });
-        for (const post of recentPosts) {
-            const postDomain = domainFromUrl(post.url);
-            if (postDomain && !this.getDomains().includes(postDomain)) {
-                this.setReason(`Post domain ${postDomain} is not in the allowed list`);
-                return false;
-            }
-        }
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override evaluate (_user: UserExtended, _history: (Post | Comment)[]): boolean {
         return true;
     }
 }

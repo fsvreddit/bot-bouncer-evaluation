@@ -8,7 +8,7 @@ import { getUserOrUndefined } from "../utility.js";
 export class EvaluateOFLinksBot extends UserEvaluatorBase {
     override name = "OF Links Bot";
     override shortname = "oflinks";
-    override banContentThreshold = 1;
+    override banContentThreshold = 0;
     override canAutoBan = true;
 
     protected async getSocialLinks (username: string): Promise<UserSocialLink[]> {

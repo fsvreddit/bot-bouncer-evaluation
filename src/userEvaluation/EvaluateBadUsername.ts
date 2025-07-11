@@ -9,7 +9,7 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
     override name = "Bad Username Bot";
     override shortname = "badusername";
 
-    public override banContentThreshold = 1;
+    public override banContentThreshold = 0;
 
     private isBadUsername (username?: string) {
         if (!username) {

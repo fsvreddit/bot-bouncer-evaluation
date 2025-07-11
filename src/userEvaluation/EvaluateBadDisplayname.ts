@@ -8,7 +8,7 @@ export class EvaluateBadDisplayName extends UserEvaluatorBase {
     override name = "Bad Display Name Bot";
     override shortname = "baddisplayname";
 
-    public override banContentThreshold = 1;
+    public override banContentThreshold = 0;
 
     private isBadDisplayName (displayName?: string) {
         if (!displayName) {
