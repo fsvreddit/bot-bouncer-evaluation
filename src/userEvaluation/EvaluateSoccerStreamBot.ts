@@ -1,7 +1,7 @@
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { Comment, Post } from "@devvit/public-api";
-import { subWeeks, subYears } from "date-fns";
+import { subWeeks } from "date-fns";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { compact, uniq } from "lodash";
 import { UserExtended } from "../types.js";
@@ -9,7 +9,7 @@ import { UserExtended } from "../types.js";
 export class EvaluateSoccerStreamBot extends UserEvaluatorBase {
     override name = "Soccer Stream Bot";
     override shortname = "soccerstreams";
-    override banContentThreshold = 20;
+    override banContentThreshold = 10;
     override canAutoBan = true;
 
     private subredditFromComment (body: string): string | undefined {
@@ -40,9 +40,7 @@ export class EvaluateSoccerStreamBot extends UserEvaluatorBase {
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
-        return user.createdAt > subYears(new Date(), 2)
-            && user.linkKarma < 500
-            && user.commentKarma < 2000;
+        return user.linkKarma < 10000;
     }
 
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
@@ -52,9 +50,9 @@ export class EvaluateSoccerStreamBot extends UserEvaluatorBase {
             return false;
         }
 
-        const comments = this.getComments(history);
+        const comments = this.getComments(history, { since: subWeeks(new Date(), 1), omitRemoved: true });
 
-        if (comments.length < 20) {
+        if (comments.length < 10) {
             this.setReason("User has insufficient comments to check user");
             return false;
         }
