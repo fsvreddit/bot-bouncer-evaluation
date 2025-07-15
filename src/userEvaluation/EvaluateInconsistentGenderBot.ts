@@ -42,7 +42,9 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
     }
 
     override evaluate (user: UserExtended, history: (Post | Comment)[]): boolean {
-        const nsfwPosts = this.getPosts(history, { since: subWeeks(new Date(), 2) }).filter(post => post.isNsfw());
+        const nsfwPosts = this.getPosts(history, { since: subWeeks(new Date(), 2) })
+            .filter(post => post.isNsfw() && !post.subredditName.toLowerCase().includes("roleplay"));
+
         if (nsfwPosts.length < 4) {
             return false;
         }
