@@ -16,10 +16,27 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
         return false;
     }
 
-    private ageRegex = /^[MFTA]?\s?(18|19|2[0-9])(?![$+])/;
+    private ageRegexes = [
+        /^F\s?(18|19|[2-4][0-9])(?![$+])/,
+        /^(18|19|[2-4][0-9])F/,
+        /^(18|19|[2-4][0-9]) \[F/,
+    ];
+
+    private getAgeFromPostTitle (title: string): number | undefined {
+        for (const regex of this.ageRegexes) {
+            const match = title.match(regex);
+            if (match) {
+                return parseInt(match[1]);
+            }
+        }
+    }
 
     override preEvaluatePost (post: Post): boolean {
-        return this.ageRegex.test(post.title) && post.isNsfw();
+        if (!post.isNsfw()) {
+            return false;
+        }
+
+        return this.getAgeFromPostTitle(post.title) !== undefined;
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -35,10 +52,7 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
             return false;
         }
 
-        const agesFound = uniq(compact(nsfwPosts.map((post) => {
-            const match = post.title.match(this.ageRegex);
-            return match ? parseInt(match[1]) : undefined;
-        })));
+        const agesFound = uniq(compact(nsfwPosts.map(post => this.getAgeFromPostTitle(post.title))));
 
         if (agesFound.length < 3) {
             this.setReason(`User has not posted enough different ages in NSFW posts: ${agesFound.join(", ")}`);

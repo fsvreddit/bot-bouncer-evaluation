@@ -25,6 +25,18 @@ test("User with three different sequential ages", () => {
 
     const evaluator = new EvaluateInconsistentAgeBot(mockContext, mockVariables);
     const result = evaluator.evaluate(mockUser, history);
-    console.log(`Result: ${evaluator.getReasons().join(", ")}`);
     expect(result).toBeTruthy();
+});
+
+test("Male user with three different sequential ages", () => {
+    const history = [
+        ...mockBasicHistory,
+        { createdAt: new Date(), id: "t3_fake6", subredditName: "gonewild", title: "M23 Hello", isNsfw: () => true },
+        { createdAt: new Date(), id: "t3_fake7", subredditName: "gonewild", title: "24M Hello", isNsfw: () => true },
+        { createdAt: new Date(), id: "t3_fake8", subredditName: "gonewild", title: "M25 Hello", isNsfw: () => true },
+    ] as unknown as Post[];
+
+    const evaluator = new EvaluateInconsistentAgeBot(mockContext, mockVariables);
+    const result = evaluator.evaluate(mockUser, history);
+    expect(result).toBeFalsy();
 });
