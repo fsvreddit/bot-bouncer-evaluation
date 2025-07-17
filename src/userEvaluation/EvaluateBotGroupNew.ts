@@ -12,7 +12,8 @@ interface AgeRange {
 }
 
 interface AgeInDays {
-    maxAgeInDays: number;
+    maxAgeInDays?: number;
+    minAgeInDays?: number; // Optional, not used in this implementation
 }
 
 type AgeCriteria = AgeRange | AgeInDays;
@@ -28,12 +29,26 @@ function validateAgeCriteria (age: AgeCriteria): string[] {
         if (dateTo && !dateRegex.test(dateTo)) {
             errors.push("Invalid date format for dateTo in age criteria. Expected format is YYYY-MM-DD.");
         }
-    } else if (Object.keys(age).includes("maxAgeInDays")) {
+
+        if (Object.keys(age).includes("maxAgeInDays") || Object.keys(age).includes("minAgeInDays")) {
+            errors.push("Cannot specify both date range and min/maxAgeInDays in age criteria.");
+        }
+    }
+
+    if (Object.keys(age).includes("maxAgeInDays")) {
         const { maxAgeInDays } = age as AgeInDays;
         if (typeof maxAgeInDays !== "number" || maxAgeInDays <= 0) {
             errors.push("maxAgeInDays must be a positive number.");
         }
-    } else {
+    }
+
+    if (Object.keys(age).includes("minAgeInDays")) {
+        const { minAgeInDays } = age as AgeInDays;
+        if (typeof minAgeInDays !== "number" || minAgeInDays <= 0) {
+            errors.push("minAgeInDays must be a positive number.");
+        }
+    } else if (!Object.keys(age).includes("dateFrom") && !Object.keys(age).includes("maxAgeInDays")) {
+        // If neither date range nor maxAgeInDays is specified, it's an error
         errors.push("Age criteria must specify either date range or maxAgeInDays.");
     }
 
@@ -43,6 +58,10 @@ function validateAgeCriteria (age: AgeCriteria): string[] {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in age criteria: ${key}`);
         }
+    }
+
+    if (!keys.includes("dateFrom") && !keys.includes("maxAgeInDays") && !keys.includes("minAgeInDays")) {
+        errors.push("Age criteria must specify at least one of dateFrom, maxAgeInDays, or minAgeInDays.");
     }
 
     return errors;
@@ -251,7 +270,7 @@ interface BotGroup {
     nsfw?: boolean;
     bioRegex?: string[];
     displayNameRegex?: string[];
-    socialLinks?: string[];
+    socialLinkRegex?: string[];
     criteria?: CriteriaGroup;
 }
 
@@ -295,17 +314,19 @@ function validateBotGroup (group: BotGroup): string[] {
         }
     }
 
-    if (group.socialLinks) {
-        if (!Array.isArray(group.socialLinks)) {
+    if (group.socialLinkRegex) {
+        if (!Array.isArray(group.socialLinkRegex)) {
             errors.push("socialLinks must be an array.");
         } else {
-            for (const link of group.socialLinks) {
+            for (const link of group.socialLinkRegex) {
                 if (typeof link !== "string") {
                     errors.push(`Invalid social link: ${link}. Must be a string.`);
                 }
 
-                if (!link.startsWith("http")) {
-                    errors.push(`Invalid social link format: ${link}. Must start with 'http' or 'https'.`);
+                try {
+                    new RegExp(link);
+                } catch {
+                    errors.push(`Invalid regex in socialLinkRegex: ${link}`);
                 }
             }
         }
@@ -363,12 +384,22 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
                     return false;
                 }
             }
-        } else if ("maxAgeInDays" in age) {
+        }
+
+        if ("maxAgeInDays" in age && age.maxAgeInDays) {
             const maxAgeDate = subDays(new Date(), age.maxAgeInDays);
             if (date < maxAgeDate) {
                 return false;
             }
         }
+
+        if ("minAgeInDays" in age && age.minAgeInDays) {
+            const minAgeDate = subDays(new Date(), age.minAgeInDays);
+            if (date > minAgeDate) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -554,14 +585,14 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             return false;
         }
 
-        if (group.socialLinks) {
+        if (group.socialLinkRegex) {
             const actualUser = await this.context.reddit.getUserByUsername(user.username);
             if (!actualUser) {
                 this.setReason(`User not found for social links check in group ${group.name}`);
                 return false;
             }
             const userSocialLinks = await actualUser.getSocialLinks();
-            if (!userSocialLinks.some(userLink => group.socialLinks?.some(link => userLink.outboundUrl.startsWith(link)))) {
+            if (!userSocialLinks.some(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex))) {
                 this.setReason(`No matching social links found for user in group ${group.name}`);
                 return false;
             }
