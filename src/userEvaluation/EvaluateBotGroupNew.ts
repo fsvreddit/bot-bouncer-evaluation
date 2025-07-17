@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Comment, Post, UserSocialLink } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../types.js";
@@ -352,6 +352,22 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
     override shortname = "botgroupnew";
     override banContentThreshold = 1;
 
+    private socialLinks: UserSocialLink[] | undefined;
+
+    private async getSocialLinks (user: UserExtended): Promise<UserSocialLink[]> {
+        if (this.socialLinks) {
+            return this.socialLinks;
+        }
+
+        const actualUser = await this.context.reddit.getUserByUsername(user.username);
+        if (!actualUser) {
+            return [];
+        }
+
+        this.socialLinks = await actualUser.getSocialLinks();
+        return this.socialLinks;
+    }
+
     private anyRegexMatches (input: string, regexes: string[]): boolean {
         return regexes.some(regex => new RegExp(regex).test(input));
     }
@@ -586,12 +602,7 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
         }
 
         if (group.socialLinkRegex) {
-            const actualUser = await this.context.reddit.getUserByUsername(user.username);
-            if (!actualUser) {
-                this.setReason(`User not found for social links check in group ${group.name}`);
-                return false;
-            }
-            const userSocialLinks = await actualUser.getSocialLinks();
+            const userSocialLinks = await this.getSocialLinks(user);
             if (!userSocialLinks.some(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex))) {
                 this.setReason(`No matching social links found for user in group ${group.name}`);
                 return false;
