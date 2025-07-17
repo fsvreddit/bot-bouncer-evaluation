@@ -61,7 +61,7 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
                 continue;
             }
 
-            this.hitReason = `Bio text matched obfuscated keyword: ${matches[0]}`;
+            this.hitReason = `Bio text matched obfuscated keyword: ${keyword} (matched "${matches[0]}")`;
 
             return true;
         }
