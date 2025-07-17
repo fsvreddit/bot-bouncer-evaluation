@@ -18,7 +18,7 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
 
     private ageRegexes = [
         /^F\s?(18|19|[2-4][0-9])(?![$+])/,
-        /^(18|19|[2-4][0-9])F/,
+        /^(18|19|[2-4][0-9])\s?F/,
         /^(18|19|[2-4][0-9]) \[F/,
     ];
 
