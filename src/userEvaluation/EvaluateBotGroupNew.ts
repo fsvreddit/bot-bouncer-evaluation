@@ -442,21 +442,21 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             || subredditNames.some(subreddit => subreddit === "{profile}" && subredditName === `u_${authorName}`);
     }
 
-    private commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition) {
-        if (condition.bodyRegex && !this.anyRegexMatches(comment.body, condition.bodyRegex)) {
+    private postOrCommentMatchesCondition (item: Post | Comment | CommentV2, condition: CommentCondition | PostCondition) {
+        if (condition.bodyRegex && item.body && !this.anyRegexMatches(item.body, condition.bodyRegex)) {
             return false;
         }
 
-        if (condition.subredditName && !this.anySubredditMatches(comment, condition.subredditName)) {
+        if (condition.subredditName && !this.anySubredditMatches(item, condition.subredditName)) {
             return false;
         }
 
-        if (condition.notSubredditName && this.anySubredditMatches(comment, condition.notSubredditName)) {
+        if (condition.notSubredditName && this.anySubredditMatches(item, condition.notSubredditName)) {
             return false;
         }
 
         if (condition.age) {
-            const referenceDate = comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt);
+            const referenceDate = item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt);
             if (!this.matchesAgeCriteria(referenceDate, condition.age)) {
                 return false;
             }
@@ -504,45 +504,21 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             };
 
             const commentConditions: CommentCondition[] = this.collectCommentConditionsForPreEvalation(group.criteria);
-            return commentConditions.some(condition => comment.comment && this.commentMatchesCondition(comment.comment, condition));
+            return commentConditions.some(condition => comment.comment && this.postOrCommentMatchesCondition(comment.comment, condition));
         });
     }
 
     private postMatchesCondition (post: Post, condition: PostCondition) {
+        if (!this.postOrCommentMatchesCondition(post, condition)) {
+            return false;
+        }
+
         if (condition.pinned !== undefined && post.stickied !== condition.pinned) {
             return false;
         }
 
         if (condition.nsfw !== undefined && post.nsfw !== condition.nsfw) {
             return false;
-        }
-
-        if (condition.subredditName && !this.anySubredditMatches(post, condition.subredditName)) {
-            return false;
-        }
-
-        if (condition.notSubredditName && this.anySubredditMatches(post, condition.notSubredditName)) {
-            return false;
-        }
-
-        if (condition.bodyRegex) {
-            if (!post.body) {
-                return false;
-            }
-
-            if (!this.anyRegexMatches(post.body, condition.bodyRegex)) {
-                return false;
-            }
-        }
-
-        if (condition.subredditName && !condition.subredditName.includes(post.subredditName)) {
-            return false;
-        }
-
-        if (condition.age) {
-            if (!this.matchesAgeCriteria(post.createdAt, condition.age)) {
-                return false;
-            }
         }
 
         if (condition.titleRegex && !this.anyRegexMatches(post.title, condition.titleRegex)) {
@@ -679,7 +655,7 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             } else if (criteria.type === "comment") {
                 const comments = this.getComments(history);
-                const matchingComments = comments.filter(comment => this.commentMatchesCondition(comment, criteria));
+                const matchingComments = comments.filter(comment => this.postOrCommentMatchesCondition(comment, criteria));
                 if (matchingComments.length === 0) {
                     return false;
                 } else if (criteria.matchesNeeded && matchingComments.length < criteria.matchesNeeded) {
