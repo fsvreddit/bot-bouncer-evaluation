@@ -96,6 +96,30 @@ interface PostCondition extends BaseItemCondition {
     domain?: string[];
 }
 
+function validateRegexArray (regexes: string[]): string[] {
+    const errors: string[] = [];
+    if (!Array.isArray(regexes)) {
+        errors.push("Expected an array of regex strings.");
+    } else {
+        for (const regexString of regexes) {
+            if (typeof regexString !== "string") {
+                errors.push(`Invalid regex: ${regexString}. Must be a string.`);
+                continue;
+            }
+            try {
+                const regex = new RegExp(regexString, "u");
+                if (regex.test("bot-bouncer")) {
+                    errors.push(`Regex ${regexString} appears to be too greedy.`);
+                }
+            } catch {
+                errors.push(`Invalid regex: ${regexString}`);
+            }
+        }
+    }
+
+    return errors;
+}
+
 function validatePostCondition (condition: PostCondition): string[] {
     const errors: string[] = [];
     if (condition.pinned !== undefined && typeof condition.pinned !== "boolean") {
@@ -103,16 +127,7 @@ function validatePostCondition (condition: PostCondition): string[] {
     }
 
     if (condition.titleRegex) {
-        if (!Array.isArray(condition.titleRegex)) {
-            errors.push("titleRegex must be an array.");
-        }
-        for (const regex of condition.titleRegex) {
-            try {
-                new RegExp(regex);
-            } catch {
-                errors.push(`Invalid regex in titleRegex: ${regex}`);
-            }
-        }
+        errors.push(...validateRegexArray(condition.titleRegex));
     }
 
     if (condition.nsfw !== undefined && typeof condition.nsfw !== "boolean") {
@@ -120,16 +135,7 @@ function validatePostCondition (condition: PostCondition): string[] {
     }
 
     if (condition.urlRegex) {
-        if (!Array.isArray(condition.urlRegex)) {
-            errors.push("urlRegex must be an array.");
-        }
-        for (const regex of condition.urlRegex) {
-            try {
-                new RegExp(regex);
-            } catch {
-                errors.push(`Invalid regex in urlRegex: ${regex}`);
-            }
-        }
+        errors.push(...validateRegexArray(condition.urlRegex));
     }
 
     if (condition.domain) {
@@ -204,20 +210,7 @@ function validateCondition (condition: PostCondition | CommentCondition): string
     }
 
     if (condition.bodyRegex) {
-        if (!Array.isArray(condition.bodyRegex)) {
-            errors.push("bodyRegex must be an array.");
-        } else {
-            if (condition.bodyRegex.length === 0) {
-                errors.push("bodyRegex cannot be an empty array.");
-            }
-        }
-        for (const regex of condition.bodyRegex) {
-            try {
-                new RegExp(regex);
-            } catch {
-                errors.push(`Invalid regex in bodyRegex: ${regex}`);
-            }
-        }
+        errors.push(...validateRegexArray(condition.bodyRegex));
     }
 
     if (condition.type === "post") {
@@ -297,13 +290,7 @@ function validateBotGroup (group: BotGroup): string[] {
     }
 
     if (group.usernameRegex) {
-        for (const regex of group.usernameRegex) {
-            try {
-                new RegExp(regex);
-            } catch {
-                errors.push(`Invalid regex in usernameRegex: ${regex}`);
-            }
-        }
+        errors.push(...validateRegexArray(group.usernameRegex));
     }
 
     if (group.age) {
@@ -311,41 +298,15 @@ function validateBotGroup (group: BotGroup): string[] {
     }
 
     if (group.bioRegex) {
-        for (const regex of group.bioRegex) {
-            try {
-                new RegExp(regex);
-            } catch {
-                errors.push(`Invalid regex in bioRegex: ${regex}`);
-            }
-        }
+        errors.push(...validateRegexArray(group.bioRegex));
     }
 
     if (group.displayNameRegex) {
-        for (const regex of group.displayNameRegex) {
-            try {
-                new RegExp(regex);
-            } catch {
-                errors.push(`Invalid regex in displayNameRegex: ${regex}`);
-            }
-        }
+        errors.push(...validateRegexArray(group.displayNameRegex));
     }
 
     if (group.socialLinkRegex) {
-        if (!Array.isArray(group.socialLinkRegex)) {
-            errors.push("socialLinks must be an array.");
-        } else {
-            for (const link of group.socialLinkRegex) {
-                if (typeof link !== "string") {
-                    errors.push(`Invalid social link: ${link}. Must be a string.`);
-                }
-
-                try {
-                    new RegExp(link);
-                } catch {
-                    errors.push(`Invalid regex in socialLinkRegex: ${link}`);
-                }
-            }
-        }
+        errors.push(...validateRegexArray(group.socialLinkRegex));
     }
 
     if (group.criteria) {
