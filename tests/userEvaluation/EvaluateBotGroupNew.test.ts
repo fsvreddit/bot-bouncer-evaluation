@@ -250,7 +250,6 @@ group1:
     expect(errors).toEqual([]);
 
     const evaluationResult = await evaluator.evaluate(user, history);
-    console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(true);
 });
 
@@ -292,7 +291,6 @@ group1:
     expect(errors).toEqual([]);
 
     const evaluationResult = await evaluator.evaluate(user, history);
-    console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(true);
 });
 
@@ -332,7 +330,6 @@ group1:
     expect(errors).toEqual([]);
 
     const evaluationResult = await evaluator.evaluate(user, history);
-    console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(false);
 });
 
@@ -396,7 +393,6 @@ group1:
     expect(errors).toEqual([]);
 
     const evaluationResult = await evaluator.evaluate(user, history);
-    console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(false);
 });
 
@@ -434,6 +430,5 @@ group1:
     expect(errors).toEqual([]);
 
     const evaluationResult = await evaluator.evaluate(user, history);
-    console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(true);
 });
