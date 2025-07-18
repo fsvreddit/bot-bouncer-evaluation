@@ -89,6 +89,7 @@ interface BaseItemCondition {
 
 interface PostCondition extends BaseItemCondition {
     type: "post";
+    pinned?: boolean;
     titleRegex?: string[];
     nsfw?: boolean;
     urlRegex?: string[];
@@ -97,6 +98,10 @@ interface PostCondition extends BaseItemCondition {
 
 function validatePostCondition (condition: PostCondition): string[] {
     const errors: string[] = [];
+    if (condition.pinned !== undefined && typeof condition.pinned !== "boolean") {
+        errors.push("pinned must be a boolean.");
+    }
+
     if (condition.titleRegex) {
         if (!Array.isArray(condition.titleRegex)) {
             errors.push("titleRegex must be an array.");
@@ -140,7 +145,7 @@ function validatePostCondition (condition: PostCondition): string[] {
     }
 
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in post condition: ${key}`);
@@ -262,7 +267,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in criteria group: ${key}`);
@@ -498,7 +503,11 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
     }
 
     private postMatchesCondition (post: Post, condition: PostCondition) {
-        if (condition.nsfw && !post.nsfw) {
+        if (condition.pinned !== undefined && post.stickied !== condition.pinned) {
+            return false;
+        }
+
+        if (condition.nsfw !== undefined && post.nsfw !== condition.nsfw) {
             return false;
         }
 
@@ -605,7 +614,7 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             return false;
         }
 
-        if (group.nsfw && !user.nsfw) {
+        if (group.nsfw !== undefined && user.nsfw !== group.nsfw) {
             this.setReason(`User is not marked as NSFW in group ${group.name}`);
             return false;
         }
