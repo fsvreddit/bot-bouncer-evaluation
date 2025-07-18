@@ -67,7 +67,6 @@ group1:
     const variables = yamlToVariables(yaml);
     const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
-    console.log(errors);
     expect(errors.length).toBe(1);
 });
 
@@ -88,6 +87,5 @@ group1:
     const variables = yamlToVariables(yaml);
     const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
-    console.log(errors);
     expect(errors.length).toBe(1);
 });
