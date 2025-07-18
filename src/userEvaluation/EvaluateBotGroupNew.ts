@@ -385,7 +385,7 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
     }
 
     private anyRegexMatches (input: string, regexes: string[]): boolean {
-        return regexes.some(regex => new RegExp(regex).test(input));
+        return regexes.some(regex => new RegExp(regex, "u").test(input));
     }
 
     public getBotGroups (): BotGroup[] {
