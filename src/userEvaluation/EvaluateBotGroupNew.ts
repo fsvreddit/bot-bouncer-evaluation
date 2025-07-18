@@ -435,17 +435,23 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
         return true;
     }
 
+    private anySubredditMatches (item: Post | Comment | CommentV2, subredditNames: string[]): boolean {
+        const subredditName = "subredditName" in item ? item.subredditName : this.context.subredditName;
+        const authorName = "authorName" in item ? item.authorName : undefined;
+        return subredditNames.some(subreddit => subredditName === subreddit)
+            || subredditNames.some(subreddit => subreddit === "{profile}" && subredditName === `u_${authorName}`);
+    }
+
     private commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition) {
         if (condition.bodyRegex && !this.anyRegexMatches(comment.body, condition.bodyRegex)) {
             return false;
         }
 
-        const subredditName = "subredditName" in comment ? comment.subredditName : this.context.subredditName;
-        if (condition.subredditName && subredditName && !condition.subredditName.includes(subredditName)) {
+        if (condition.subredditName && !this.anySubredditMatches(comment, condition.subredditName)) {
             return false;
         }
 
-        if (subredditName && condition.notSubredditName?.includes(subredditName)) {
+        if (condition.notSubredditName && this.anySubredditMatches(comment, condition.notSubredditName)) {
             return false;
         }
 
@@ -511,11 +517,11 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             return false;
         }
 
-        if (condition.subredditName && !condition.subredditName.includes(post.subredditName)) {
+        if (condition.subredditName && !this.anySubredditMatches(post, condition.subredditName)) {
             return false;
         }
 
-        if (condition.notSubredditName?.includes(post.subredditName)) {
+        if (condition.notSubredditName && this.anySubredditMatches(post, condition.notSubredditName)) {
             return false;
         }
 
