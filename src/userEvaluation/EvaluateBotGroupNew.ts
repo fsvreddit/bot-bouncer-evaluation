@@ -83,6 +83,7 @@ interface BaseItemCondition {
     matchesNeeded?: number;
     age?: AgeCriteria;
     subredditName?: string[];
+    notSubredditName?: string[];
     bodyRegex?: string[];
 }
 
@@ -139,7 +140,7 @@ function validatePostCondition (condition: PostCondition): string[] {
     }
 
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in post condition: ${key}`);
@@ -156,7 +157,7 @@ interface CommentCondition extends BaseItemCondition {
 function validateCommentCondition (condition: CommentCondition): string[] {
     const errors: string[] = [];
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "bodyRegex"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in comment condition: ${key}`);
@@ -183,6 +184,16 @@ function validateCondition (condition: PostCondition | CommentCondition): string
         } else {
             if (condition.subredditName.includes("")) {
                 errors.push("subredditName cannot be an empty string.");
+            }
+        }
+    }
+
+    if (condition.notSubredditName) {
+        if (!Array.isArray(condition.notSubredditName)) {
+            errors.push("notSubredditName must be an array.");
+        } else {
+            if (condition.notSubredditName.includes("")) {
+                errors.push("notSubredditName cannot be an empty string.");
             }
         }
     }
@@ -251,7 +262,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "matchesNeeded", "age", "subredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["not", "every", "some", "type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in criteria group: ${key}`);
@@ -429,6 +440,10 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             return false;
         }
 
+        if (subredditName && condition.notSubredditName?.includes(subredditName)) {
+            return false;
+        }
+
         if (condition.age) {
             const referenceDate = comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt);
             if (!this.matchesAgeCriteria(referenceDate, condition.age)) {
@@ -488,6 +503,10 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
         }
 
         if (condition.subredditName && !condition.subredditName.includes(post.subredditName)) {
+            return false;
+        }
+
+        if (condition.notSubredditName?.includes(post.subredditName)) {
             return false;
         }
 

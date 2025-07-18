@@ -344,7 +344,7 @@ killswitch: false
 group1:
     name: Test Group
     age:
-        noGreaterThan: 30
+        maxAgeInDays: 30
     criteria:
         type: post
         matchesNeeded: 2
@@ -360,4 +360,80 @@ group1:
     const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
+});
+
+test("Not subredditName criteria with comment in the sub", async () => {
+    const yaml = `
+name: botgroupnew
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: comment
+        matchesNeeded: 1
+        age:
+            maxAgeInDays: 30
+        notSubredditName:
+            - Frieren
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Comment,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    console.log(evaluator.getReasons());
+    expect(evaluationResult).toBe(false);
+});
+
+test("Not subredditName criteria with comment outside the sub", async () => {
+    const yaml = `
+name: botgroupnew
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: comment
+        matchesNeeded: 1
+        age:
+            maxAgeInDays: 30
+        notSubredditName:
+            - Frieren
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Comment,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    console.log(evaluator.getReasons());
+    expect(evaluationResult).toBe(true);
 });
