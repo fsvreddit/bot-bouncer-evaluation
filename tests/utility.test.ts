@@ -1,4 +1,4 @@
-import { yamlToVariables } from "./utility";
+import { yamlToVariables } from "../src/utility";
 
 test("Substitutions Module", () => {
     const yaml = `
@@ -7,13 +7,13 @@ sub1: value1
 sub2: value2
 ---
 name: module1
-var1: {{sub1}}
-var2: {{sub2}}
+var1: "{{sub1}}"
+var2: "{{sub2}}"
 ---
 name: module2
 head1:
     subhead2:
-        subhead3: {{sub1}}
+        subhead3: "{{sub1}}"
 `;
 
     const variables = yamlToVariables(yaml) as Record<string, unknown>;
