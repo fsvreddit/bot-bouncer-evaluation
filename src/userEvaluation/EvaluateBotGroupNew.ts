@@ -280,6 +280,10 @@ interface BotGroup {
     bioRegex?: string[];
     displayNameRegex?: string[];
     socialLinkRegex?: string[];
+    hasVerifiedEmail?: boolean;
+    hasRedditPremium?: boolean;
+    isSubredditModerator?: boolean;
+
     criteria?: CriteriaGroup;
 }
 
@@ -314,7 +318,7 @@ function validateBotGroup (group: BotGroup): string[] {
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinks", "criteria"];
+    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinks", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in bot group: ${key}`);
@@ -578,6 +582,21 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
                 this.setReason(`No matching social links found for user in group ${group.name}`);
                 return false;
             }
+        }
+
+        if (group.hasVerifiedEmail !== undefined && user.hasVerifiedEmail !== group.hasVerifiedEmail) {
+            this.setReason(`User has verified email status does not match in group ${group.name}`);
+            return false;
+        }
+
+        if (group.hasRedditPremium !== undefined && user.isGold !== group.hasRedditPremium) {
+            this.setReason(`User has Reddit Premium status does not match in group ${group.name}`);
+            return false;
+        }
+
+        if (group.isSubredditModerator !== undefined && user.isModerator !== group.isSubredditModerator) {
+            this.setReason(`User is subreddit moderator status does not match in group ${group.name}`);
+            return false;
         }
 
         return true;
