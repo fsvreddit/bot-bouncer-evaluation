@@ -24,7 +24,6 @@ import { EvaluateBotGroup } from "./userEvaluation/EvaluateBotGroup.js";
 import { EvaluateBadUsernameYoung } from "./userEvaluation/EvaluateBadUsernameYoung.js";
 import { EvaluateCommentPhrase } from "./userEvaluation/EvaluateCommentPhrase.js";
 import { EvaluateRapidFireBot } from "./userEvaluation/EvaluateRapidFireBot.js";
-import { EvaluateAmazonSpam } from "./userEvaluation/EvaluateAmazonSpam.js";
 import { EvaluateSuspiciousFirstPostPhrase } from "./userEvaluation/EvaluateSuspiciousFirstPostPhrase.js";
 import { EvaluateTGGroup } from "./userEvaluation/EvaluateTGGroup.js";
 import { EvaluateCommentBotGroup } from "./userEvaluation/EvaluateCommentBotGroup.js";
@@ -58,7 +57,6 @@ export const ALL_EVALUATORS = [
     EvaluateBotGroup,
     EvaluateCommentPhrase,
     EvaluateRapidFireBot,
-    EvaluateAmazonSpam,
     EvaluateSuspiciousFirstPostPhrase,
     EvaluateTGGroup,
     EvaluateCommentBotGroup,
