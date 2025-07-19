@@ -18,13 +18,13 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
     override canAutoBan = true;
     override banContentThreshold = 10;
 
-    private getSubGroups (): SubGroup[] {
+    private getWTSubGroups (): SubGroup[] {
         const subGroups = this.getVariable<string[]>("subgroups", []);
         return subGroups.map(group => ({ group, subs: group.split(",").map(s => s.trim()) }));
     }
 
     private getSubList (): string[] {
-        return this.getSubGroups().map(group => group.subs).flat();
+        return this.getWTSubGroups().map(group => group.subs).flat();
     }
 
     private isInEligibleSubreddit (): boolean {
@@ -57,7 +57,7 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
 
         const distinctSubreddits = uniq(relevantHistory.map(item => item.subredditName));
 
-        const distinctSubGroups = uniq(this.getSubGroups()
+        const distinctSubGroups = uniq(this.getWTSubGroups()
             .filter(group => distinctSubreddits.some(sub => group.subs.includes(sub)))
             .map(group => group.group));
 
