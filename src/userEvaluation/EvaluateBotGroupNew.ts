@@ -1,9 +1,10 @@
 import { Comment, Post, UserSocialLink } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
+import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
+import { isLinkId } from "@devvit/shared-types/tid.js";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../types.js";
 import { endOfDay, parse, subDays } from "date-fns";
-import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 
 interface AgeRange {
@@ -167,12 +168,14 @@ function validatePostCondition (condition: PostCondition): string[] {
 
 interface CommentCondition extends BaseItemCondition {
     type: "comment";
+    isTopLevel?: boolean;
+    isCommentOnOwnPost?: boolean;
 }
 
 function validateCommentCondition (condition: CommentCondition): string[] {
     const errors: string[] = [];
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "isTopLevel", "isCommentOnOwnPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in comment condition: ${key}`);
@@ -520,7 +523,7 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             };
 
             const commentConditions: CommentCondition[] = this.collectCommentConditionsForPreEvalation(group.criteria);
-            return commentConditions.some(condition => comment.comment && this.postOrCommentMatchesCondition(comment.comment, condition));
+            return commentConditions.some(condition => comment.comment && this.commentMatchesCondition(comment.comment, condition));
         });
     }
 
@@ -553,6 +556,27 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             if (!condition.domain.includes(domain)) {
                 return false;
             }
+        }
+
+        return true;
+    }
+
+    private commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): boolean {
+        if (!this.postOrCommentMatchesCondition(comment, condition)) {
+            return false;
+        }
+
+        if (condition.isTopLevel !== undefined && condition.isTopLevel !== isLinkId(comment.parentId)) {
+            return false;
+        }
+
+        if (condition.isCommentOnOwnPost !== undefined) {
+            if (!history || !(comment instanceof Comment)) {
+                return false;
+            }
+            const posts = this.getPosts(history);
+            const parentPost = posts.find(post => post.id === comment.postId);
+            return condition.isCommentOnOwnPost === (parentPost?.authorName === comment.authorName);
         }
 
         return true;
@@ -686,7 +710,7 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             } else if (criteria.type === "comment") {
                 const comments = this.getComments(history);
-                const matchingComments = comments.filter(comment => this.postOrCommentMatchesCondition(comment, criteria));
+                const matchingComments = comments.filter(comment => this.commentMatchesCondition(comment, criteria, history));
                 if (matchingComments.length === 0) {
                     return false;
                 } else if (criteria.matchesNeeded && matchingComments.length < criteria.matchesNeeded) {
