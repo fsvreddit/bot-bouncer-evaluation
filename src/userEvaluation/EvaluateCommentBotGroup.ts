@@ -109,6 +109,15 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
         }
     }
 
+    override getSubGroups (): string[] | undefined {
+        const botGroups = this.getBotGroups();
+        if (botGroups.length === 0) {
+            return;
+        }
+
+        return botGroups.map(group => group.name);
+    }
+
     override preEvaluateComment (event: CommentCreate): boolean {
         const comment = event.comment;
         if (!comment) {

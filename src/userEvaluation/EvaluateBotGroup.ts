@@ -98,6 +98,15 @@ export class EvaluateBotGroup extends UserEvaluatorBase {
         }
     }
 
+    override getSubGroups (): string[] | undefined {
+        const botGroups = this.getBotGroups();
+        if (botGroups.length === 0) {
+            return;
+        }
+
+        return botGroups.map(group => group.name);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
         return false;
