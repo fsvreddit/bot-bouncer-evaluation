@@ -85,6 +85,10 @@ interface BaseItemCondition {
     subredditName?: string[];
     notSubredditName?: string[];
     bodyRegex?: string[];
+    minBodyLength?: number;
+    maxBodyLength?: number;
+    minParaCount?: number;
+    maxParaCount?: number;
 }
 
 interface PostCondition extends BaseItemCondition {
@@ -151,7 +155,7 @@ function validatePostCondition (condition: PostCondition): string[] {
     }
 
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "titleRegex", "nsfw", "urlRegex", "domain"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in post condition: ${key}`);
@@ -168,7 +172,7 @@ interface CommentCondition extends BaseItemCondition {
 function validateCommentCondition (condition: CommentCondition): string[] {
     const errors: string[] = [];
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in comment condition: ${key}`);
@@ -211,6 +215,22 @@ function validateCondition (condition: PostCondition | CommentCondition): string
 
     if (condition.bodyRegex) {
         errors.push(...validateRegexArray(condition.bodyRegex));
+    }
+
+    if (condition.minBodyLength !== undefined && (typeof condition.minBodyLength !== "number" || condition.minBodyLength < 0)) {
+        errors.push("minBodyLength must be a non-negative number.");
+    }
+
+    if (condition.maxBodyLength !== undefined && (typeof condition.maxBodyLength !== "number" || condition.maxBodyLength < 0)) {
+        errors.push("maxBodyLength must be a non-negative number.");
+    }
+
+    if (condition.minParaCount !== undefined && (typeof condition.minParaCount !== "number" || condition.minParaCount < 0)) {
+        errors.push("minParaCount must be a non-negative number.");
+    }
+
+    if (condition.maxParaCount !== undefined && (typeof condition.maxParaCount !== "number" || condition.maxParaCount < 0)) {
+        errors.push("maxParaCount must be a non-negative number.");
     }
 
     if (condition.type === "post") {
@@ -419,6 +439,28 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
     private postOrCommentMatchesCondition (item: Post | Comment | CommentV2, condition: CommentCondition | PostCondition) {
         if (condition.bodyRegex && item.body && !this.anyRegexMatches(item.body, condition.bodyRegex)) {
             return false;
+        }
+
+        if (condition.minBodyLength !== undefined && item.body && item.body.length < condition.minBodyLength) {
+            return false;
+        }
+
+        if (condition.maxBodyLength !== undefined && item.body && item.body.length > condition.maxBodyLength) {
+            return false;
+        }
+
+        if (condition.minParaCount !== undefined && item.body) {
+            const paraCount = item.body.split("\n").filter(para => para.trim() !== "").length;
+            if (paraCount < condition.minParaCount) {
+                return false;
+            }
+        }
+
+        if (condition.maxParaCount !== undefined && item.body) {
+            const paraCount = item.body.split("\n").filter(para => para.trim() !== "").length;
+            if (paraCount > condition.maxParaCount) {
+                return false;
+            }
         }
 
         if (condition.subredditName && !this.anySubredditMatches(item, condition.subredditName)) {
