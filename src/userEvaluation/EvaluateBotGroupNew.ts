@@ -13,7 +13,7 @@ interface AgeRange {
 
 interface AgeInDays {
     maxAgeInDays?: number;
-    minAgeInDays?: number; // Optional, not used in this implementation
+    minAgeInDays?: number;
 }
 
 type AgeCriteria = AgeRange | AgeInDays;
@@ -23,7 +23,7 @@ function validateAgeCriteria (age: AgeCriteria): string[] {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (Object.keys(age).includes("dateFrom")) {
         const { dateFrom, dateTo } = age as AgeRange;
-        if (!dateFrom || !dateRegex.test(dateFrom)) {
+        if (!dateRegex.test(dateFrom)) {
             errors.push("Invalid or missing dateFrom in age criteria.");
         }
         if (dateTo && !dateRegex.test(dateTo)) {
@@ -47,13 +47,13 @@ function validateAgeCriteria (age: AgeCriteria): string[] {
         if (typeof minAgeInDays !== "number" || minAgeInDays <= 0) {
             errors.push("minAgeInDays must be a positive number.");
         }
-    } else if (!Object.keys(age).includes("dateFrom") && !Object.keys(age).includes("maxAgeInDays")) {
+    } else if (!Object.keys(age).includes("dateFrom") && !Object.keys(age).includes("maxAgeInDays") && !Object.keys(age).includes("minAgeInDays")) {
         // If neither date range nor maxAgeInDays is specified, it's an error
-        errors.push("Age criteria must specify either date range or maxAgeInDays.");
+        errors.push("Age criteria must specify either date range, maxAgeInDays, or minAgeInDays.");
     }
 
     const keys = Object.keys(age);
-    const expectedKeys = ["dateFrom", "dateTo", "maxAgeInDays"];
+    const expectedKeys = ["dateFrom", "dateTo", "maxAgeInDays", "minAgeInDays"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in age criteria: ${key}`);
@@ -71,7 +71,7 @@ interface NotCondition {
     not: CriteriaGroup;
 }
 
-interface Every {
+interface EveryCondition {
     every: CriteriaGroup[];
 }
 
@@ -222,7 +222,7 @@ function validateCondition (condition: PostCondition | CommentCondition): string
     return errors;
 }
 
-type CriteriaGroup = NotCondition | Every | SomeCondition | PostCondition | CommentCondition;
+type CriteriaGroup = NotCondition | EveryCondition | SomeCondition | PostCondition | CommentCondition;
 
 function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     const errors: string[] = [];
