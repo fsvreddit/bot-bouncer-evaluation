@@ -403,8 +403,8 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
     private anySubredditMatches (item: Post | Comment | CommentV2, subredditNames: string[]): boolean {
         const subredditName = "subredditName" in item ? item.subredditName : this.context.subredditName;
         const authorName = "authorName" in item ? item.authorName : undefined;
-        return subredditNames.some(subreddit => subredditName === subreddit)
-            || subredditNames.some(subreddit => subreddit === "{profile}" && subredditName === `u_${authorName}`);
+        return subredditNames.some(subreddit => subredditName?.toLowerCase() === subreddit.toLowerCase())
+            || subredditNames.some(subreddit => subreddit === "$profile" && subredditName === `u_${authorName}`);
     }
 
     private postOrCommentMatchesCondition (item: Post | Comment | CommentV2, condition: CommentCondition | PostCondition) {
