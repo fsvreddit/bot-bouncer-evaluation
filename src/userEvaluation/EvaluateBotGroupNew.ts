@@ -369,6 +369,15 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
         return errors;
     }
 
+    override getSubGroups (): string[] | undefined {
+        const botGroups = this.getBotGroups();
+        if (botGroups.length === 0) {
+            return;
+        }
+
+        return botGroups.map(group => group.name);
+    }
+
     private matchesAgeCriteria (date: Date, age: AgeCriteria): boolean {
         if ("dateFrom" in age) {
             const dateFrom = parse(age.dateFrom, "yyyy-MM-dd", new Date());
