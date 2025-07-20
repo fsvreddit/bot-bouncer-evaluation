@@ -433,7 +433,7 @@ group1:
     expect(evaluationResult).toBe(true);
 });
 
-test ("Regex as string not array", () => {
+test("Regex as string not array", () => {
     const yaml = `
 name: botgroupnew
 killswitch: false
