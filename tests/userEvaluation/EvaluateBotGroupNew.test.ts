@@ -432,3 +432,24 @@ group1:
     const evaluationResult = await evaluator.evaluate(user, history);
     expect(evaluationResult).toBe(true);
 });
+
+test ("Regex as string not array", () => {
+    const yaml = `
+name: botgroupnew
+killswitch: false
+
+group1:
+    name: BangHorna etc. low karma accounts
+    maxCommentKarma: 200
+    criteria:
+        type: comment
+        age:
+            maxAgeInDays: 90
+        bodyRegex: '[A-Z][a-z]{3,}.?(?:[Oo]onga|[Hh]oonga|[Hh]orna|[Ww]inko).+AI'
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(1);
+});
