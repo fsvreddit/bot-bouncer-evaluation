@@ -26,9 +26,9 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
                 continue;
             }
 
-            // if (regex.test("A")) {
-            //     results.push(`Post title regex is too greedy: ${regexVal}`);
-            // }
+            if (regex.test("")) {
+                results.push(`Post title regex is too greedy: ${regexVal}`);
+            }
         }
 
         return results;

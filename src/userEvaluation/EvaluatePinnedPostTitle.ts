@@ -26,9 +26,9 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
                 continue;
             }
 
-            // if (regex.test("A")) {
-            //     results.push(`Sticky post title regex is too greedy: ${regexVal}`);
-            // }
+            if (regex.test("")) {
+                results.push(`Sticky post title regex is too greedy: ${regexVal}`);
+            }
         }
 
         return results;

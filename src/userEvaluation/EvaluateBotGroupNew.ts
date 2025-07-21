@@ -113,9 +113,9 @@ function validateRegexArray (regexes: string[]): string[] {
             }
             try {
                 const regex = new RegExp(regexString, "u");
-                // if (regex.test("A")) {
-                //     errors.push(`Regex ${regexString} appears to be too greedy.`);
-                // }
+                if (regex.test("")) {
+                    errors.push(`Regex ${regexString} appears to be too greedy.`);
+                }
             } catch {
                 errors.push(`Invalid regex: ${regexString}`);
             }

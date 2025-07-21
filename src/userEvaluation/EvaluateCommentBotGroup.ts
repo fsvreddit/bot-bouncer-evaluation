@@ -71,12 +71,16 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
             try {
                 for (const usernameRegex of usernameRegexes ?? []) {
                     const regex = new RegExp(usernameRegex);
-                    // if (regex.test("A")) {
-                    //     throw new Error(`Username regex is too greedy in comment bot group ${key}: ${usernameRegex}`);
-                    // }
+                    if (regex.test("")) {
+                        throw new Error(`Username regex is too greedy in comment bot group ${key}: ${usernameRegex}`);
+                    }
                 }
-            } catch {
-                throw new Error(`Invalid regex for usernameRegex in bot group ${key}.`);
+            } catch (error) {
+                if (error instanceof Error) {
+                    throw new Error(`Invalid regex for usernameRegex in bot group ${key}: ${error.message}`);
+                } else {
+                    throw new Error(`Invalid regex for usernameRegex in bot group ${key}: ${error}`);
+                }
             }
 
             try {

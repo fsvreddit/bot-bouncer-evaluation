@@ -36,9 +36,9 @@ export class EvaluateBioText extends UserEvaluatorBase {
                 continue;
             }
 
-            // if (regex.test("A")) {
-            //     results.push(`Bio Text regex is too greedy: ${regexVal}`);
-            // }
+            if (regex.test("")) {
+                results.push(`Bio Text regex is too greedy: ${regexVal}`);
+            }
         }
 
         return results;
