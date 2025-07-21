@@ -28,9 +28,9 @@ export class EvaluateZombieNSFW extends UserEvaluatorBase {
                 continue;
             }
 
-            if (regex.test("A")) {
-                results.push(`Zombie NSFW Poster regex is too greedy: ${regexVal}`);
-            }
+            // if (regex.test("A")) {
+            //     results.push(`Zombie NSFW Poster regex is too greedy: ${regexVal}`);
+            // }
         }
 
         return results;

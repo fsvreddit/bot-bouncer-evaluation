@@ -15,11 +15,11 @@ export class EvaluateRepeatedPhraseBot extends UserEvaluatorBase {
         const results: string[] = [];
         const phrases = this.getVariable<string[]>("phrases", []);
 
-        for (const phrase of phrases) {
-            if ("A".includes(phrase)) {
-                results.push(`Phrase is too greedy: ${phrase}`);
-            }
-        }
+        // for (const phrase of phrases) {
+        //     if ("A".includes(phrase)) {
+        //         results.push(`Phrase is too greedy: ${phrase}`);
+        //     }
+        // }
 
         return results;
     }

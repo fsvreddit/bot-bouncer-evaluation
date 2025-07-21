@@ -22,9 +22,9 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
                 continue;
             }
 
-            if (regex.test("A")) {
-                results.push(`TG Group regex is too greedy: ${regexVal}`);
-            }
+            // if (regex.test("A")) {
+            //     results.push(`TG Group regex is too greedy: ${regexVal}`);
+            // }
         }
 
         return results;
