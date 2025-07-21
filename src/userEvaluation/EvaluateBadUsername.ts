@@ -36,9 +36,9 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
                 continue;
             }
 
-            if (regex.test("A")) {
-                results.push(`Bad username regex is too greedy: ${regexVal}`);
-            }
+            // if (regex.test("A")) {
+            //     results.push(`Bad username regex is too greedy: ${regexVal}`);
+            // }
         }
 
         return results;

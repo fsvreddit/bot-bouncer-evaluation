@@ -61,9 +61,9 @@ export class EvaluateBotGroup extends UserEvaluatorBase {
             try {
                 for (const usernameRegex of usernameRegexes) {
                     const regex = new RegExp(usernameRegex);
-                    if (regex.test("A")) {
-                        throw new Error(`Username regex is too greedy in bot group ${key}: ${usernameRegex}`);
-                    }
+                    // if (regex.test("A")) {
+                    //     throw new Error(`Username regex is too greedy in bot group ${key}: ${usernameRegex}`);
+                    // }
                 }
             } catch (e) {
                 if (e instanceof Error) {
