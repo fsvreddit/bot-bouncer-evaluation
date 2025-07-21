@@ -71,7 +71,7 @@ export class EvaluateCommentBotGroup extends UserEvaluatorBase {
             try {
                 for (const usernameRegex of usernameRegexes ?? []) {
                     const regex = new RegExp(usernameRegex);
-                    if (regex.test("bot-bouncer")) {
+                    if (regex.test("A")) {
                         throw new Error(`Username regex is too greedy in comment bot group ${key}: ${usernameRegex}`);
                     }
                 }

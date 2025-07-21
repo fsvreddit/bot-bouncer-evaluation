@@ -26,7 +26,7 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
                 continue;
             }
 
-            if (regex.test("bot-bouncer")) {
+            if (regex.test("A")) {
                 results.push(`Post title regex is too greedy: ${regexVal}`);
             }
         }

@@ -36,7 +36,7 @@ export class EvaluateBioText extends UserEvaluatorBase {
                 continue;
             }
 
-            if (regex.test("bot-bouncer")) {
+            if (regex.test("A")) {
                 results.push(`Bio Text regex is too greedy: ${regexVal}`);
             }
         }

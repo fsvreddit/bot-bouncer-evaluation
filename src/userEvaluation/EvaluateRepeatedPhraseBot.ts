@@ -16,7 +16,7 @@ export class EvaluateRepeatedPhraseBot extends UserEvaluatorBase {
         const phrases = this.getVariable<string[]>("phrases", []);
 
         for (const phrase of phrases) {
-            if ("bot-bouncer".includes(phrase)) {
+            if ("A".includes(phrase)) {
                 results.push(`Phrase is too greedy: ${phrase}`);
             }
         }

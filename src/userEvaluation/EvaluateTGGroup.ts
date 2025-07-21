@@ -22,7 +22,7 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
                 continue;
             }
 
-            if (regex.test("bot-bouncer")) {
+            if (regex.test("A")) {
                 results.push(`TG Group regex is too greedy: ${regexVal}`);
             }
         }

@@ -113,7 +113,7 @@ function validateRegexArray (regexes: string[]): string[] {
             }
             try {
                 const regex = new RegExp(regexString, "u");
-                if (regex.test("bot-bouncer")) {
+                if (regex.test("A")) {
                     errors.push(`Regex ${regexString} appears to be too greedy.`);
                 }
             } catch {
