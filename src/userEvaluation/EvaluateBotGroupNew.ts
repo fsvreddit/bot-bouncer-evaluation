@@ -83,6 +83,7 @@ interface SomeCondition {
 interface BaseItemCondition {
     matchesNeeded?: number;
     age?: AgeCriteria;
+    edited?: boolean;
     subredditName?: string[];
     notSubredditName?: string[];
     bodyRegex?: string[];
@@ -156,7 +157,7 @@ function validatePostCondition (condition: PostCondition): string[] {
     }
 
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "titleRegex", "nsfw", "urlRegex", "domain"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in post condition: ${key}`);
@@ -175,7 +176,7 @@ interface CommentCondition extends BaseItemCondition {
 function validateCommentCondition (condition: CommentCondition): string[] {
     const errors: string[] = [];
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "isTopLevel", "isCommentOnOwnPost"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "isTopLevel", "isCommentOnOwnPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in comment condition: ${key}`);
@@ -283,7 +284,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in criteria group: ${key}`);
@@ -440,7 +441,7 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
     }
 
     private postOrCommentMatchesCondition (item: Post | Comment | CommentV2, condition: CommentCondition | PostCondition) {
-        if (condition.bodyRegex && item.body && !this.anyRegexMatches(item.body, condition.bodyRegex)) {
+        if (condition.edited !== undefined && "edited" in item && item.edited !== condition.edited) {
             return false;
         }
 
