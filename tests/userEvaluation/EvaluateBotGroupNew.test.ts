@@ -517,6 +517,7 @@ group1:
 
     const history = [
         { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t1_123", body: "LoveHoonga is great for AI girlfriends" } as unknown as Comment,
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
     ];
 
     const variables = yamlToVariables(yaml);
