@@ -453,3 +453,77 @@ group1:
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
+
+test("False positives", async () => {
+    const yaml = `
+name: botgroupnew
+killswitch: false
+
+group1:
+    name: BangHorna etc. low karma accounts
+    maxCommentKarma: 200
+    criteria:
+        type: comment
+        age:
+            maxAgeInDays: 90
+        bodyRegex:
+            - '[A-Z][a-z]{3,}.?(?:[Oo]onga|[Hh]oonga|[Hh]orna|[Ww]inko).+AI'
+
+`;
+
+    const user = {
+        username: "testuser43",
+        commentKarma: 50,
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t1_123", body: "Test Body" } as unknown as Comment,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});
+
+test("Body regex match", async () => {
+    const yaml = `
+name: botgroupnew
+killswitch: false
+
+group1:
+    name: BangHorna etc. low karma accounts
+    maxCommentKarma: 200
+    criteria:
+        type: comment
+        age:
+            maxAgeInDays: 90
+        bodyRegex:
+            - '[A-Z][a-z]{3,}.?(?:[Oo]onga|[Hh]oonga|[Hh]orna|[Ww]inko).+AI'
+
+`;
+
+    const user = {
+        username: "testuser43",
+        commentKarma: 50,
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t1_123", body: "LoveHoonga is great for AI girlfriends" } as unknown as Comment,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(true);
+});

@@ -467,6 +467,12 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             }
         }
 
+        if (condition.bodyRegex && item.body) {
+            if (!this.anyRegexMatches(item.body, condition.bodyRegex)) {
+                return false;
+            }
+        }
+
         if (condition.subredditName && !this.anySubredditMatches(item, condition.subredditName)) {
             return false;
         }
