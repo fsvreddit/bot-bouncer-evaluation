@@ -1,6 +1,6 @@
 import { yamlToVariables } from "../src/utility";
 
-test("Substitutions Module", () => {
+test("Substitutions Module - strings", () => {
     const yaml = `
 name: substitutions
 sub1: value1
@@ -27,4 +27,21 @@ head1:
     // Add type assertion to inform TypeScript about the expected structure
     const typedHead1 = head1 as { subhead2: { subhead3: string } };
     expect(typedHead1.subhead2.subhead3).toBe("value1");
+});
+
+test("Substitutions Module - arrays", () => {
+    const yaml = `
+name: substitutions
+arraysub:
+    - value1
+    - value2
+    - 'value''3'
+    - "value\\4"
+---
+name: module1
+var1: {{arraysub}}
+`;
+
+    const variables = yamlToVariables(yaml) as Record<string, unknown>;
+    expect(variables["module1:var1"]).toEqual(["value1", "value2", "value'3", "value\\4"]);
 });

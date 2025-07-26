@@ -15,9 +15,9 @@ export async function getUserOrUndefined (username: string, context: TriggerCont
     return user;
 }
 
-function getSubstitutionsListFromYaml (yaml: string): Record<string, string> {
+function getSubstitutionsListFromYaml (yaml: string): Record<string, string | string[]> {
     const yamlDocuments = parseAllDocuments(yaml);
-    const substitutions: Record<string, string> = {};
+    const substitutions: Record<string, string | string[]> = {};
 
     for (const document of yamlDocuments) {
         const json = document.toJSON() as Record<string, JSONValue> | null;
@@ -27,7 +27,7 @@ function getSubstitutionsListFromYaml (yaml: string): Record<string, string> {
 
         for (const key in json) {
             if (key !== "name") {
-                substitutions[key] = json[key] as string;
+                substitutions[key] = json[key] as string | string[];
             }
         }
     }
@@ -39,7 +39,12 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
     const substitutionsList = getSubstitutionsListFromYaml(input);
     let yaml = input;
     for (const key in substitutionsList) {
-        yaml = replaceAll(yaml, `{{${key}}}`, substitutionsList[key]);
+        if (typeof substitutionsList[key] === "string") {
+            yaml = replaceAll(yaml, `{{${key}}}`, substitutionsList[key]);
+        } else {
+            // Handle array substitutions
+            yaml = replaceAll(yaml, `{{${key}}}`, JSON.stringify(substitutionsList[key]));
+        }
     }
 
     const yamlDocuments = parseAllDocuments(yaml);
