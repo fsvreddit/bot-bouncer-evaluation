@@ -58,12 +58,11 @@ export class EvaluateBioText extends UserEvaluatorBase {
             return false;
         }
 
-        if (user.commentKarma > 2000 || user.linkKarma > 2000) {
+        if (user.commentKarma > 2000 && user.linkKarma > 2000) {
             return false;
         }
 
         const problematicBioText = [...bannableBioText, ...reportableBioText];
-
         return problematicBioText.some(bioText => user.userDescription && new RegExp(bioText, "u").test(user.userDescription));
     }
 
