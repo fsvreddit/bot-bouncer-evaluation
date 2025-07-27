@@ -467,7 +467,10 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             }
         }
 
-        if (condition.bodyRegex && item.body) {
+        if (condition.bodyRegex) {
+            if (item.body === undefined) {
+                return false; // Body regex check requires body to be present
+            }
             if (!this.anyRegexMatches(item.body, condition.bodyRegex)) {
                 return false;
             }
