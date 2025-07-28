@@ -352,10 +352,10 @@ function validateBotGroup (group: BotGroup): string[] {
     return errors;
 }
 
-export class EvaluateBotGroupNew extends UserEvaluatorBase {
-    override name = "Bot Group New";
-    override shortname = "botgroupnew";
-    override banContentThreshold = 1;
+export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
+    override name = "Bot Group Advanced";
+    override shortname = "botgroupadvanced";
+    override banContentThreshold = 0; // No content ban threshold for this evaluator to support account properties only checks
 
     private socialLinks: UserSocialLink[] | undefined;
 
@@ -651,14 +651,26 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             return false;
         }
 
-        if (group.bioRegex && user.userDescription && !this.anyRegexMatches(user.userDescription, group.bioRegex)) {
-            this.setReason(`Bio does not match regex in group ${group.name}`);
-            return false;
+        if (group.bioRegex) {
+            if (!user.userDescription) {
+                this.setReason(`User does not have a bio in group ${group.name}`);
+                return false;
+            }
+            if (!this.anyRegexMatches(user.userDescription, group.bioRegex)) {
+                this.setReason(`Bio does not match regex in group ${group.name}`);
+                return false;
+            }
         }
 
-        if (group.displayNameRegex && user.displayName && !this.anyRegexMatches(user.displayName, group.displayNameRegex)) {
-            this.setReason(`Display name does not match regex in group ${group.name}`);
-            return false;
+        if (group.displayNameRegex) {
+            if (!user.displayName) {
+                this.setReason(`User does not have a display name in group ${group.name}`);
+                return false;
+            }
+            if (!this.anyRegexMatches(user.displayName, group.displayNameRegex)) {
+                this.setReason(`Display name does not match regex in group ${group.name}`);
+                return false;
+            }
         }
 
         if (group.socialLinkRegex) {
@@ -710,9 +722,8 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             if (criteria.type === "post") {
                 const posts = this.getPosts(history);
                 const matchingPosts = posts.filter(post => this.postMatchesCondition(post, criteria));
-                if (matchingPosts.length === 0) {
-                    return false;
-                } else if (criteria.matchesNeeded && matchingPosts.length < criteria.matchesNeeded) {
+                const matchesNeeded = criteria.matchesNeeded ?? 1;
+                if (matchingPosts.length < matchesNeeded) {
                     return false;
                 } else {
                     return true;
@@ -721,9 +732,8 @@ export class EvaluateBotGroupNew extends UserEvaluatorBase {
             } else if (criteria.type === "comment") {
                 const comments = this.getComments(history);
                 const matchingComments = comments.filter(comment => this.commentMatchesCondition(comment, criteria, history));
-                if (matchingComments.length === 0) {
-                    return false;
-                } else if (criteria.matchesNeeded && matchingComments.length < criteria.matchesNeeded) {
+                const matchesNeeded = criteria.matchesNeeded ?? 1;
+                if (matchingComments.length < matchesNeeded) {
                     return false;
                 } else {
                     return true;

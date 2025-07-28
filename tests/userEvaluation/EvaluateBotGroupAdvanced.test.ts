@@ -1,12 +1,12 @@
 import { subDays } from "date-fns";
 import { UserExtended } from "../../src/types";
-import { EvaluateBotGroupNew } from "../../src/userEvaluation/EvaluateBotGroupNew";
+import { EvaluateBotGroupAdvanced } from "../../src/userEvaluation/EvaluateBotGroupAdvanced";
 import { yamlToVariables } from "../../src/utility";
 import { Comment, Post, TriggerContext } from "@devvit/public-api";
 
 test("Simple account properties evaluation", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -26,7 +26,7 @@ group1:
     } as unknown as UserExtended;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -36,7 +36,7 @@ group1:
 
 test("Simple criteria", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -65,7 +65,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -75,7 +75,7 @@ group1:
 
 test("And Criteria", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -110,7 +110,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -120,7 +120,7 @@ group1:
 
 test("Or Criteria", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -154,7 +154,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -164,7 +164,7 @@ group1:
 
 test("Not Criteria returns false", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -200,7 +200,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -210,7 +210,7 @@ group1:
 
 test("Not Criteria returns true", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -245,7 +245,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -255,7 +255,7 @@ group1:
 
 test("Min items criteria matches", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -286,7 +286,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -296,7 +296,7 @@ group1:
 
 test("Min items criteria does not match", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -325,7 +325,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -335,7 +335,7 @@ group1:
 
 test("Badly formed YAML", () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -354,14 +354,14 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
 
 test("Not subredditName criteria with comment in the sub", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -388,7 +388,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -398,7 +398,7 @@ group1:
 
 test("Not subredditName criteria with comment outside the sub", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -425,7 +425,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -435,7 +435,7 @@ group1:
 
 test("Regex as string not array", () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -449,14 +449,14 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
 
 test("False positives", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -483,7 +483,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -493,7 +493,7 @@ group1:
 
 test("Body regex match", async () => {
     const yaml = `
-name: botgroupnew
+name: botgroupadvanced
 killswitch: false
 
 group1:
@@ -521,10 +521,118 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupNew({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
     const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(true);
+});
+
+test("Doc Ava false positive avoidance", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group4:
+    name: Doc Ava # Failsafe where they have no NSFW content
+    maxCommentKarma: 50
+    age:
+        maxAgeInDays: 28
+    bioRegex:
+        - 'fieryava'
+        - 'avafiery'
+`;
+
+    const user = {
+        username: "testuser43",
+        commentKarma: 5,
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t1_123", body: "LoveHoonga is great for AI girlfriends" } as unknown as Comment,
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});
+
+test("Doc Ava false positive avoidance 2", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group4:
+    name: Doc Ava # Failsafe where they have no NSFW content
+    maxCommentKarma: 50
+    age:
+        maxAgeInDays: 28
+    bioRegex:
+        - 'fieryava'
+        - 'avafiery'
+`;
+
+    const user = {
+        username: "testuser43",
+        commentKarma: 5,
+        createdAt: subDays(new Date(), 20),
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t1_123", body: "LoveHoonga is great for AI girlfriends" } as unknown as Comment,
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});
+
+test("Doc Ava correct match", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group4:
+    name: Doc Ava # Failsafe where they have no NSFW content
+    maxCommentKarma: 50
+    age:
+        maxAgeInDays: 28
+    bioRegex:
+        - 'fieryava'
+        - 'avafiery'
+`;
+
+    const user = {
+        username: "testuser43",
+        commentKarma: 5,
+        createdAt: subDays(new Date(), 20),
+        userDescription: "40F, Doctor. Find me on my link below! fieryava",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t1_123", body: "LoveHoonga is great for AI girlfriends" } as unknown as Comment,
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(true);
 });
