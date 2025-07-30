@@ -636,3 +636,315 @@ group4:
     console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(true);
 });
+
+test("minBodyLength criteria matches", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        minBodyLength: 10
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "This is a valid body" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(true);
+});
+
+test("minBodyLength criteria does not match", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        minBodyLength: 10
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Short" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});
+
+test("maxBodyLength criteria matches", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        maxBodyLength: 50
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "This is a valid body that is not too long" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(true);
+});
+
+test("maxBodyLength criteria does not match", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        maxBodyLength: 50
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "This is a very long body that exceeds the maximum length set in the criteria" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});
+
+test("minParaCount criteria matches", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        minParaCount: 2
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "This is a valid body.\nIt has multiple paragraphs." } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(true);
+});
+
+test("minParaCount criteria does not match", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        minParaCount: 2
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "This is a single paragraph." } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});
+
+test("maxParaCount criteria matches", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        maxParaCount: 3
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "This is a valid body.\nIt has multiple paragraphs.\nBut not too many." } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(true);
+});
+
+test("maxParaCount criteria does not match", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        type: post
+        maxParaCount: 2
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - Frieren
+        titleRegex:
+            - ^Test
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "This is a body with too many paragraphs.\nIt has multiple paragraphs.\nAnd even more paragraphs.\nThis should not match." } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});

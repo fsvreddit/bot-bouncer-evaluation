@@ -284,7 +284,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "isTopLevel", "isCommentOnOwnPost"];
+    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in criteria group: ${key}`);
@@ -445,23 +445,35 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             return false;
         }
 
-        if (condition.minBodyLength !== undefined && item.body && item.body.length < condition.minBodyLength) {
-            return false;
+        if (condition.minBodyLength) {
+            if (item.body === undefined) {
+                return false;
+            }
+            if (item.body.length < condition.minBodyLength) {
+                return false;
+            }
         }
 
-        if (condition.maxBodyLength !== undefined && item.body && item.body.length > condition.maxBodyLength) {
-            return false;
+        if (condition.maxBodyLength) {
+            const body = item.body ?? "";
+            if (body.length > condition.maxBodyLength) {
+                return false;
+            }
         }
 
-        if (condition.minParaCount !== undefined && item.body) {
+        if (condition.minParaCount) {
+            if (item.body === undefined) {
+                return false;
+            }
             const paraCount = item.body.split("\n").filter(para => para.trim() !== "").length;
             if (paraCount < condition.minParaCount) {
                 return false;
             }
         }
 
-        if (condition.maxParaCount !== undefined && item.body) {
-            const paraCount = item.body.split("\n").filter(para => para.trim() !== "").length;
+        if (condition.maxParaCount !== undefined) {
+            const body = item.body ?? "";
+            const paraCount = body.split("\n").filter(para => para.trim() !== "").length;
             if (paraCount > condition.maxParaCount) {
                 return false;
             }
