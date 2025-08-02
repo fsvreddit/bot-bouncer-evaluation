@@ -47,10 +47,12 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
         }
     }
 
-    const yamlDocuments = parseAllDocuments(yaml);
     const variables: Record<string, JSONValue> = {};
 
+    const yamlDocuments = parseAllDocuments(yaml, { uniqueKeys: true });
+
     const modulesSeen = new Set<string>();
+    const errors: string[] = [];
 
     let index = 0;
     for (const doc of yamlDocuments) {
@@ -66,8 +68,15 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
             continue;
         }
 
+        if (doc.errors.length > 0) {
+            if (doc.errors.some(e => e.code === "DUPLICATE_KEY")) {
+                errors.push(`Module name ${root} has duplicate keys`);
+            }
+        }
+
         if (modulesSeen.has(root)) {
-            console.warn(`Evaluator Variables: Module name ${root} is present more than once. This is not permitted.`);
+            errors.push(`Module name ${root} is present more than once`);
+        } else {
             modulesSeen.add(root);
         }
 
@@ -79,6 +88,8 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
 
         index++;
     }
+
+    variables.errors = errors;
 
     return variables;
 }

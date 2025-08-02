@@ -108,6 +108,10 @@ function validateRegexArray (regexes: string[]): string[] {
         errors.push("Expected an array of regex strings.");
     } else {
         for (const regexString of regexes) {
+            if (Array.isArray(regexString)) {
+                errors.push("Regex must be a string, not an array.");
+                continue;
+            }
             if (typeof regexString !== "string") {
                 errors.push(`Invalid regex: ${regexString}. Must be a string.`);
                 continue;
@@ -148,10 +152,13 @@ function validatePostCondition (condition: PostCondition): string[] {
         if (!Array.isArray(condition.domain)) {
             errors.push("domain must be an array.");
         } else {
-            for (const domain of condition.domain) {
-                if (typeof domain !== "string") {
-                    errors.push(`Invalid domain: ${domain}. Must be a string.`);
-                }
+            if (condition.domain.some(subreddit => Array.isArray(subreddit))) {
+                errors.push("domain must be an array of strings, not arrays.");
+            } else if (condition.domain.some(name => typeof name !== "string")) {
+                errors.push("domain must be an array of strings.");
+            }
+            if (condition.domain.includes("")) {
+                errors.push("domain cannot be an empty string.");
             }
         }
     }
@@ -175,6 +182,15 @@ interface CommentCondition extends BaseItemCondition {
 
 function validateCommentCondition (condition: CommentCondition): string[] {
     const errors: string[] = [];
+
+    if (condition.isTopLevel !== undefined && typeof condition.isTopLevel !== "boolean") {
+        errors.push("isTopLevel must be a boolean.");
+    }
+
+    if (condition.isCommentOnOwnPost !== undefined && typeof condition.isCommentOnOwnPost !== "boolean") {
+        errors.push("isCommentOnOwnPost must be a boolean.");
+    }
+
     const keys = Object.keys(condition);
     const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "isTopLevel", "isCommentOnOwnPost"];
     for (const key of keys) {
@@ -189,8 +205,16 @@ function validateCommentCondition (condition: CommentCondition): string[] {
 function validateCondition (condition: PostCondition | CommentCondition): string[] {
     const errors: string[] = [];
 
+    if (condition.matchesNeeded && typeof condition.matchesNeeded !== "number") {
+        errors.push("matchesNeeded must be a number.");
+    }
+
     if (condition.matchesNeeded && condition.matchesNeeded < 1) {
         errors.push("matchesNeeded must be at least 1.");
+    }
+
+    if (condition.edited !== undefined && typeof condition.edited !== "boolean") {
+        errors.push("edited must be a boolean.");
     }
 
     if (condition.age) {
@@ -201,6 +225,11 @@ function validateCondition (condition: PostCondition | CommentCondition): string
         if (!Array.isArray(condition.subredditName)) {
             errors.push("subredditName must be an array.");
         } else {
+            if (condition.subredditName.some(subreddit => Array.isArray(subreddit))) {
+                errors.push("subredditName must be an array of strings, not arrays.");
+            } else if (condition.subredditName.some(name => typeof name !== "string")) {
+                errors.push("subredditName must be an array of strings.");
+            }
             if (condition.subredditName.includes("")) {
                 errors.push("subredditName cannot be an empty string.");
             }
@@ -211,6 +240,11 @@ function validateCondition (condition: PostCondition | CommentCondition): string
         if (!Array.isArray(condition.notSubredditName)) {
             errors.push("notSubredditName must be an array.");
         } else {
+            if (condition.notSubredditName.some(subreddit => Array.isArray(subreddit))) {
+                errors.push("notSubredditName must be an array of strings, not arrays.");
+            } else if (condition.notSubredditName.some(name => typeof name !== "string")) {
+                errors.push("notSubredditName must be an array of strings.");
+            }
             if (condition.notSubredditName.includes("")) {
                 errors.push("notSubredditName cannot be an empty string.");
             }

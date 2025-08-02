@@ -948,3 +948,33 @@ group1:
     const evaluationResult = await evaluator.evaluate(user, history);
     expect(evaluationResult).toBe(false);
 });
+
+test("Validate string array", () => {
+    const yaml = `
+name: substitutions
+
+memesubs:
+    - artmemes
+    - dankmemes
+
+---
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    criteria:
+        type: post
+        maxParaCount: 2
+        age:
+            maxAgeInDays: 30
+        subredditName:
+            - {{memesubs}}
+
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(1);
+});

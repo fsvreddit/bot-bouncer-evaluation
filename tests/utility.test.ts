@@ -45,3 +45,58 @@ var1: {{arraysub}}
     const variables = yamlToVariables(yaml) as Record<string, unknown>;
     expect(variables["module1:var1"]).toEqual(["value1", "value2", "value'3", "value\\4"]);
 });
+
+test("Duplicate keys", () => {
+    const yaml = `
+name: botgroupadvanced
+
+group1:
+    name: group1
+
+group1:
+    name: group2
+`;
+
+    const errors = yamlToVariables(yaml).errors as string[] | undefined;
+    expect(errors).toBeDefined();
+    expect(errors).toContain("Module name botgroupadvanced has duplicate keys");
+});
+
+test("Duplicate keys 2", () => {
+    const yaml = `
+name: botgroupadvanced
+
+group1:
+    name: group1
+    usernameRegex:
+        - "test"
+    usernameRegex:
+        - "test2"
+
+`;
+
+    const errors = yamlToVariables(yaml).errors as string[] | undefined;
+    expect(errors).toBeDefined();
+    expect(errors).toContain("Module name botgroupadvanced has duplicate keys");
+});
+
+test("Duplicate modules", () => {
+    const yaml = `
+name: botgroupadvanced
+
+group1:
+    name: group1
+    usernameRegex:
+        - "test"
+---
+name: botgroupadvanced
+group1:
+    name: group1
+    usernameRegex:
+        - "test2"
+`;
+
+    const errors = yamlToVariables(yaml).errors as string[] | undefined;
+    expect(errors).toBeDefined();
+    expect(errors).toEqual(["Module name botgroupadvanced is present more than once"]);
+});
