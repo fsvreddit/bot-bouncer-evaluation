@@ -284,34 +284,56 @@ type CriteriaGroup = NotCondition | EveryCondition | SomeCondition | PostConditi
 
 function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     const errors: string[] = [];
+
     if (Array.isArray(criteria)) {
-        errors.push("Criteria cannot be an array. Use 'and' or 'or' to combine conditions.");
+        errors.push("Criteria cannot be an array. Use 'every' or 'some' to combine conditions.");
+        return errors;
+    }
+
+    const subKeys = Object.keys(criteria).filter(key => ["not", "every", "some", "type"].includes(key));
+    if (subKeys.length === 0) {
+        errors.push("Criteria must contain one condition or a group (not, every, some).");
+        return errors;
+    }
+    if (subKeys.length > 1) {
+        errors.push("Criteria cannot contain multiple top-level conditions. Use 'every' or 'some' to combine them.");
+        return errors;
     }
 
     if ("not" in criteria) {
         if (level > 1) {
             errors.push("Nested 'not' conditions are not allowed.");
         }
-        if (typeof criteria.not !== "object" || Array.isArray(criteria.not)) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (criteria.not === null) {
+            errors.push("'not' condition must not be empty.");
+        } else if (typeof criteria.not !== "object" || Array.isArray(criteria.not)) {
             errors.push("'not' condition must be a single condition.");
+        } else {
+            errors.push(...validateCriteriaGroup(criteria.not, level + 1));
         }
-        errors.push(...validateCriteriaGroup(criteria.not, level + 1));
     } else if ("every" in criteria) {
-        if (!Array.isArray(criteria.every) || criteria.every.length === 0) {
-            errors.push("'all' must be an array of conditions.");
-        }
-        for (const subCriteria of criteria.every) {
-            errors.push(...validateCriteriaGroup(subCriteria, level + 1));
+        if (!Array.isArray(criteria.every)) {
+            errors.push("'every' must be an array of conditions.");
+        } else if (criteria.every.length === 0) {
+            errors.push("'every' must not be an empty array.");
+        } else {
+            for (const subCriteria of criteria.every) {
+                errors.push(...validateCriteriaGroup(subCriteria, level + 1));
+            }
         }
     } else if ("some" in criteria) {
-        if (criteria.some.some(subCriteria => "not" in subCriteria)) {
-            errors.push("Nested 'not' conditions within 'or' are not allowed.");
-        }
-        if (!Array.isArray(criteria.some) || criteria.some.length === 0) {
+        if (!Array.isArray(criteria.some)) {
             errors.push("'some' must be an array of conditions.");
-        }
-        for (const subCriteria of criteria.some) {
-            errors.push(...validateCriteriaGroup(subCriteria, level + 1));
+        } else if (criteria.some.length === 0) {
+            errors.push("'some' must not be an empty array.");
+        } else {
+            if (criteria.some.some(subCriteria => "not" in subCriteria)) {
+                errors.push("Nested 'not' conditions within 'or' are not allowed.");
+            }
+            for (const subCriteria of criteria.some) {
+                errors.push(...validateCriteriaGroup(subCriteria, level + 1));
+            }
         }
     } else {
         errors.push(...validateCondition(criteria));

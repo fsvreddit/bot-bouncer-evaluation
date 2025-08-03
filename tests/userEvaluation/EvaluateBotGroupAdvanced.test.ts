@@ -978,3 +978,82 @@ group1:
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
+
+test("Validate invalid criteria with multiple boolean operators", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        every:
+            - type: post
+        some:
+            - type: comment
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toBeGreaterThan(0);
+});
+
+test("Validate invalid criteria with empty every condition", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        every:
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toBeGreaterThan(0);
+});
+
+test("Validate invalid criteria with empty some condition", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        some:
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toBeGreaterThan(0);
+});
+
+test("Validate invalid criteria with empty not condition", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        not:
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toBeGreaterThan(0);
+});
