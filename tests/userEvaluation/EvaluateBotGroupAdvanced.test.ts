@@ -1001,6 +1001,26 @@ group1:
     expect(errors.length).toBeGreaterThan(0);
 });
 
+test("Validate invalid criteria with array of criteria", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    age:
+        maxAgeInDays: 30
+    criteria:
+        - type: post
+        - type: comment
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toBeGreaterThan(0);
+});
+
 test("Validate invalid criteria with empty every condition", () => {
     const yaml = `
 name: botgroupadvanced
