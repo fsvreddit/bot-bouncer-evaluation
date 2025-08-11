@@ -21,7 +21,6 @@ import { EvaluateBadDisplayName } from "./userEvaluation/EvaluateBadDisplayname.
 import { EvaluateAdviceBot } from "./userEvaluation/EvaluateAdviceBot.js";
 import { EvaluateWorldTraveller } from "./userEvaluation/EvaluateWorldTraveller.js";
 import { EvaluateBotGroup } from "./userEvaluation/EvaluateBotGroup.js";
-import { EvaluateBadUsernameYoung } from "./userEvaluation/EvaluateBadUsernameYoung.js";
 import { EvaluateCommentPhrase } from "./userEvaluation/EvaluateCommentPhrase.js";
 import { EvaluateRapidFireBot } from "./userEvaluation/EvaluateRapidFireBot.js";
 import { EvaluateSuspiciousFirstPostPhrase } from "./userEvaluation/EvaluateSuspiciousFirstPostPhrase.js";
@@ -32,7 +31,6 @@ import { EvaluateBotGroupAdvanced } from "./userEvaluation/EvaluateBotGroupAdvan
 
 export const ALL_EVALUATORS = [
     EvaluateBadUsername,
-    EvaluateBadUsernameYoung,
     EvaluateBioText,
     EvaluateMixedBot,
     EvaluateDomainSharer,
