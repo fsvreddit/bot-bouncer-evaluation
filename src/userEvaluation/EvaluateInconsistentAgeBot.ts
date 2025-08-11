@@ -47,6 +47,9 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
         const nsfwPosts = this.getPosts(history, { since: subWeeks(new Date(), 2) })
             .filter(post => post.isNsfw() && !post.subredditName.toLowerCase().includes("roleplay"));
 
+        const contentThreshold = this.getVariable<number>("contentthreshold", 6);
+        this.banContentThreshold = contentThreshold;
+
         if (nsfwPosts.length < 4) {
             this.setReason("User has not posted enough NSFW posts in the last 2 weeks");
             return false;
