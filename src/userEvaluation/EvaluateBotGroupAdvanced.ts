@@ -205,11 +205,11 @@ function validateCommentCondition (condition: CommentCondition): string[] {
 function validateCondition (condition: PostCondition | CommentCondition): string[] {
     const errors: string[] = [];
 
-    if (condition.matchesNeeded && typeof condition.matchesNeeded !== "number") {
+    if (condition.matchesNeeded !== undefined && typeof condition.matchesNeeded !== "number") {
         errors.push("matchesNeeded must be a number.");
     }
 
-    if (condition.matchesNeeded && condition.matchesNeeded < 1) {
+    if (condition.matchesNeeded !== undefined && condition.matchesNeeded < 1) {
         errors.push("matchesNeeded must be at least 1.");
     }
 
@@ -395,6 +395,38 @@ function validateBotGroup (group: BotGroup): string[] {
 
     if (group.criteria) {
         errors.push(...validateCriteriaGroup(group.criteria));
+    }
+
+    if (group.maxLinkKarma !== undefined) {
+        if (typeof group.maxLinkKarma !== "number") {
+            errors.push("Max link karma must be a number.");
+        } else if (group.maxLinkKarma <= 0) {
+            errors.push("Max link karma must be a positive number.");
+        }
+    }
+
+    if (group.maxCommentKarma !== undefined) {
+        if (typeof group.maxCommentKarma !== "number") {
+            errors.push("Max comment karma must be a number.");
+        } else if (group.maxCommentKarma <= 0) {
+            errors.push("Max comment karma must be a positive number.");
+        }
+    }
+
+    if (group.nsfw !== undefined && typeof group.nsfw !== "boolean") {
+        errors.push("NSFW must be a boolean.");
+    }
+
+    if (group.hasVerifiedEmail !== undefined && typeof group.hasVerifiedEmail !== "boolean") {
+        errors.push("Has verified email must be a boolean.");
+    }
+
+    if (group.hasRedditPremium !== undefined && typeof group.hasRedditPremium !== "boolean") {
+        errors.push("Has Reddit Premium must be a boolean.");
+    }
+
+    if (group.isSubredditModerator !== undefined && typeof group.isSubredditModerator !== "boolean") {
+        errors.push("Is subreddit moderator must be a boolean.");
     }
 
     const keys = Object.keys(group);
