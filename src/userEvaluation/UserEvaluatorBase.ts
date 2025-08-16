@@ -1,7 +1,7 @@
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { Comment, Post, TriggerContext } from "@devvit/public-api";
 import { UserExtended } from "../types.js";
-import { isCommentId, isLinkId } from "@devvit/public-api/types/tid.js";
+import { isCommentId, isLinkId } from "@devvit/shared-types/tid.js";
 
 interface HistoryOptions {
     since?: Date;
