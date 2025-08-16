@@ -1077,3 +1077,56 @@ group1:
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
+
+test("Max Comment Karma check returns false with more karma", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    maxCommentKarma: 100
+
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        commentKarma: 150,
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+
+    const evaluationResult = await evaluator.evaluate(user, []);
+    expect(evaluationResult).toBe(false);
+});
+
+test("Max Comment Karma check returns true with less karma", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    maxCommentKarma: 100
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        commentKarma: 50,
+        userDescription: "Julie, 19! Find me on my link below!",
+    } as unknown as UserExtended;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+
+    const evaluationResult = await evaluator.evaluate(user, []);
+    expect(evaluationResult).toBe(true);
+});
