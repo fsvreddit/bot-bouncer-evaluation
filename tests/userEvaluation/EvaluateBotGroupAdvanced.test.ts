@@ -1130,3 +1130,23 @@ group1:
     const evaluationResult = await evaluator.evaluate(user, []);
     expect(evaluationResult).toBe(true);
 });
+
+test("Validate indented criteria", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    maxCommentKarma: 100
+      criteria:
+        type: comment
+`;
+
+    const variables = yamlToVariables(yaml);
+    console.log(variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, variables);
+    const errors = evaluator.validateVariables();
+    console.log(errors);
+    expect(errors.length).toEqual(1);
+});
