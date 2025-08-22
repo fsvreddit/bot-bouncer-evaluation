@@ -18,14 +18,11 @@ import { EvaluateShortTlcNew } from "./userEvaluation/EvaluateShortTlcNew.js";
 import { EvaluateInconsistentGenderBot } from "./userEvaluation/EvaluateInconsistentGenderBot.js";
 import { EvaluateOFLinksBot } from "./userEvaluation/EvaluateOFLinksBot.js";
 import { EvaluateBadDisplayName } from "./userEvaluation/EvaluateBadDisplayname.js";
-import { EvaluateAdviceBot } from "./userEvaluation/EvaluateAdviceBot.js";
 import { EvaluateWorldTraveller } from "./userEvaluation/EvaluateWorldTraveller.js";
 import { EvaluateBotGroup } from "./userEvaluation/EvaluateBotGroup.js";
 import { EvaluateCommentPhrase } from "./userEvaluation/EvaluateCommentPhrase.js";
 import { EvaluateRapidFireBot } from "./userEvaluation/EvaluateRapidFireBot.js";
-import { EvaluateSuspiciousFirstPostPhrase } from "./userEvaluation/EvaluateSuspiciousFirstPostPhrase.js";
 import { EvaluateTGGroup } from "./userEvaluation/EvaluateTGGroup.js";
-import { EvaluateCommentBotGroup } from "./userEvaluation/EvaluateCommentBotGroup.js";
 import { EvaluateFirstPostWithSelfComment } from "./userEvaluation/EvaluateFirstPostWithSelfComment.js";
 import { EvaluateBotGroupAdvanced } from "./userEvaluation/EvaluateBotGroupAdvanced.js";
 
@@ -50,14 +47,11 @@ export const ALL_EVALUATORS = [
     EvaluateShortTlcNew,
     EvaluateOFLinksBot,
     EvaluateBadDisplayName,
-    EvaluateAdviceBot,
     EvaluateWorldTraveller,
     EvaluateBotGroup,
     EvaluateCommentPhrase,
     EvaluateRapidFireBot,
-    EvaluateSuspiciousFirstPostPhrase,
     EvaluateTGGroup,
-    EvaluateCommentBotGroup,
     EvaluateFirstPostWithSelfComment,
     EvaluateBotGroupAdvanced,
 ];
