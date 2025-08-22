@@ -40,28 +40,28 @@ function createHistory (body: string, edited: boolean, createdAt: Date) {
 
 test("Edited comment that doesn't match regex", () => {
     const history = createHistory("This is a test comment", true, subDays(new Date(), 1));
-    const evaluator = new EvaluateEditedComment(mockContext, evaluatorVariables);
+    const evaluator = new EvaluateEditedComment(mockContext, undefined, evaluatorVariables);
     const evaluationResult = evaluator.evaluate(mockUser, history);
     expect(evaluationResult).toBeFalsy();
 });
 
 test("Edited comment that matches regex", () => {
     const history = createHistory("This is an EssayFox comment", true, subDays(new Date(), 1));
-    const evaluator = new EvaluateEditedComment(mockContext, evaluatorVariables);
+    const evaluator = new EvaluateEditedComment(mockContext, undefined, evaluatorVariables);
     const evaluationResult = evaluator.evaluate(mockUser, history);
     expect(evaluationResult).toBeTruthy();
 });
 
 test("Edited comment that matches regex but is too old", () => {
     const history = createHistory("This is an EssayFox comment", true, subDays(new Date(), 8));
-    const evaluator = new EvaluateEditedComment(mockContext, evaluatorVariables);
+    const evaluator = new EvaluateEditedComment(mockContext, undefined, evaluatorVariables);
     const evaluationResult = evaluator.evaluate(mockUser, history);
     expect(evaluationResult).toBeFalsy();
 });
 
 test("Edited comment that matches regex but is not edited", () => {
     const history = createHistory("This is an EssayFox comment", false, subDays(new Date(), 1));
-    const evaluator = new EvaluateEditedComment(mockContext, evaluatorVariables);
+    const evaluator = new EvaluateEditedComment(mockContext, undefined, evaluatorVariables);
     const evaluationResult = evaluator.evaluate(mockUser, history);
     expect(evaluationResult).toBeFalsy();
 });

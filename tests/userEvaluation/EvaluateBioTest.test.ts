@@ -27,14 +27,14 @@ function createMockUser (bioText: string): UserExtended {
 }
 
 test("User with matching bio", () => {
-    const evaluator = new EvaluateBioText({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBioText({} as unknown as TriggerContext, undefined, variables);
     const mockUser = createMockUser("📍Oklahoma 20y/o just looking for real connections out here, Text me for more details on the link below!");
     const result = evaluator.evaluate(mockUser, []);
     expect(result).toBeTruthy();
 });
 
 test("User with nonmatching bio", () => {
-    const evaluator = new EvaluateBioText({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBioText({} as unknown as TriggerContext, undefined, variables);
     const mockUser = createMockUser("A very ordinary Redditor with no special interests.");
     const result = evaluator.evaluate(mockUser, []);
     expect(result).toBeFalsy();
@@ -47,7 +47,7 @@ test("Validation of regex", () => {
         ]
     }`) as Record<string, JSONValue>;
 
-    const evaluator = new EvaluateBioText({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBioText({} as unknown as TriggerContext, undefined, variables);
     const validationResults = evaluator.validateVariables();
     expect(validationResults.length).toEqual(1);
 });

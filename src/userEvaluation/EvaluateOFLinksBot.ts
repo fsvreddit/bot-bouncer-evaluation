@@ -1,24 +1,14 @@
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
-import { Comment, Post, UserSocialLink } from "@devvit/public-api";
+import { Comment, Post } from "@devvit/public-api";
 import { subDays } from "date-fns";
 import { UserExtended } from "../types.js";
-import { getUserOrUndefined } from "../utility.js";
 
 export class EvaluateOFLinksBot extends UserEvaluatorBase {
     override name = "OF Links Bot";
     override shortname = "oflinks";
     override banContentThreshold = 0;
     override canAutoBan = true;
-
-    protected async getSocialLinks (username: string): Promise<UserSocialLink[]> {
-        const user = await getUserOrUndefined(username, this.context);
-        if (!user) {
-            return [];
-        }
-        const socialLinks = await user.getSocialLinks();
-        return socialLinks;
-    }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_event: CommentCreate): boolean {

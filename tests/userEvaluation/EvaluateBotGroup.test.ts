@@ -34,14 +34,14 @@ function createMockHistory (subreddits: string[]): Post[] {
 
 test("Ensure that bot groups are parsed correctly", () => {
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, undefined, variables);
     const botGroups = evaluator.getBotGroups();
     expect(botGroups.length).toBe(1);
 });
 
 test("User with matching user properties and history", () => {
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, undefined, variables);
     const preEvaluateResult = evaluator.preEvaluateUser(mockUser);
     expect(preEvaluateResult).toBe(true);
 
@@ -65,7 +65,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBe(1);
 });
@@ -85,7 +85,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateBotGroup({} as unknown as TriggerContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBe(1);
 });

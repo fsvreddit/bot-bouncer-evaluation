@@ -32,13 +32,13 @@ const mockHistory = [
 ] as unknown as Comment[];
 
 test("User with every recent comment matching the phrase", () => {
-    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, variables);
+    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, undefined, variables);
     const result = evaluator.evaluate(mockUser, mockHistory);
     expect(result).toBeTruthy();
 });
 
 test("User with a recent mismatching comment matching the phrase", () => {
-    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, variables);
+    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, undefined, variables);
     const history = [
         ...mockHistory,
         {
@@ -53,7 +53,7 @@ test("User with a recent mismatching comment matching the phrase", () => {
 });
 
 test("User with a recent post", () => {
-    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, variables);
+    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, undefined, variables);
     const history = [
         ...mockHistory,
         {
@@ -68,7 +68,7 @@ test("User with a recent post", () => {
 });
 
 test("User with an old recent post", () => {
-    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, variables);
+    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, undefined, variables);
     const history = [
         ...mockHistory,
         {
@@ -83,7 +83,7 @@ test("User with an old recent post", () => {
 });
 
 test("User with insufficient history", () => {
-    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, variables);
+    const evaluator = new EvaluateRepeatedPhraseBot(mockTriggerContext, undefined, variables);
     const history = mockHistory.slice(0, 2) as unknown as Comment[];
 
     const result = evaluator.evaluate(mockUser, history);

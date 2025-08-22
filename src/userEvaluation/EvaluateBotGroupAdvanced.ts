@@ -1,4 +1,4 @@
-import { Comment, Post, UserSocialLink } from "@devvit/public-api";
+import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/shared-types/tid.js";
@@ -445,22 +445,6 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     override shortname = "botgroupadvanced";
     override banContentThreshold = 0; // No content ban threshold for this evaluator to support account properties only checks
 
-    private socialLinks: UserSocialLink[] | undefined;
-
-    private async getSocialLinks (user: UserExtended): Promise<UserSocialLink[]> {
-        if (this.socialLinks) {
-            return this.socialLinks;
-        }
-
-        const actualUser = await this.context.reddit.getUserByUsername(user.username);
-        if (!actualUser) {
-            return [];
-        }
-
-        this.socialLinks = await actualUser.getSocialLinks();
-        return this.socialLinks;
-    }
-
     private anyRegexMatches (input: string, regexes: string[]): boolean {
         return regexes.some(regex => new RegExp(regex, "u").test(input));
     }
@@ -774,7 +758,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         if (group.socialLinkRegex) {
-            const userSocialLinks = await this.getSocialLinks(user);
+            const userSocialLinks = await this.getSocialLinks(user.username);
             if (!userSocialLinks.some(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex))) {
                 this.setReason(`No matching social links found for user in group ${group.name}`);
                 return false;

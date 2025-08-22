@@ -1,4 +1,4 @@
-import { Comment, Post, User } from "@devvit/public-api";
+import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { subMonths, subYears } from "date-fns";
@@ -41,15 +41,8 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
             return false;
         }
 
-        let userObject: User | undefined;
-        try {
-            userObject = await this.context.reddit.getUserByUsername(user.username);
-        } catch {
-            return false;
-        }
-
-        const userSocialLinks = await userObject?.getSocialLinks();
-        if (!userSocialLinks || userSocialLinks.length === 0) {
+        const userSocialLinks = await this.getSocialLinks(user.username);
+        if (userSocialLinks.length === 0) {
             return false;
         }
 

@@ -1,7 +1,8 @@
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
-import { Comment, Post, TriggerContext } from "@devvit/public-api";
+import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-api";
 import { UserExtended } from "../types.js";
 import { isCommentId, isLinkId } from "@devvit/shared-types/tid.js";
+import { getUserOrUndefined } from "../utility.js";
 
 interface HistoryOptions {
     since?: Date;
@@ -17,6 +18,8 @@ export abstract class UserEvaluatorBase {
     abstract name: string;
     abstract shortname: string;
 
+    public socialLinks: UserSocialLink[] | undefined;
+
     public setReason (reason: string) {
         this.reasons.push(reason);
     }
@@ -28,8 +31,9 @@ export abstract class UserEvaluatorBase {
     public banContentThreshold = 10;
     public canAutoBan = true;
 
-    constructor (context: TriggerContext, variables: Record<string, unknown>) {
+    constructor (context: TriggerContext, socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
         this.context = context;
+        this.socialLinks = socialLinks;
         this.variables = variables;
     }
 
@@ -62,6 +66,17 @@ export abstract class UserEvaluatorBase {
 
     protected getGenericVariable<Type> (name: string, defaultValue: Type): Type {
         return this.variables[`generic:${name}`] as Type | undefined ?? defaultValue;
+    }
+
+    protected async getSocialLinks (username: string): Promise<UserSocialLink[]> {
+        if (this.socialLinks === undefined) {
+            const user = await getUserOrUndefined(username, this.context);
+            if (!user) {
+                return [];
+            }
+            this.socialLinks = await user.getSocialLinks();
+        }
+        return this.socialLinks;
     }
 
     public hitReason: string | undefined = undefined;

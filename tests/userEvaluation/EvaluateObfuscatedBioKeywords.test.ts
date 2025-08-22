@@ -32,69 +32,69 @@ const variables = {
 test("Bio text that should be banned", () => {
     const fakeUser = createFakeUser("my wh,at.sapp: carla18");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeTruthy();
 });
 
 test("Bio text that should be banned 2", () => {
     const fakeUser = createFakeUser("my whats4pp: carla18");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeTruthy();
 });
 
 test("Bio text that should be banned 3", () => {
     const fakeUser = createFakeUser("my T. E. L. E. G. R. A. M: carla18");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeTruthy();
 });
 
 test("Bio text that should not be banned", () => {
     const fakeUser = createFakeUser("my whatsapp: carla18");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeFalsy();
 });
 
 test("Bio text that should not be banned 2", () => {
     const fakeUser = createFakeUser("my Whatsapp: carla18");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeFalsy();
 });
 
 test("Bio text that should not be banned 3", () => {
     const fakeUser = createFakeUser("I'm available for sexting session until you cum🔥 nudes videos 🥵 custom video 🔥 drop box 🎁 facetime 💕 WhatsApp +1 (586) 873-9543 telegram @Lilerose83");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeFalsy();
 });
 
 test("Bio text that should not be banned 4", () => {
     const fakeUser = createFakeUser("23M looking for fun 👉👌 dm me NO I DON'T HAVE TELEGRAM OR WHATSAPP AND I NEVER WILL if you add on snap, just mention you found me through reddit");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeFalsy();
 });
 
 test("Bio text that should not be banned 5", () => {
     const fakeUser = createFakeUser("kinky redditor playing on Reddit, telegram, snap, discord and session. Message for my username on those apps! Open to anything legal and 18+");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeFalsy();
 });
 
 test("Bio text that should not be banned 6", () => {
     const fakeUser = createFakeUser("message my snap chat plz");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeFalsy();
 });
 
 test("Bio text that has no related keywords at all", () => {
     const fakeUser = createFakeUser("Just here for the memes!");
     const mockTriggerContext = {} as unknown as TriggerContext;
-    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, variables);
+    const evaluator = new EvaluateObfuscatedBioKeywords(mockTriggerContext, undefined, variables);
     expect(evaluator.preEvaluateUser(fakeUser)).toBeFalsy();
 });

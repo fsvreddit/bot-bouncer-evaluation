@@ -20,14 +20,14 @@ function createMockHistory (subreddits: string[]): Post[] {
 }
 
 test("Content in more than one group", () => {
-    const evaluator = new EvaluateWorldTraveller({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateWorldTraveller({} as unknown as TriggerContext, undefined, variables);
     const history = createMockHistory(["CasualUK", "canada"]);
     const result = evaluator.evaluate({} as unknown as UserExtended, history);
     expect(result).toBe(true);
 });
 
 test("Content in one group", () => {
-    const evaluator = new EvaluateWorldTraveller({} as unknown as TriggerContext, variables);
+    const evaluator = new EvaluateWorldTraveller({} as unknown as TriggerContext, undefined, variables);
     const history = createMockHistory(["CasualUK", "uknews"]);
     const result = evaluator.evaluate({} as unknown as UserExtended, history);
     expect(result).toBe(false);

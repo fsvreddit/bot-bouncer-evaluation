@@ -13,7 +13,7 @@ test("User with consistent genders", () => {
         isNsfw: () => true,
     })) as unknown as Post[];
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, {});
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, {});
     const evaluationResult = evaluator.evaluate({} as unknown as UserExtended, history);
     expect(evaluationResult).toBeFalsy();
 });
@@ -43,7 +43,7 @@ test("User with inconsistent genders", () => {
         isNsfw: () => true,
     } as unknown as Post);
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, {});
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, {});
     const evaluationResult = evaluator.evaluate({} as unknown as UserExtended, history);
     expect(evaluationResult).toBeTruthy();
 });
@@ -58,7 +58,7 @@ test("Regex formats", () => {
         { title: "23M", expected: "M" },
     ];
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, {});
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, {});
 
     for (const { title, expected } of testCases) {
         const result = evaluator.getGenderFromTitle(title);
