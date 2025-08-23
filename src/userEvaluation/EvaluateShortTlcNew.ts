@@ -2,7 +2,7 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
-import { isCommentId } from "@devvit/shared-types/tid.js";
+import { isCommentId } from "@devvit/public-api/types/tid.js";
 import { subDays } from "date-fns";
 import { autogenRegex } from "./evaluatorHelpers.js";
 import { UserExtended } from "../types.js";

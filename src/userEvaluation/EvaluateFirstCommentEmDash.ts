@@ -2,7 +2,7 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
-import { isLinkId } from "@devvit/shared-types/tid.js";
+import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { subMonths } from "date-fns";
 import { last, uniq } from "lodash";
 import { domainFromUrl } from "./evaluatorHelpers.js";

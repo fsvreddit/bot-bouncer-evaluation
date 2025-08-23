@@ -1,6 +1,6 @@
 {
     "name": "@fsvreddit/bot-bouncer-evaluation",
-    "version": "0.3.9",
+    "version": "0.4.0",
     "description": "Evaluation code for Bot Bouncer, a Dev Platform app designed to hunt bots on Reddit",
     "main": "dist/index.js",
     "scripts": {
@@ -43,8 +43,7 @@
         "devvit"
     ],
     "peerDependencies": {
-        "@devvit/protos": "^0.11.19",
-        "@devvit/public-api": "^0.11.19",
-        "@devvit/shared-types": "^0.11.19"
+        "@devvit/protos": "^0.12.0",
+        "@devvit/public-api": "^0.12.0"
     }
 }
