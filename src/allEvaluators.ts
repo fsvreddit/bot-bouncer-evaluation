@@ -43,7 +43,6 @@ export const ALL_EVALUATORS = [
     EvaluateEditedComment,
     EvaluateInconsistentAgeBot,
     EvaluateInconsistentGenderBot,
-    EvaluateShortTlcNew,
     EvaluateOFLinksBot,
     EvaluateBadDisplayName,
     EvaluateWorldTraveller,
