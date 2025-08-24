@@ -430,7 +430,7 @@ function validateBotGroup (group: BotGroup): string[] {
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinks", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
+    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in bot group: ${key}`);
