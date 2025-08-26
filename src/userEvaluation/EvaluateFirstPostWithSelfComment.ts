@@ -10,9 +10,11 @@ export class EvaluateFirstPostWithSelfComment extends UserEvaluatorBase {
     override canAutoBan = true;
     override banContentThreshold = 1;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override preEvaluateComment (_: CommentCreate): boolean {
-        return false;
+    override preEvaluateComment (event: CommentCreate): boolean {
+        if (!event.author?.id) {
+            return false;
+        }
+        return event.author.id === event.post?.authorId;
     }
 
     override preEvaluatePost (post: Post): boolean {

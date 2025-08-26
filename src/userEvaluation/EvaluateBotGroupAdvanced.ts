@@ -612,6 +612,24 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 }
             }
 
+            if (group.bioRegex) {
+                if (!comment.author?.description) {
+                    return false;
+                }
+
+                if (!this.anyRegexMatches(comment.author.description, group.bioRegex)) {
+                    return false;
+                }
+            }
+
+            if (group.maxCommentKarma !== undefined && comment.author?.karma !== undefined && comment.author.karma > group.maxCommentKarma) {
+                return false;
+            }
+
+            if (group.maxLinkKarma !== undefined && comment.author?.karma !== undefined && comment.author.karma > group.maxLinkKarma) {
+                return false;
+            }
+
             if (!group.criteria) {
                 return true;
             };

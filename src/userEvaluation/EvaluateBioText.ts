@@ -9,15 +9,17 @@ export class EvaluateBioText extends UserEvaluatorBase {
     override shortname = "biotext";
     override banContentThreshold = 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override preEvaluateComment (_: CommentCreate): boolean {
-        return false;
-    }
-
     private getBioText () {
         const bannableBioText = this.getVariable<string[]>("bantext", []);
         const reportableBioText = this.getVariable<string[]>("reporttext", []);
         return { bannableBioText, reportableBioText };
+    }
+
+    override preEvaluateComment (event: CommentCreate): boolean {
+        const { bannableBioText, reportableBioText } = this.getBioText();
+        const problematicBioText = [...bannableBioText, ...reportableBioText];
+
+        return problematicBioText.some(bioText => event.author?.description && new RegExp(bioText, "u").test(event.author.description));
     }
 
     override validateVariables (): string[] {

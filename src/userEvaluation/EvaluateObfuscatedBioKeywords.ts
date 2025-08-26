@@ -16,8 +16,8 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
         return this.getVariable<string[]>("allowedterms", []);
     }
 
-    private bioTextMatches (user: UserExtended): boolean {
-        if (!user.userDescription) {
+    private bioTextMatches (bio: string | undefined): boolean {
+        if (!bio) {
             return false;
         }
 
@@ -48,7 +48,7 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
             const regexText = "(?:" + regexComponents.join("|") + ")";
 
             const regex = new RegExp("\\b" + regexText + "\\b", "i");
-            const matches = user.userDescription.match(regex);
+            const matches = bio.match(regex);
             if (!matches || matches.length !== 1) {
                 continue;
             }
@@ -70,8 +70,8 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override preEvaluateComment (_: CommentCreate): boolean {
-        return this.getKeywords().length > 0;
+    override preEvaluateComment (event: CommentCreate): boolean {
+        return this.bioTextMatches(event.author?.description);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -84,7 +84,7 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
             return false;
         }
 
-        return this.bioTextMatches(user);
+        return this.bioTextMatches(user.userDescription);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

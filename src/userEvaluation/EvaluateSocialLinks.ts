@@ -19,6 +19,10 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
+        if (this.socialLinks) {
+            const badSocialLinks = this.getVariable<string[]>("badlinks", []);
+            return this.socialLinks.some(link => badSocialLinks.some(badLink => link.outboundUrl.startsWith(badLink)));
+        }
         return false;
     }
 

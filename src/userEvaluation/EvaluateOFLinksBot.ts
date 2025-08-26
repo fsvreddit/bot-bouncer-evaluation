@@ -16,6 +16,9 @@ export class EvaluateOFLinksBot extends UserEvaluatorBase {
     }
 
     override preEvaluatePost (post: Post): boolean {
+        if (this.socialLinks?.length === 0) {
+            return false;
+        }
         return post.isNsfw();
     }
 
