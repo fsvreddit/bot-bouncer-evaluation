@@ -18,7 +18,6 @@ import { EvaluateInconsistentGenderBot } from "./userEvaluation/EvaluateInconsis
 import { EvaluateOFLinksBot } from "./userEvaluation/EvaluateOFLinksBot.js";
 import { EvaluateBadDisplayName } from "./userEvaluation/EvaluateBadDisplayname.js";
 import { EvaluateWorldTraveller } from "./userEvaluation/EvaluateWorldTraveller.js";
-import { EvaluateBotGroup } from "./userEvaluation/EvaluateBotGroup.js";
 import { EvaluateCommentPhrase } from "./userEvaluation/EvaluateCommentPhrase.js";
 import { EvaluateRapidFireBot } from "./userEvaluation/EvaluateRapidFireBot.js";
 import { EvaluateTGGroup } from "./userEvaluation/EvaluateTGGroup.js";
@@ -46,7 +45,6 @@ export const ALL_EVALUATORS = [
     EvaluateOFLinksBot,
     EvaluateBadDisplayName,
     EvaluateWorldTraveller,
-    EvaluateBotGroup,
     EvaluateCommentPhrase,
     EvaluateRapidFireBot,
     EvaluateTGGroup,
