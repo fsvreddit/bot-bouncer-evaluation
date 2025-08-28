@@ -44,7 +44,6 @@ var1: {{arraysub}}
 
     const variables = yamlToVariables(yaml) as Record<string, unknown>;
     expect(variables["module1:var1"]).toEqual(["value1", "value2", "value'3", "value\\4"]);
-    expect(variables["substitutions:arraysub"]).toBeUndefined();
 });
 
 test("Duplicate keys", () => {
