@@ -373,6 +373,10 @@ function validateBotGroup (group: BotGroup): string[] {
         errors.push("Bot group name is required.");
     }
 
+    if (typeof group.name !== "string") {
+        errors.push("Bot group name must be a string. You may need to enclose the group name in single quotes.");
+    }
+
     if (group.usernameRegex) {
         errors.push(...validateRegexArray(group.usernameRegex));
     }
