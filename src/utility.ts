@@ -68,10 +68,6 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
             continue;
         }
 
-        if (root === "substitutions") {
-            continue;
-        }
-
         if (doc.errors.length > 0) {
             if (doc.errors.some(e => e.code === "DUPLICATE_KEY")) {
                 errors.push(`Module name ${root} has duplicate keys`);
