@@ -88,7 +88,7 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
             return false;
         }
 
-        this.hitReason = `Comment found matching regex: "${matchedPhrase}"`;
+        this.addHitReason(`Comment found matching regex: "${matchedPhrase}"`);
         return true;
     }
 }

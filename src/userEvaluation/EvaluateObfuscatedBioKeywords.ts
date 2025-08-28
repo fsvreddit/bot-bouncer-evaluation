@@ -61,7 +61,7 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
                 continue;
             }
 
-            this.hitReason = `Bio text matched obfuscated keyword: ${keyword} (matched "${matches[0]}")`;
+            this.addHitReason(`Bio text matched obfuscated keyword: ${keyword} (matched "${matches[0]}")`);
 
             return true;
         }
@@ -69,7 +69,6 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
         return false;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (event: CommentCreate): boolean {
         return this.bioTextMatches(event.author?.description);
     }

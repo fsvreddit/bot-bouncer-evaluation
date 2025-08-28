@@ -57,7 +57,7 @@ export class EvaluateOFLinksBot extends UserEvaluatorBase {
             return false;
         }
 
-        this.hitReason = `User has OF links in their profile: ${matchedPrefix}`;
+        this.addHitReason(`User has OF links in their profile: ${matchedPrefix}`);
         return true;
     }
 

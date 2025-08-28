@@ -30,11 +30,11 @@ export class EvaluateRepeatedPhraseBot extends UserEvaluatorBase {
 
         if (caseSensitive) {
             const matchedPhrases = phrases.filter(phrase => comment.body.includes(phrase));
-            this.hitReason = `Matched phrases: ${matchedPhrases.join(", ")}`;
+            this.addHitReason(`Matched phrases: ${matchedPhrases.join(", ")}`);
             return matchedPhrases.length > 0;
         } else {
             const matchedPhrases = phrases.filter(phrase => comment.body.toLowerCase().includes(phrase.toLowerCase()));
-            this.hitReason = `Matched phrases: ${matchedPhrases.join(", ")}`;
+            this.addHitReason(`Matched phrases: ${matchedPhrases.join(", ")}`);
             return matchedPhrases.length > 0;
         }
     }

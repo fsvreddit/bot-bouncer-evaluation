@@ -79,7 +79,15 @@ export abstract class UserEvaluatorBase {
         return this.socialLinks;
     }
 
-    public hitReason: string | undefined = undefined;
+    protected addHitReason (reason: string) {
+        if (!this.hitReasons) {
+            this.hitReasons = [reason];
+        } else {
+            this.hitReasons.push(reason);
+        }
+    }
+
+    public hitReasons: string[] | undefined = undefined;
 
     abstract preEvaluateComment (event: CommentCreate): boolean;
 

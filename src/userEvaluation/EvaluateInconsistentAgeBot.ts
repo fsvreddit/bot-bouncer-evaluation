@@ -66,7 +66,7 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
             this.canAutoBan = false;
         }
 
-        this.hitReason = `Inconsistent Age Bot: Found ${agesFound.length} different ages in ${nsfwPosts.length} posts`;
+        this.addHitReason(`Inconsistent Age Bot: Found ${agesFound.length} different ages in ${nsfwPosts.length} posts`);
         return true;
     }
 }

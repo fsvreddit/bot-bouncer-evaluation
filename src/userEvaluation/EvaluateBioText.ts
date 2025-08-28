@@ -80,10 +80,10 @@ export class EvaluateBioText extends UserEvaluatorBase {
 
         if (bannableBioTextFound) {
             this.canAutoBan = true;
-            this.hitReason = `Bio text matched regex: ${markdownEscape(bannableBioTextFound)}`;
+            this.addHitReason(`Bio text matched regex: ${markdownEscape(bannableBioTextFound)}`);
         } else if (reportableBioTextFound) {
             this.canAutoBan = false;
-            this.hitReason = `Bio text matched regex: ${markdownEscape(reportableBioTextFound)}`;
+            this.addHitReason(`Bio text matched regex: ${markdownEscape(reportableBioTextFound)}`);
         } else {
             return false;
         }

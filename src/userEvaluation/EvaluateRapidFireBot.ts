@@ -48,7 +48,7 @@ export class EvaluateRapidFireBot extends UserEvaluatorBase {
         for (const item of sortedHistory) {
             const itemsInPeriod = sortedHistory.filter(otherItem => otherItem.createdAt < item.createdAt && otherItem.createdAt > subMinutes(item.createdAt, periodInMinutes));
             if (itemsInPeriod.length >= numberOfItems) {
-                this.hitReason = `User has ${itemsInPeriod.length} items in a ${periodInMinutes} minute period up to ${item.id}`;
+                this.addHitReason(`User has ${itemsInPeriod.length} items in a ${periodInMinutes} minute period up to ${item.id}`);
                 return true;
             }
         }

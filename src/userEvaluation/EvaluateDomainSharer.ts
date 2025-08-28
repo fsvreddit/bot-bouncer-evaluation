@@ -105,7 +105,7 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
                 this.canAutoBan = true;
                 this.banContentThreshold = 5;
             }
-            this.hitReason = `User has shared ${contentInAllowedSubs.length} posts with the same domain: ${dominantDomains.map(item => item.domain).join(", ")}`;
+            this.addHitReason(`User has shared ${contentInAllowedSubs.length} posts with the same domain: ${dominantDomains.map(item => item.domain).join(", ")}`);
             return true;
         } else {
             this.setReason("User content is not dominated by one domain");

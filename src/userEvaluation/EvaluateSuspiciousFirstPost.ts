@@ -73,7 +73,7 @@ export class EvaluateSuspiciousFirstPost extends UserEvaluatorBase {
             }
         }
 
-        this.hitReason = `Sole post in ${markdownEscape(posts[0].subredditName)}`;
+        this.addHitReason(`Sole post in ${markdownEscape(posts[0].subredditName)}`);
 
         return true;
     }

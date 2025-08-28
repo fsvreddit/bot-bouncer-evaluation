@@ -868,10 +868,9 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 }
             }
 
-            this.hitReason = group.name;
-            return true;
+            this.addHitReason(group.name);
         }
 
-        return false; // No bot group matched
+        return this.hitReasons !== undefined && this.hitReasons.length > 0;
     }
 }

@@ -72,7 +72,7 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
             this.canAutoBan = false;
         }
 
-        this.hitReason = `Inconsistent Gender Bot: Found ${gendersFound.length} different genders in ${nsfwPosts.length} posts`;
+        this.addHitReason(`Inconsistent Gender Bot: Found ${gendersFound.length} different genders in ${nsfwPosts.length} posts`);
         return true;
     }
 }
