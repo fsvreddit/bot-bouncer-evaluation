@@ -72,6 +72,11 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
             this.canAutoBan = false;
         }
 
+        const sharedRegex = /([0-9]{2}M|M[0-9]{2}) and ([0-9]{2}F|F[0-9]{2})/;
+        if (nsfwPosts.some(post => sharedRegex.test(post.title))) {
+            this.canAutoBan = false;
+        }
+
         this.addHitReason(`Inconsistent Gender Bot: Found ${gendersFound.length} different genders in ${nsfwPosts.length} posts`);
         return true;
     }
