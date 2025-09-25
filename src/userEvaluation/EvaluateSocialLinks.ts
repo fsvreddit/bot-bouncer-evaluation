@@ -39,7 +39,8 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
         }
 
         const accountEligible = (user.commentKarma < 500 && user.createdAt > subMonths(new Date(), 3))
-            || user.createdAt < subYears(new Date(), 5);
+            || user.createdAt < subYears(new Date(), 5)
+            || user.nsfw;
 
         if (!accountEligible) {
             return false;
