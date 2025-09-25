@@ -176,7 +176,7 @@ function validatePostCondition (condition: PostCondition): string[] {
 
 interface CommentCondition extends BaseItemCondition {
     type: "comment";
-    postId?: string;
+    postId?: string[];
     isTopLevel?: boolean;
     isCommentOnOwnPost?: boolean;
 }
@@ -184,13 +184,17 @@ interface CommentCondition extends BaseItemCondition {
 function validateCommentCondition (condition: CommentCondition): string[] {
     const errors: string[] = [];
 
-    if (condition.postId !== undefined && typeof condition.postId !== "string") {
-        errors.push("postId must be a string.");
+    if (condition.postId !== undefined && !Array.isArray(condition.postId)) {
+        errors.push("postId must be an array.");
+    }
+
+    if (condition.postId?.some(postId => typeof postId !== "string")) {
+        errors.push("postId must be an array of strings.");
     }
 
     const validPostIdRegex = /^[a-z0-9]{6,8}$/;
-    if (condition.postId && !validPostIdRegex.test(condition.postId)) {
-        errors.push(`Invalid postId: ${condition.postId}. Must be a 6-8 character lower-case alphanumeric string.`);
+    if (condition.postId && !condition.postId.every(id => validPostIdRegex.test(id))) {
+        errors.push(`Invalid postId(s): ${condition.postId.filter(id => !validPostIdRegex.test(id)).join(", ")}. Must be a 6-8 character lower-case alphanumeric string.`);
     }
 
     if (condition.isTopLevel !== undefined && typeof condition.isTopLevel !== "boolean") {
@@ -697,7 +701,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             return false;
         }
 
-        if (condition.postId && comment.postId !== `t3_${condition.postId}`) {
+        if (condition.postId && !condition.postId.some(postId => comment.postId === `t3_${postId}`)) {
             return false;
         }
 
