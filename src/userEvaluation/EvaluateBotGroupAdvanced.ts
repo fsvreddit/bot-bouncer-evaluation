@@ -370,6 +370,7 @@ interface BotGroup {
     bioRegex?: string[];
     displayNameRegex?: string[];
     socialLinkRegex?: string[];
+    socialLinkTitleRegex?: string[];
     hasVerifiedEmail?: boolean;
     hasRedditPremium?: boolean;
     isSubredditModerator?: boolean;
@@ -405,6 +406,10 @@ function validateBotGroup (group: BotGroup): string[] {
 
     if (group.socialLinkRegex) {
         errors.push(...validateRegexArray(group.socialLinkRegex));
+    }
+
+    if (group.socialLinkTitleRegex) {
+        errors.push(...validateRegexArray(group.socialLinkTitleRegex));
     }
 
     if (group.criteria) {
@@ -444,7 +449,7 @@ function validateBotGroup (group: BotGroup): string[] {
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
+    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in bot group: ${key}`);
@@ -797,6 +802,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const userSocialLinks = await this.getSocialLinks(user.username);
             if (!userSocialLinks.some(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex))) {
                 this.setReason(`No matching social links found for user in group ${group.name}`);
+                return false;
+            }
+        }
+
+        if (group.socialLinkTitleRegex) {
+            const userSocialLinks = await this.getSocialLinks(user.username);
+            if (!userSocialLinks.some(userLink => group.socialLinkTitleRegex && userLink.title && this.anyRegexMatches(userLink.title, group.socialLinkTitleRegex))) {
+                this.setReason(`No matching social link titles found for user in group ${group.name}`);
                 return false;
             }
         }
