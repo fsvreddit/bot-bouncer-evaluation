@@ -6,7 +6,7 @@ import { UserExtended } from "../types.js";
 export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
     override name = "Obfuscated Bio Keywords Bot";
     override shortname = "obfuscatedbiowords";
-    override banContentThreshold = 1;
+    override banContentThreshold = 0;
 
     private getKeywords (): string[] {
         return this.getVariable<string[]>("keywords", []);
