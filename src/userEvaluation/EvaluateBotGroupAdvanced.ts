@@ -176,12 +176,22 @@ function validatePostCondition (condition: PostCondition): string[] {
 
 interface CommentCondition extends BaseItemCondition {
     type: "comment";
+    postId?: string;
     isTopLevel?: boolean;
     isCommentOnOwnPost?: boolean;
 }
 
 function validateCommentCondition (condition: CommentCondition): string[] {
     const errors: string[] = [];
+
+    if (condition.postId !== undefined && typeof condition.postId !== "string") {
+        errors.push("postId must be a string.");
+    }
+
+    const validPostIdRegex = /^[a-z0-9]{6,8}$/;
+    if (condition.postId && !validPostIdRegex.test(condition.postId)) {
+        errors.push(`Invalid postId: ${condition.postId}. Must be a 6-8 character lower-case alphanumeric string.`);
+    }
 
     if (condition.isTopLevel !== undefined && typeof condition.isTopLevel !== "boolean") {
         errors.push("isTopLevel must be a boolean.");
@@ -192,7 +202,7 @@ function validateCommentCondition (condition: CommentCondition): string[] {
     }
 
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "isTopLevel", "isCommentOnOwnPost"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "postId", "isTopLevel", "isCommentOnOwnPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in comment condition: ${key}`);
@@ -340,7 +350,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount"];
+    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in criteria group: ${key}`);
@@ -679,6 +689,10 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
     private commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): boolean {
         if (!this.postOrCommentMatchesCondition(comment, condition)) {
+            return false;
+        }
+
+        if (condition.postId && comment.postId !== `t3_${condition.postId}`) {
             return false;
         }
 
