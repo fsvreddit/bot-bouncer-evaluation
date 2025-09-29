@@ -73,7 +73,7 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
 
         const badSocialLinksFound = userSocialLinks.filter(link => badSocialLinks.some(badLink => link.outboundUrl.startsWith(badLink)));
         if (badSocialLinksFound.length > 0) {
-            this.addHitReason(`User has bad social links: ${uniq(badSocialLinksFound.map(link => link.outboundUrl).join(", "))}`);
+            this.addHitReason(`User has bad social links: ${uniq(badSocialLinksFound.map(link => link.outboundUrl)).join(", ")}`);
             return true;
         }
 
