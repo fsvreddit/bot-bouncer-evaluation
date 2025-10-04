@@ -4,7 +4,7 @@ import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { subMonths, subYears } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "../types.js";
-import { compact, uniq } from "lodash";
+import { uniq } from "lodash";
 
 export class EvaluateSocialLinks extends UserEvaluatorBase {
     override name = "Social Links Bot";
@@ -19,8 +19,15 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
         domains.add("i.redd.it");
 
         const badLinks = this.getVariable<string[]>("badlinks", []);
-        for (const domain of compact(uniq(badLinks.map(domainFromUrl)))) {
-            domains.add(domain);
+        for (const link of badLinks) {
+            try {
+                const domain = domainFromUrl(link);
+                if (domain) {
+                    domains.add(domain);
+                }
+            } catch {
+                //
+            }
         }
 
         return Array.from(domains);
