@@ -15,7 +15,7 @@ export class EvaluateSoccerStreamBot extends UserEvaluatorBase {
     private subredditFromComment (body: string): string | undefined {
         const regex = /r\/([\w\d-]+)\/wiki\//;
         const matches = regex.exec(body);
-        if (matches && matches.length === 2) {
+        if (matches?.length === 2) {
             return matches[1];
         }
     }

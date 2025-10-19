@@ -49,7 +49,7 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
 
             const regex = new RegExp("\\b" + regexText + "\\b", "i");
             const matches = bio.match(regex);
-            if (!matches || matches.length !== 1) {
+            if (matches?.length !== 1) {
                 continue;
             }
 

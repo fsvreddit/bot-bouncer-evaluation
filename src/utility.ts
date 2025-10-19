@@ -21,7 +21,7 @@ function getSubstitutionsListFromYaml (yaml: string): Record<string, string | st
 
     for (const document of yamlDocuments) {
         const json = document.toJSON() as Record<string, JSONValue> | null;
-        if (!json || json.name !== "substitutions") {
+        if (json?.name !== "substitutions") {
             continue;
         }
 
