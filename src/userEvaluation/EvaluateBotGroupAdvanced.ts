@@ -1,5 +1,5 @@
 import { Comment, Post } from "@devvit/public-api";
-import { CommentCreate } from "@devvit/protos";
+import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
@@ -660,6 +660,10 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const commentConditions: CommentCondition[] = this.collectCommentConditionsForPreEvalation(group.criteria);
             return commentConditions.some(condition => comment.comment && this.commentMatchesCondition(comment.comment, condition));
         });
+    }
+
+    override preEvaluateCommentEdit (event: CommentUpdate): boolean {
+        return this.preEvaluateComment(event);
     }
 
     private postMatchesCondition (post: Post, condition: PostCondition) {
