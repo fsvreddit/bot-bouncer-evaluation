@@ -89,10 +89,10 @@ export abstract class UserEvaluatorBase {
 
     public hitReasons: string[] | undefined = undefined;
 
-    abstract preEvaluateComment (event: CommentCreate): boolean;
+    abstract preEvaluateComment (event: CommentCreate): boolean | Promise<boolean>;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public preEvaluateCommentEdit (event: CommentUpdate): boolean {
+    public preEvaluateCommentEdit (event: CommentUpdate): boolean | Promise<boolean> {
         return false;
     }
 

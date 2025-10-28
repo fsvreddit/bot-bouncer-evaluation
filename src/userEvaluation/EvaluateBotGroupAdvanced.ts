@@ -4,8 +4,9 @@ import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../types.js";
-import { endOfDay, parse, subDays } from "date-fns";
+import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
+import { compact } from "lodash";
 
 interface AgeRange {
     dateFrom: string;
@@ -91,6 +92,8 @@ interface BaseItemCondition {
     maxBodyLength?: number;
     minParaCount?: number;
     maxParaCount?: number;
+    minKarma?: number;
+    maxKarma?: number;
 }
 
 interface PostCondition extends BaseItemCondition {
@@ -100,6 +103,7 @@ interface PostCondition extends BaseItemCondition {
     nsfw?: boolean;
     urlRegex?: string[];
     domain?: string[];
+    isCrossPost?: boolean;
 }
 
 function validateRegexArray (regexes: string[]): string[] {
@@ -163,8 +167,12 @@ function validatePostCondition (condition: PostCondition): string[] {
         }
     }
 
+    if (condition.isCrossPost !== undefined && typeof condition.isCrossPost !== "boolean") {
+        errors.push("isCrossPost must be a boolean.");
+    }
+
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "titleRegex", "nsfw", "urlRegex", "domain"];
+    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "titleRegex", "nsfw", "urlRegex", "domain", "isCrossPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in post condition: ${key}`);
@@ -179,6 +187,7 @@ interface CommentCondition extends BaseItemCondition {
     postId?: string[];
     isTopLevel?: boolean;
     isCommentOnOwnPost?: boolean;
+    postTitleRegex?: string[];
 }
 
 function validateCommentCondition (condition: CommentCondition): string[] {
@@ -205,8 +214,12 @@ function validateCommentCondition (condition: CommentCondition): string[] {
         errors.push("isCommentOnOwnPost must be a boolean.");
     }
 
+    if (condition.postTitleRegex) {
+        errors.push(...validateRegexArray(condition.postTitleRegex));
+    }
+
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "postId", "isTopLevel", "isCommentOnOwnPost"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postId", "isTopLevel", "isCommentOnOwnPost", "postTitleRegex"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in comment condition: ${key}`);
@@ -285,6 +298,14 @@ function validateCondition (condition: PostCondition | CommentCondition): string
         errors.push("maxParaCount must be a non-negative number.");
     }
 
+    if (condition.minKarma !== undefined && (typeof condition.minKarma !== "number" || condition.minKarma < 0)) {
+        errors.push("minKarma must be a non-negative number.");
+    }
+
+    if (condition.maxKarma !== undefined && (typeof condition.maxKarma !== "number" || condition.maxKarma < 0)) {
+        errors.push("maxKarma must be a non-negative number.");
+    }
+
     if (condition.type === "post") {
         errors.push(...validatePostCondition(condition));
     } else { // Comment condition
@@ -354,7 +375,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount"];
+    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in criteria group: ${key}`);
@@ -369,6 +390,8 @@ interface BotGroup {
     usernameRegex?: string[];
     maxCommentKarma?: number;
     maxLinkKarma?: number;
+    minCommentKarma?: number;
+    minLinkKarma?: number;
     age?: AgeCriteria;
     nsfw?: boolean;
     bioRegex?: string[];
@@ -436,6 +459,22 @@ function validateBotGroup (group: BotGroup): string[] {
         }
     }
 
+    if (group.minLinkKarma !== undefined) {
+        if (typeof group.minLinkKarma !== "number") {
+            errors.push("Min link karma must be a number.");
+        } else if (group.minLinkKarma < 0) {
+            errors.push("Min link karma must be a non-negative number.");
+        }
+    }
+
+    if (group.minCommentKarma !== undefined) {
+        if (typeof group.minCommentKarma !== "number") {
+            errors.push("Min comment karma must be a number.");
+        } else if (group.minCommentKarma < 0) {
+            errors.push("Min comment karma must be a non-negative number.");
+        }
+    }
+
     if (group.nsfw !== undefined && typeof group.nsfw !== "boolean") {
         errors.push("NSFW must be a boolean.");
     }
@@ -453,7 +492,7 @@ function validateBotGroup (group: BotGroup): string[] {
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
+    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push(`Unexpected key in bot group: ${key}`);
@@ -598,6 +637,18 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
+        if (condition.minKarma !== undefined) {
+            if (item.score < condition.minKarma) {
+                return false;
+            }
+        }
+
+        if (condition.maxKarma !== undefined) {
+            if (item.score > condition.maxKarma) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -618,51 +669,61 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return conditions;
     }
 
-    override preEvaluateComment (comment: CommentCreate): boolean {
+    override async preEvaluateComment (comment: CommentCreate): Promise<boolean> {
         if (!comment.comment) {
             return false;
         }
 
         const groups = this.getBotGroups();
-        return groups.some((group) => {
+
+        for (const group of groups) {
             if (group.usernameRegex) {
                 if (!comment.author?.name) {
-                    return false;
+                    continue;
                 }
 
                 if (!this.anyRegexMatches(comment.author.name, group.usernameRegex)) {
-                    return false;
+                    continue;
                 }
             }
 
             if (group.bioRegex) {
                 if (!comment.author?.description) {
-                    return false;
+                    continue;
                 }
 
                 if (!this.anyRegexMatches(comment.author.description, group.bioRegex)) {
-                    return false;
+                    continue;
                 }
             }
 
             if (group.maxCommentKarma !== undefined && comment.author?.karma !== undefined && comment.author.karma > group.maxCommentKarma) {
-                return false;
+                continue;
             }
 
             if (group.maxLinkKarma !== undefined && comment.author?.karma !== undefined && comment.author.karma > group.maxLinkKarma) {
-                return false;
+                continue;
             }
 
             if (!group.criteria) {
-                return true;
+                continue;
             };
 
             const commentConditions: CommentCondition[] = this.collectCommentConditionsForPreEvalation(group.criteria);
-            return commentConditions.some(condition => comment.comment && this.commentMatchesCondition(comment.comment, condition));
-        });
+            for (const condition of commentConditions) {
+                const conditionMatches = await this.commentMatchesCondition(comment.comment, condition);
+                if (!conditionMatches) {
+                    continue;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
-    override preEvaluateCommentEdit (event: CommentUpdate): boolean {
+    override async preEvaluateCommentEdit (event: CommentUpdate): Promise<boolean> {
         return this.preEvaluateComment(event);
     }
 
@@ -697,10 +758,38 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
+        if (condition.isCrossPost !== undefined) {
+            const isCrossPost = post.url.startsWith("/r/");
+            if (isCrossPost !== condition.isCrossPost) {
+                return false;
+            }
+        }
+
         return true;
     }
 
-    private commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): boolean {
+    private cachedPostTitles: Record<string, string> = {};
+
+    private async getPostTitle (postId: string): Promise<string> {
+        const localCachedTitle = this.cachedPostTitles[postId];
+        if (localCachedTitle) {
+            return localCachedTitle;
+        }
+
+        const cacheKey = `postTitle~${postId}`;
+        const cachedPostTitle = await this.context.redis.get(cacheKey);
+        if (cachedPostTitle) {
+            this.cachedPostTitles[postId] = cachedPostTitle;
+            return cachedPostTitle;
+        }
+
+        const post = await this.context.reddit.getPostById(postId);
+        await this.context.redis.set(cacheKey, post.title, { expiration: addDays(new Date(), 1) });
+        this.cachedPostTitles[postId] = post.title;
+        return post.title;
+    }
+
+    private async commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): Promise<boolean> {
         if (!this.postOrCommentMatchesCondition(comment, condition)) {
             return false;
         }
@@ -720,6 +809,13 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const posts = this.getPosts(history);
             const parentPost = posts.find(post => post.id === comment.postId);
             return condition.isCommentOnOwnPost === (parentPost?.authorName === comment.authorName);
+        }
+
+        if (condition.postTitleRegex) {
+            const postTitle = await this.getPostTitle(comment.postId);
+            if (!this.anyRegexMatches(postTitle, condition.postTitleRegex)) {
+                return false;
+            }
         }
 
         return true;
@@ -776,6 +872,16 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         if (group.maxLinkKarma && user.linkKarma > group.maxLinkKarma) {
             this.setReason(`Link karma exceeds limit in group ${group.name}`);
+            return false;
+        }
+
+        if (group.minCommentKarma && user.commentKarma < group.minCommentKarma) {
+            this.setReason(`Comment karma below minimum in group ${group.name}`);
+            return false;
+        }
+
+        if (group.minLinkKarma && user.linkKarma < group.minLinkKarma) {
+            this.setReason(`Link karma below minimum in group ${group.name}`);
             return false;
         }
 
@@ -852,13 +958,13 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return false;
     }
 
-    private historyMatchesCriteriaGroup (history: (Post | Comment)[], criteria: CriteriaGroup): boolean {
+    private async historyMatchesCriteriaGroup (history: (Post | Comment)[], criteria: CriteriaGroup): Promise<boolean> {
         if ("not" in criteria) {
-            return !this.historyMatchesCriteriaGroup(history, criteria.not);
+            return !await this.historyMatchesCriteriaGroup(history, criteria.not);
         } else if ("every" in criteria) {
-            return criteria.every.every(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria));
+            return (await Promise.all(criteria.every.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)))).every(Boolean);
         } else if ("some" in criteria) {
-            return criteria.some.some(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria));
+            return (await Promise.all(criteria.some.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)))).some(Boolean);
         } else if ("type" in criteria) {
             if (criteria.type === "post") {
                 const posts = this.getPosts(history);
@@ -872,9 +978,9 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             } else if (criteria.type === "comment") {
                 const comments = this.getComments(history);
-                const matchingComments = comments.filter(comment => this.commentMatchesCondition(comment, criteria, history));
+                const matchingComments = await Promise.all(comments.map(async comment => await this.commentMatchesCondition(comment, criteria, history)));
                 const matchesNeeded = criteria.matchesNeeded ?? 1;
-                if (matchingComments.length < matchesNeeded) {
+                if (compact(matchingComments).length < matchesNeeded) {
                     return false;
                 } else {
                     return true;
@@ -896,7 +1002,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
 
             if (group.criteria) {
-                const historyMatchesGroup = this.historyMatchesCriteriaGroup(history, group.criteria);
+                const historyMatchesGroup = await this.historyMatchesCriteriaGroup(history, group.criteria);
                 if (!historyMatchesGroup) {
                     this.setReason(`User does not match history criteria in group ${group.name}`);
                     continue;
