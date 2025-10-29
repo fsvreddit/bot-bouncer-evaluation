@@ -1,6 +1,6 @@
 import { JSONValue, Post, TriggerContext } from "@devvit/public-api";
 import { EvaluateWorldTraveller } from "../../src/userEvaluation/EvaluateWorldTraveller.js";
-import { UserExtended } from "../../src/types.js";
+import { UserExtended } from "../../src/extendedDevvit.js";
 
 const variables: Record<string, JSONValue> = {
     "worldtraveler:killswitch": false,

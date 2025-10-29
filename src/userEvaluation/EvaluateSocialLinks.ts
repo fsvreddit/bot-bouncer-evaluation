@@ -3,7 +3,7 @@ import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { subMonths, subYears } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 import { uniq } from "lodash";
 
 export class EvaluateSocialLinks extends UserEvaluatorBase {

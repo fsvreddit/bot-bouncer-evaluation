@@ -1,5 +1,5 @@
 import { JSONValue, TriggerContext } from "@devvit/public-api";
-import { UserExtended } from "../../src/types.js";
+import { UserExtended } from "../../src/extendedDevvit.js";
 import { subDays } from "date-fns";
 import { EvaluateBioText } from "../../src/userEvaluation/EvaluateBioText.js";
 

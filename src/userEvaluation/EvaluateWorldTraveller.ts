@@ -2,7 +2,7 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { CONTROL_SUBREDDIT } from "../constants.js";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 import { uniq } from "lodash";
 import { subMonths } from "date-fns";
 

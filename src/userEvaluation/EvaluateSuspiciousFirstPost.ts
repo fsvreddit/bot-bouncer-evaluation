@@ -3,7 +3,7 @@ import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { Comment, Post } from "@devvit/public-api";
 import { subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
 
 export class EvaluateSuspiciousFirstPost extends UserEvaluatorBase {

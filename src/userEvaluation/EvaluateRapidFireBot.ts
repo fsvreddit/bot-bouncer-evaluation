@@ -2,7 +2,7 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { subDays, subMinutes, subMonths } from "date-fns";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 
 export class EvaluateRapidFireBot extends UserEvaluatorBase {
     override name = "Rapid Fire Bot";

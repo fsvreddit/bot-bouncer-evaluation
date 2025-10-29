@@ -1,7 +1,7 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
 import { subWeeks } from "date-fns";
 

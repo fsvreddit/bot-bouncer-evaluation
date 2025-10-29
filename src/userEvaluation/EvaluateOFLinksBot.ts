@@ -2,7 +2,7 @@ import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { Comment, Post } from "@devvit/public-api";
 import { subDays } from "date-fns";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 
 export class EvaluateOFLinksBot extends UserEvaluatorBase {
     override name = "OF Links Bot";

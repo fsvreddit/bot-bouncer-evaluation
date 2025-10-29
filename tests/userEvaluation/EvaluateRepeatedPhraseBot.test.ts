@@ -1,6 +1,6 @@
 import { Comment, Post, TriggerContext } from "@devvit/public-api";
 import { EvaluateRepeatedPhraseBot } from "../../src/userEvaluation/EvaluateRepeatedPhraseBot.js";
-import { UserExtended } from "../../src/types.js";
+import { UserExtended } from "../../src/extendedDevvit.js";
 import { subYears } from "date-fns";
 
 const mockTriggerContext = {} as unknown as TriggerContext;

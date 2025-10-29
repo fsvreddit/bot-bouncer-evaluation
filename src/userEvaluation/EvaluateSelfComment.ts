@@ -5,7 +5,7 @@ import { addMinutes, subDays } from "date-fns";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 
 export class EvaluateSelfComment extends UserEvaluatorBase {
     override name = "Self Comment";

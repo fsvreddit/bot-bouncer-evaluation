@@ -3,7 +3,7 @@ import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { compact } from "lodash";
@@ -776,7 +776,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             return localCachedTitle;
         }
 
-        const cacheKey = `postTitle~${postId}`;
+        const cacheKey = `bbe~postTitle~${postId}`;
         const cachedPostTitle = await this.context.redis.get(cacheKey);
         if (cachedPostTitle) {
             this.cachedPostTitles[postId] = cachedPostTitle;

@@ -1,6 +1,6 @@
 import { Post, TriggerContext } from "@devvit/public-api";
 import { EvaluateInconsistentGenderBot } from "../../src/userEvaluation/EvaluateInconsistentGenderBot.js";
-import { UserExtended } from "../../src/types.js";
+import { UserExtended } from "../../src/extendedDevvit.js";
 
 const mockContext = {} as unknown as TriggerContext;
 
@@ -10,6 +10,7 @@ test("User with consistent genders", () => {
         createdAt: new Date(),
         title: "M19",
         subredditName: "findsnapchat",
+        url: `https://www.reddit.com/r/findsnapchat/comments/t3_fake_${i}`,
         isNsfw: () => true,
     })) as unknown as Post[];
 
@@ -24,6 +25,7 @@ test("User with inconsistent genders", () => {
         createdAt: new Date(),
         title: "M19",
         subredditName: "findsnapchat",
+        url: `https://www.reddit.com/r/findsnapchat/comments/t3_fake_${i}`,
         isNsfw: () => true,
     })) as unknown as Post[];
 
@@ -32,6 +34,7 @@ test("User with inconsistent genders", () => {
         createdAt: new Date(),
         title: "20 [F4M]",
         subredditName: "findsnapchat",
+        url: "https://www.reddit.com/r/findsnapchat/comments/t3_fake_7",
         isNsfw: () => true,
     } as unknown as Post);
 
@@ -40,6 +43,7 @@ test("User with inconsistent genders", () => {
         createdAt: new Date(),
         title: "20 [F4M]",
         subredditName: "findsnapchat",
+        url: "https://www.reddit.com/r/findsnapchat/comments/t3_fake_8",
         isNsfw: () => true,
     } as unknown as Post);
 

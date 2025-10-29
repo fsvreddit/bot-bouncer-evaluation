@@ -1,7 +1,7 @@
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { Comment, Post } from "@devvit/public-api";
-import { UserExtended } from "../types.js";
+import { UserExtended } from "../extendedDevvit.js";
 import { compact, countBy } from "lodash";
 import { subWeeks } from "date-fns";
 
