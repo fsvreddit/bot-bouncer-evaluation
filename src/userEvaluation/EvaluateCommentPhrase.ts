@@ -4,7 +4,6 @@ import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { subDays } from "date-fns";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
-import { isRegexVulnerable } from "../utility.js";
 
 export class EvaluateCommentPhrase extends UserEvaluatorBase {
     override name = "Comment Phrase";
@@ -21,16 +20,12 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
             try {
                 regex = new RegExp(regexVal);
             } catch {
-                results.push(`Invalid regex in comment phrase: ${regexVal}`);
+                results.push(`Invalid regex in biotext: ${regexVal}`);
                 continue;
             }
 
             if (regex.test("")) {
-                results.push(`Comment Phrase regex is too greedy: ${regexVal}`);
-            }
-
-            if (isRegexVulnerable(regexVal)) {
-                results.push(`Comment Phrase regex is vulnerable to ReDoS: ${regexVal}`);
+                results.push(`Bio Text regex is too greedy: ${regexVal}`);
             }
         }
 

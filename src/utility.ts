@@ -1,5 +1,4 @@
 import { JSONValue, TriggerContext, User } from "@devvit/public-api";
-import { checkSync } from "recheck";
 import { parseAllDocuments } from "yaml";
 
 export function replaceAll (input: string, pattern: string, replacement: string): string {
@@ -93,8 +92,4 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
     variables.errors = errors;
 
     return variables;
-}
-
-export function isRegexVulnerable (regex: string, flags?: string): boolean {
-    return checkSync(regex, flags ?? "").status === "vulnerable";
 }

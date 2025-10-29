@@ -3,7 +3,6 @@ import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
-import { isRegexVulnerable } from "../utility.js";
 
 export class EvaluateBioText extends UserEvaluatorBase {
     override name = "Bio Text Bot";
@@ -41,10 +40,6 @@ export class EvaluateBioText extends UserEvaluatorBase {
 
             if (regex.test("")) {
                 results.push(`Bio Text regex is too greedy: ${regexVal}`);
-            }
-
-            if (isRegexVulnerable(regexVal, "u")) {
-                results.push(`Bio Text regex is vulnerable to ReDoS: ${regexVal}`);
             }
         }
 
