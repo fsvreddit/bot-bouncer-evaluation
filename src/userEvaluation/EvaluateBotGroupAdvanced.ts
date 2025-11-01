@@ -7,6 +7,7 @@ import { UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { compact } from "lodash";
+import { isRegexVulnerable } from "../utility.js";
 
 interface AgeRange {
     dateFrom: string;
@@ -124,6 +125,9 @@ function validateRegexArray (regexes: string[]): string[] {
                 const regex = new RegExp(regexString, "u");
                 if (regex.test("")) {
                     errors.push(`Regex ${regexString} appears to be too greedy.`);
+                }
+                if (isRegexVulnerable(regexString, "u")) {
+                    errors.push(`Regex ${regexString} is vulnerable to ReDoS.`);
                 }
             } catch {
                 errors.push(`Invalid regex: ${regexString}`);

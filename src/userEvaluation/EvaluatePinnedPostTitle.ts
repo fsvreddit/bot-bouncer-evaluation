@@ -4,6 +4,7 @@ import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
+import { isRegexVulnerable } from "../utility.js";
 
 export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
     override name = "Sticky Post Title Bot";
@@ -28,6 +29,10 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
 
             if (regex.test("")) {
                 results.push(`Sticky post title regex is too greedy: ${regexVal}`);
+            }
+
+            if (isRegexVulnerable(regexVal, "u")) {
+                results.push(`Sticky post title regex is vulnerable to ReDoS: ${regexVal}`);
             }
         }
 

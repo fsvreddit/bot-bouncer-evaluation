@@ -4,6 +4,7 @@ import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
 import { subWeeks } from "date-fns";
+import { isRegexVulnerable } from "../utility.js";
 
 export class EvaluatePostTitle extends UserEvaluatorBase {
     override name = "Bad Post Title Bot";
@@ -28,6 +29,10 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
 
             if (regex.test("")) {
                 results.push(`Post title regex is too greedy: ${regexVal}`);
+            }
+
+            if (isRegexVulnerable(regexVal, "u")) {
+                results.push(`Post title regex is vulnerable to ReDoS: ${regexVal}`);
             }
         }
 

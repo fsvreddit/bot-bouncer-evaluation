@@ -4,6 +4,7 @@ import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { subWeeks } from "date-fns";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
+import { isRegexVulnerable } from "../utility.js";
 
 export class EvaluateBadUsername extends UserEvaluatorBase {
     override name = "Bad Username Bot";
@@ -38,6 +39,10 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
 
             if (regex.test("")) {
                 results.push(`Bad username regex is too greedy: ${regexVal}`);
+            }
+
+            if (isRegexVulnerable(regexVal)) {
+                results.push(`Bad username regex is vulnerable to ReDoS: ${regexVal}`);
             }
         }
 

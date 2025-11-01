@@ -3,6 +3,7 @@ import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { subMonths, subWeeks } from "date-fns";
+import { isRegexVulnerable } from "../utility.js";
 
 export class EvaluateTGGroup extends UserEvaluatorBase {
     override name = "Telegram Group Bot";
@@ -24,6 +25,10 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
 
             if (regex.test("")) {
                 results.push(`TG Group regex is too greedy: ${regexVal}`);
+            }
+
+            if (isRegexVulnerable(regexVal)) {
+                results.push(`TG Group regex is vulnerable to ReDoS: ${regexVal}`);
             }
         }
 

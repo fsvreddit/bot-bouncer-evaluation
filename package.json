@@ -1,6 +1,6 @@
 {
     "name": "@fsvreddit/bot-bouncer-evaluation",
-    "version": "0.4.16",
+    "version": "0.5.0",
     "description": "Evaluation code for Bot Bouncer, a Dev Platform app designed to hunt bots on Reddit",
     "main": "dist/index.js",
     "scripts": {
@@ -24,6 +24,7 @@
         "date-fns": "^4.1.0",
         "lodash": "^4.17.21",
         "markdown-escape": "^2.0.0",
+        "recheck": "^4.5.0",
         "yaml": "^2.8.0"
     },
     "devDependencies": {
