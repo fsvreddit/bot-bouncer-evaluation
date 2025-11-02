@@ -1,16 +1,17 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { subMonths, subWeeks } from "date-fns";
+import { regexIsSafe } from "../utility.js";
 
 export class EvaluateTGGroup extends UserEvaluatorBase {
     override name = "Telegram Group Bot";
     override shortname = "tg-group";
     override banContentThreshold = 1;
 
-    override validateVariables (): string[] {
-        const results: string[] = [];
+    override validateVariables (): ValidationIssue[] {
+        const results: ValidationIssue[] = [];
         const regexes = this.getVariable<string[]>("bodyregex", []);
 
         for (const regexVal of regexes) {
@@ -18,12 +19,16 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
             try {
                 regex = new RegExp(regexVal);
             } catch {
-                results.push(`Invalid regex in TG Group: ${regexVal}`);
+                results.push({ severity: "error", message: `Invalid regex in TG Group: ${regexVal}` });
                 continue;
             }
 
             if (regex.test("")) {
-                results.push(`TG Group regex is too greedy: ${regexVal}`);
+                results.push({ severity: "error", message: `TG Group regex is too greedy: ${regexVal}` });
+            }
+
+            if (!regexIsSafe(regex)) {
+                results.push({ severity: "warning", message: `TG Group regex is not safe: ${regexVal.slice(0, 100)}` });
             }
         }
 

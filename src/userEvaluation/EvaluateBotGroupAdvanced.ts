@@ -2,11 +2,12 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { compact } from "lodash";
+import { regexIsSafe } from "../utility.js";
 
 interface AgeRange {
     dateFrom: string;
@@ -20,50 +21,50 @@ interface AgeInDays {
 
 type AgeCriteria = AgeRange | AgeInDays;
 
-function validateAgeCriteria (age: AgeCriteria): string[] {
-    const errors: string[] = [];
+function validateAgeCriteria (age: AgeCriteria): ValidationIssue[] {
+    const errors: ValidationIssue[] = [];
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (Object.keys(age).includes("dateFrom")) {
         const { dateFrom, dateTo } = age as AgeRange;
         if (!dateRegex.test(dateFrom)) {
-            errors.push("Invalid or missing dateFrom in age criteria.");
+            errors.push({ severity: "error", message: "Invalid or missing dateFrom in age criteria." });
         }
         if (dateTo && !dateRegex.test(dateTo)) {
-            errors.push("Invalid date format for dateTo in age criteria. Expected format is YYYY-MM-DD.");
+            errors.push({ severity: "error", message: "Invalid date format for dateTo in age criteria. Expected format is YYYY-MM-DD." });
         }
 
         if (Object.keys(age).includes("maxAgeInDays") || Object.keys(age).includes("minAgeInDays")) {
-            errors.push("Cannot specify both date range and min/maxAgeInDays in age criteria.");
+            errors.push({ severity: "error", message: "Cannot specify both date range and min/maxAgeInDays in age criteria." });
         }
     }
 
     if (Object.keys(age).includes("maxAgeInDays")) {
         const { maxAgeInDays } = age as AgeInDays;
         if (typeof maxAgeInDays !== "number" || maxAgeInDays <= 0) {
-            errors.push("maxAgeInDays must be a positive number.");
+            errors.push({ severity: "error", message: "maxAgeInDays must be a positive number." });
         }
     }
 
     if (Object.keys(age).includes("minAgeInDays")) {
         const { minAgeInDays } = age as AgeInDays;
         if (typeof minAgeInDays !== "number" || minAgeInDays <= 0) {
-            errors.push("minAgeInDays must be a positive number.");
+            errors.push({ severity: "error", message: "minAgeInDays must be a positive number." });
         }
     } else if (!Object.keys(age).includes("dateFrom") && !Object.keys(age).includes("maxAgeInDays") && !Object.keys(age).includes("minAgeInDays")) {
         // If neither date range nor maxAgeInDays is specified, it's an error
-        errors.push("Age criteria must specify either date range, maxAgeInDays, or minAgeInDays.");
+        errors.push({ severity: "error", message: "Age criteria must specify either date range, maxAgeInDays, or minAgeInDays." });
     }
 
     const keys = Object.keys(age);
     const expectedKeys = ["dateFrom", "dateTo", "maxAgeInDays", "minAgeInDays"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
-            errors.push(`Unexpected key in age criteria: ${key}`);
+            errors.push({ severity: "error", message: `Unexpected key in age criteria: ${key}` });
         }
     }
 
     if (!keys.includes("dateFrom") && !keys.includes("maxAgeInDays") && !keys.includes("minAgeInDays")) {
-        errors.push("Age criteria must specify at least one of dateFrom, maxAgeInDays, or minAgeInDays.");
+        errors.push({ severity: "error", message: "Age criteria must specify at least one of dateFrom, maxAgeInDays, or minAgeInDays." });
     }
 
     return errors;
@@ -106,27 +107,30 @@ interface PostCondition extends BaseItemCondition {
     isCrossPost?: boolean;
 }
 
-function validateRegexArray (regexes: string[]): string[] {
-    const errors: string[] = [];
+function validateRegexArray (regexes: string[]): ValidationIssue[] {
+    const errors: ValidationIssue[] = [];
     if (!Array.isArray(regexes)) {
-        errors.push("Expected an array of regex strings.");
+        errors.push({ severity: "error", message: "Expected an array of regex strings." });
     } else {
         for (const regexString of regexes) {
             if (Array.isArray(regexString)) {
-                errors.push("Regex must be a string, not an array.");
+                errors.push({ severity: "error", message: "Regex must be a string, not an array." });
                 continue;
             }
             if (typeof regexString !== "string") {
-                errors.push(`Invalid regex: ${regexString}. Must be a string.`);
+                errors.push({ severity: "error", message: `Invalid regex: ${regexString}. Must be a string.` });
                 continue;
             }
             try {
                 const regex = new RegExp(regexString, "u");
                 if (regex.test("")) {
-                    errors.push(`Regex ${regexString} appears to be too greedy.`);
+                    errors.push({ severity: "error", message: `Regex ${regexString} appears to be too greedy.` });
+                }
+                if (!regexIsSafe(regex)) {
+                    errors.push({ severity: "warning", message: `Unsafe regex: ${regexString.slice(0, 100)}` });
                 }
             } catch {
-                errors.push(`Invalid regex: ${regexString}`);
+                errors.push({ severity: "error", message: `Invalid regex: ${regexString}` });
             }
         }
     }
@@ -134,10 +138,10 @@ function validateRegexArray (regexes: string[]): string[] {
     return errors;
 }
 
-function validatePostCondition (condition: PostCondition): string[] {
-    const errors: string[] = [];
+function validatePostCondition (condition: PostCondition): ValidationIssue[] {
+    const errors: ValidationIssue[] = [];
     if (condition.pinned !== undefined && typeof condition.pinned !== "boolean") {
-        errors.push("pinned must be a boolean.");
+        errors.push({ severity: "error", message: "pinned must be a boolean." });
     }
 
     if (condition.titleRegex) {
@@ -145,7 +149,7 @@ function validatePostCondition (condition: PostCondition): string[] {
     }
 
     if (condition.nsfw !== undefined && typeof condition.nsfw !== "boolean") {
-        errors.push("nsfw must be a boolean.");
+        errors.push({ severity: "error", message: "nsfw must be a boolean." });
     }
 
     if (condition.urlRegex) {
@@ -154,28 +158,28 @@ function validatePostCondition (condition: PostCondition): string[] {
 
     if (condition.domain) {
         if (!Array.isArray(condition.domain)) {
-            errors.push("domain must be an array.");
+            errors.push({ severity: "error", message: "domain must be an array." });
         } else {
             if (condition.domain.some(subreddit => Array.isArray(subreddit))) {
-                errors.push("domain must be an array of strings, not arrays.");
+                errors.push({ severity: "error", message: "domain must be an array of strings, not arrays." });
             } else if (condition.domain.some(name => typeof name !== "string")) {
-                errors.push("domain must be an array of strings.");
+                errors.push({ severity: "error", message: "domain must be an array of strings." });
             }
             if (condition.domain.includes("")) {
-                errors.push("domain cannot be an empty string.");
+                errors.push({ severity: "error", message: "domain cannot be an empty string." });
             }
         }
     }
 
     if (condition.isCrossPost !== undefined && typeof condition.isCrossPost !== "boolean") {
-        errors.push("isCrossPost must be a boolean.");
+        errors.push({ severity: "error", message: "isCrossPost must be a boolean." });
     }
 
     const keys = Object.keys(condition);
     const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "titleRegex", "nsfw", "urlRegex", "domain", "isCrossPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
-            errors.push(`Unexpected key in post condition: ${key}`);
+            errors.push({ severity: "error", message: `Unexpected key in post condition: ${key}` });
         }
     }
 
@@ -190,28 +194,28 @@ interface CommentCondition extends BaseItemCondition {
     postTitleRegex?: string[];
 }
 
-function validateCommentCondition (condition: CommentCondition): string[] {
-    const errors: string[] = [];
+function validateCommentCondition (condition: CommentCondition): ValidationIssue[] {
+    const errors: ValidationIssue[] = [];
 
     if (condition.postId !== undefined && !Array.isArray(condition.postId)) {
-        errors.push("postId must be an array.");
+        errors.push({ severity: "error", message: "postId must be an array." });
     }
 
     if (condition.postId?.some(postId => typeof postId !== "string")) {
-        errors.push("postId must be an array of strings.");
+        errors.push({ severity: "error", message: "postId must be an array of strings." });
     }
 
     const validPostIdRegex = /^[a-z0-9]{6,8}$/;
     if (condition.postId && !condition.postId.every(id => validPostIdRegex.test(id))) {
-        errors.push(`Invalid postId(s): ${condition.postId.filter(id => !validPostIdRegex.test(id)).join(", ")}. Must be a 6-8 character lower-case alphanumeric string.`);
+        errors.push({ severity: "error", message: `Invalid postId(s): ${condition.postId.filter(id => !validPostIdRegex.test(id)).join(", ")}. Must be a 6-8 character lower-case alphanumeric string.` });
     }
 
     if (condition.isTopLevel !== undefined && typeof condition.isTopLevel !== "boolean") {
-        errors.push("isTopLevel must be a boolean.");
+        errors.push({ severity: "error", message: "isTopLevel must be a boolean." });
     }
 
     if (condition.isCommentOnOwnPost !== undefined && typeof condition.isCommentOnOwnPost !== "boolean") {
-        errors.push("isCommentOnOwnPost must be a boolean.");
+        errors.push({ severity: "error", message: "isCommentOnOwnPost must be a boolean." });
     }
 
     if (condition.postTitleRegex) {
@@ -222,58 +226,58 @@ function validateCommentCondition (condition: CommentCondition): string[] {
     const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postId", "isTopLevel", "isCommentOnOwnPost", "postTitleRegex"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
-            errors.push(`Unexpected key in comment condition: ${key}`);
+            errors.push({ severity: "error", message: `Unexpected key in comment condition: ${key}` });
         }
     }
 
     return errors;
 }
 
-function validateCondition (condition: PostCondition | CommentCondition): string[] {
-    const errors: string[] = [];
+function validateCondition (condition: PostCondition | CommentCondition): ValidationIssue[] {
+    const errors: ValidationIssue[] = [];
 
     if (condition.matchesNeeded !== undefined && typeof condition.matchesNeeded !== "number") {
-        errors.push("matchesNeeded must be a number.");
+        errors.push({ severity: "error", message: "matchesNeeded must be a number." });
     }
 
     if (condition.matchesNeeded !== undefined && condition.matchesNeeded < 1) {
-        errors.push("matchesNeeded must be at least 1.");
+        errors.push({ severity: "error", message: "matchesNeeded must be at least 1." });
     }
 
     if (condition.edited !== undefined && typeof condition.edited !== "boolean") {
-        errors.push("edited must be a boolean.");
+        errors.push({ severity: "error", message: "edited must be a boolean." });
     }
 
     if (condition.age) {
-        errors.push(...validateAgeCriteria(condition.age).map(error => `Age criteria: ${error}`));
+        errors.push(...validateAgeCriteria(condition.age).map(error => ({ severity: error.severity, message: `Age criteria: ${error.message}` })));
     }
 
     if (condition.subredditName) {
         if (!Array.isArray(condition.subredditName)) {
-            errors.push("subredditName must be an array.");
+            errors.push({ severity: "error", message: "subredditName must be an array." });
         } else {
             if (condition.subredditName.some(subreddit => Array.isArray(subreddit))) {
-                errors.push("subredditName must be an array of strings, not arrays.");
+                errors.push({ severity: "error", message: "subredditName must be an array of strings, not arrays." });
             } else if (condition.subredditName.some(name => typeof name !== "string")) {
-                errors.push("subredditName must be an array of strings.");
+                errors.push({ severity: "error", message: "subredditName must be an array of strings." });
             }
             if (condition.subredditName.includes("")) {
-                errors.push("subredditName cannot be an empty string.");
+                errors.push({ severity: "error", message: "subredditName cannot be an empty string." });
             }
         }
     }
 
     if (condition.notSubredditName) {
         if (!Array.isArray(condition.notSubredditName)) {
-            errors.push("notSubredditName must be an array.");
+            errors.push({ severity: "error", message: "notSubredditName must be an array." });
         } else {
             if (condition.notSubredditName.some(subreddit => Array.isArray(subreddit))) {
-                errors.push("notSubredditName must be an array of strings, not arrays.");
+                errors.push({ severity: "error", message: "notSubredditName must be an array of strings, not arrays." });
             } else if (condition.notSubredditName.some(name => typeof name !== "string")) {
-                errors.push("notSubredditName must be an array of strings.");
+                errors.push({ severity: "error", message: "notSubredditName must be an array of strings." });
             }
             if (condition.notSubredditName.includes("")) {
-                errors.push("notSubredditName cannot be an empty string.");
+                errors.push({ severity: "error", message: "notSubredditName cannot be an empty string." });
             }
         }
     }
@@ -283,27 +287,27 @@ function validateCondition (condition: PostCondition | CommentCondition): string
     }
 
     if (condition.minBodyLength !== undefined && (typeof condition.minBodyLength !== "number" || condition.minBodyLength < 0)) {
-        errors.push("minBodyLength must be a non-negative number.");
+        errors.push({ severity: "error", message: "minBodyLength must be a non-negative number." });
     }
 
     if (condition.maxBodyLength !== undefined && (typeof condition.maxBodyLength !== "number" || condition.maxBodyLength < 0)) {
-        errors.push("maxBodyLength must be a non-negative number.");
+        errors.push({ severity: "error", message: "maxBodyLength must be a non-negative number." });
     }
 
     if (condition.minParaCount !== undefined && (typeof condition.minParaCount !== "number" || condition.minParaCount < 0)) {
-        errors.push("minParaCount must be a non-negative number.");
+        errors.push({ severity: "error", message: "minParaCount must be a non-negative number." });
     }
 
     if (condition.maxParaCount !== undefined && (typeof condition.maxParaCount !== "number" || condition.maxParaCount < 0)) {
-        errors.push("maxParaCount must be a non-negative number.");
+        errors.push({ severity: "error", message: "maxParaCount must be a non-negative number." });
     }
 
     if (condition.minKarma !== undefined && (typeof condition.minKarma !== "number" || condition.minKarma < 0)) {
-        errors.push("minKarma must be a non-negative number.");
+        errors.push({ severity: "error", message: "minKarma must be a non-negative number." });
     }
 
     if (condition.maxKarma !== undefined && (typeof condition.maxKarma !== "number" || condition.maxKarma < 0)) {
-        errors.push("maxKarma must be a non-negative number.");
+        errors.push({ severity: "error", message: "maxKarma must be a non-negative number." });
     }
 
     if (condition.type === "post") {
@@ -317,41 +321,41 @@ function validateCondition (condition: PostCondition | CommentCondition): string
 
 type CriteriaGroup = NotCondition | EveryCondition | SomeCondition | PostCondition | CommentCondition;
 
-function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
-    const errors: string[] = [];
+function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): ValidationIssue[] {
+    const errors: ValidationIssue[] = [];
 
     if (Array.isArray(criteria)) {
-        errors.push("Criteria cannot be an array. Use 'every' or 'some' to combine conditions.");
+        errors.push({ severity: "error", message: "Criteria cannot be an array. Use 'every' or 'some' to combine conditions." });
         return errors;
     }
 
     const subKeys = Object.keys(criteria).filter(key => ["not", "every", "some", "type"].includes(key));
     if (subKeys.length === 0) {
-        errors.push("Criteria must contain one condition or a group (not, every, some).");
+        errors.push({ severity: "error", message: "Criteria must contain one condition or a group (not, every, some)." });
         return errors;
     }
     if (subKeys.length > 1) {
-        errors.push("Criteria cannot contain multiple top-level conditions. Use 'every' or 'some' to combine them.");
+        errors.push({ severity: "error", message: "Criteria cannot contain multiple top-level conditions. Use 'every' or 'some' to combine them." });
         return errors;
     }
 
     if ("not" in criteria) {
         if (level > 1) {
-            errors.push("Nested 'not' conditions are not allowed.");
+            errors.push({ severity: "error", message: "Nested 'not' conditions are not allowed." });
         }
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (criteria.not === null) {
-            errors.push("'not' condition must not be empty.");
+            errors.push({ severity: "error", message: "'not' condition must not be empty." });
         } else if (typeof criteria.not !== "object" || Array.isArray(criteria.not)) {
-            errors.push("'not' condition must be a single condition.");
+            errors.push({ severity: "error", message: "'not' condition must be a single condition." });
         } else {
             errors.push(...validateCriteriaGroup(criteria.not, level + 1));
         }
     } else if ("every" in criteria) {
         if (!Array.isArray(criteria.every)) {
-            errors.push("'every' must be an array of conditions.");
+            errors.push({ severity: "error", message: "'every' must be an array of conditions." });
         } else if (criteria.every.length === 0) {
-            errors.push("'every' must not be an empty array.");
+            errors.push({ severity: "error", message: "'every' must not be an empty array." });
         } else {
             for (const subCriteria of criteria.every) {
                 errors.push(...validateCriteriaGroup(subCriteria, level + 1));
@@ -359,12 +363,12 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
         }
     } else if ("some" in criteria) {
         if (!Array.isArray(criteria.some)) {
-            errors.push("'some' must be an array of conditions.");
+            errors.push({ severity: "error", message: "'some' must be an array of conditions." });
         } else if (criteria.some.length === 0) {
-            errors.push("'some' must not be an empty array.");
+            errors.push({ severity: "error", message: "'some' must not be an empty array." });
         } else {
             if (criteria.some.some(subCriteria => "not" in subCriteria)) {
-                errors.push("Nested 'not' conditions within 'or' are not allowed.");
+                errors.push({ severity: "error", message: "Nested 'not' conditions within 'or' are not allowed." });
             }
             for (const subCriteria of criteria.some) {
                 errors.push(...validateCriteriaGroup(subCriteria, level + 1));
@@ -378,7 +382,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): string[] {
     const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
-            errors.push(`Unexpected key in criteria group: ${key}`);
+            errors.push({ severity: "error", message: `Unexpected key in criteria group: ${key}` });
         }
     }
 
@@ -405,14 +409,14 @@ interface BotGroup {
     criteria?: CriteriaGroup;
 }
 
-function validateBotGroup (group: BotGroup): string[] {
-    const errors: string[] = [];
+function validateBotGroup (group: BotGroup): ValidationIssue[] {
+    const errors: ValidationIssue[] = [];
     if (!group.name) {
-        errors.push("Bot group name is required.");
+        errors.push({ severity: "error", message: "Bot group name is required." });
     }
 
     if (typeof group.name !== "string") {
-        errors.push("Bot group name must be a string. You may need to enclose the group name in single quotes.");
+        errors.push({ severity: "error", message: "Bot group name must be a string. You may need to enclose the group name in single quotes." });
     }
 
     if (group.usernameRegex) {
@@ -420,7 +424,7 @@ function validateBotGroup (group: BotGroup): string[] {
     }
 
     if (group.age) {
-        errors.push(...validateAgeCriteria(group.age).map(error => `Account age: ${error}`));
+        errors.push(...validateAgeCriteria(group.age).map(error => ({ severity: error.severity, message: `Account age: ${error.message}` })));
     }
 
     if (group.bioRegex) {
@@ -445,57 +449,57 @@ function validateBotGroup (group: BotGroup): string[] {
 
     if (group.maxLinkKarma !== undefined) {
         if (typeof group.maxLinkKarma !== "number") {
-            errors.push("Max link karma must be a number.");
+            errors.push({ severity: "error", message: "Max link karma must be a number." });
         } else if (group.maxLinkKarma <= 0) {
-            errors.push("Max link karma must be a positive number.");
+            errors.push({ severity: "error", message: "Max link karma must be a positive number." });
         }
     }
 
     if (group.maxCommentKarma !== undefined) {
         if (typeof group.maxCommentKarma !== "number") {
-            errors.push("Max comment karma must be a number.");
+            errors.push({ severity: "error", message: "Max comment karma must be a number." });
         } else if (group.maxCommentKarma <= 0) {
-            errors.push("Max comment karma must be a positive number.");
+            errors.push({ severity: "error", message: "Max comment karma must be a positive number." });
         }
     }
 
     if (group.minLinkKarma !== undefined) {
         if (typeof group.minLinkKarma !== "number") {
-            errors.push("Min link karma must be a number.");
+            errors.push({ severity: "error", message: "Min link karma must be a number." });
         } else if (group.minLinkKarma < 0) {
-            errors.push("Min link karma must be a non-negative number.");
+            errors.push({ severity: "error", message: "Min link karma must be a non-negative number." });
         }
     }
 
     if (group.minCommentKarma !== undefined) {
         if (typeof group.minCommentKarma !== "number") {
-            errors.push("Min comment karma must be a number.");
+            errors.push({ severity: "error", message: "Min comment karma must be a number." });
         } else if (group.minCommentKarma < 0) {
-            errors.push("Min comment karma must be a non-negative number.");
+            errors.push({ severity: "error", message: "Min comment karma must be a non-negative number." });
         }
     }
 
     if (group.nsfw !== undefined && typeof group.nsfw !== "boolean") {
-        errors.push("NSFW must be a boolean.");
+        errors.push({ severity: "error", message: "NSFW must be a boolean." });
     }
 
     if (group.hasVerifiedEmail !== undefined && typeof group.hasVerifiedEmail !== "boolean") {
-        errors.push("Has verified email must be a boolean.");
+        errors.push({ severity: "error", message: "Has verified email must be a boolean." });
     }
 
     if (group.hasRedditPremium !== undefined && typeof group.hasRedditPremium !== "boolean") {
-        errors.push("Has Reddit Premium must be a boolean.");
+        errors.push({ severity: "error", message: "Has Reddit Premium must be a boolean." });
     }
 
     if (group.isSubredditModerator !== undefined && typeof group.isSubredditModerator !== "boolean") {
-        errors.push("Is subreddit moderator must be a boolean.");
+        errors.push({ severity: "error", message: "Is subreddit moderator must be a boolean." });
     }
 
     const keys = Object.keys(group);
     const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
-            errors.push(`Unexpected key in bot group: ${key}`);
+            errors.push({ severity: "error", message: `Unexpected key in bot group: ${key}` });
         }
     }
 
@@ -517,11 +521,11 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return Object.values(groups);
     }
 
-    override validateVariables (): string[] {
-        const errors: string[] = [];
+    override validateVariables (): ValidationIssue[] {
+        const errors: ValidationIssue[] = [];
         const groups = this.getAllVariables("group") as Record<string, BotGroup>;
         for (const [key, group] of Object.entries(groups)) {
-            errors.push(...validateBotGroup(group).map(error => `Bot group ${key}: ${error}`));
+            errors.push(...validateBotGroup(group).map(error => ({ severity: error.severity, message: `Bot group ${key}: ${error.message}` })));
         }
 
         return errors;

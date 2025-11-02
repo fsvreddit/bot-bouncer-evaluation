@@ -9,6 +9,11 @@ interface HistoryOptions {
     edited?: boolean;
 }
 
+export interface ValidationIssue {
+    severity: "error" | "warning";
+    message: string;
+}
+
 export abstract class UserEvaluatorBase {
     protected reasons: string[] = [];
     protected context: TriggerContext;
@@ -40,7 +45,7 @@ export abstract class UserEvaluatorBase {
         return this.getVariable<boolean>("killswitch", false);
     }
 
-    public validateVariables (): string[] {
+    public validateVariables (): ValidationIssue[] {
         return [];
     }
 

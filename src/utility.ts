@@ -1,4 +1,5 @@
 import { JSONValue, TriggerContext, User } from "@devvit/public-api";
+import { isSafe } from "redos-detector";
 import { parseAllDocuments } from "yaml";
 
 export function replaceAll (input: string, pattern: string, replacement: string): string {
@@ -92,4 +93,12 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
     variables.errors = errors;
 
     return variables;
+}
+
+export function regexIsSafe (regex: RegExp): boolean {
+    const result = isSafe(regex, { maxScore: 500 });
+    if (!result.safe) {
+        console.warn(`Unsafe regex detected: ${regex.source}, reason: ${result.error}, score: ${JSON.stringify(result.score)}`);
+    }
+    return result.safe;
 }

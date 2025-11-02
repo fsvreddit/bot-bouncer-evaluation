@@ -1,6 +1,6 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { subMonths, subYears } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "../extendedDevvit.js";
@@ -11,6 +11,19 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
     override shortname = "sociallinks";
 
     override banContentThreshold = 0;
+
+    override validateVariables (): ValidationIssue[] {
+        const results: ValidationIssue[] = [];
+        const badLinks = this.getVariable<string[]>("badlinks", []);
+        for (const link of badLinks) {
+            try {
+                domainFromUrl(link);
+            } catch {
+                results.push({ severity: "error", message: `Invalid URL in badlinks: ${link}` });
+            }
+        }
+        return results;
+    }
 
     private getDomains (): string[] {
         const domains = new Set<string>(this.getGenericVariable<string[]>("redditdomains", []));

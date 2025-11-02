@@ -467,7 +467,7 @@ group1:
         age:
             maxAgeInDays: 90
         bodyRegex:
-            - '[A-Z][a-z]{3,}.?(?:[Oo]onga|[Hh]oonga|[Hh]orna|[Ww]inko).+AI'
+            - '[A-Z][a-z]{3,6}[^a-z]?(?:[Oo]onga|[Hh]oonga|[Hh]orna|[Ww]inko)'
 
 `;
 
@@ -504,7 +504,7 @@ group1:
         age:
             maxAgeInDays: 90
         bodyRegex:
-            - '[A-Z][a-z]{3,}.?(?:[Oo]onga|[Hh]oonga|[Hh]orna|[Ww]inko).+AI'
+            - '[A-Z][a-z]{3,6}[^a-z]?(?:[Oo]onga|[Hh]oonga|[Hh]orna|[Ww]inko)'
 
 `;
 

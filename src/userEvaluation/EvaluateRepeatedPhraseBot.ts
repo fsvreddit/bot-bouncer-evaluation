@@ -1,5 +1,5 @@
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { Comment, Post } from "@devvit/public-api";
 import { subMonths, subYears } from "date-fns";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
@@ -11,13 +11,13 @@ export class EvaluateRepeatedPhraseBot extends UserEvaluatorBase {
     override banContentThreshold = 3;
     override canAutoBan = true;
 
-    override validateVariables (): string[] {
-        const results: string[] = [];
+    override validateVariables (): ValidationIssue[] {
+        const results: ValidationIssue[] = [];
         const phrases = this.getVariable<string[]>("phrases", []);
 
         for (const phrase of phrases) {
             if ("".includes(phrase)) {
-                results.push(`Phrase is too greedy: ${phrase}`);
+                results.push({ severity: "error", message: `Phrase is too greedy: ${phrase}` });
             }
         }
 

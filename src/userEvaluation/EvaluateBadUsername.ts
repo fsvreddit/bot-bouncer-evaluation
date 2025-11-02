@@ -1,9 +1,10 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { subWeeks } from "date-fns";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
+import { regexIsSafe } from "../utility.js";
 
 export class EvaluateBadUsername extends UserEvaluatorBase {
     override name = "Bad Username Bot";
@@ -24,20 +25,24 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
         return matchedRegex !== undefined;
     }
 
-    override validateVariables (): string[] {
-        const results: string[] = [];
+    override validateVariables (): ValidationIssue[] {
+        const results: ValidationIssue[] = [];
         const regexes = this.getVariable<string[]>("regexes", []);
         for (const regexVal of regexes) {
             let regex: RegExp;
             try {
                 regex = new RegExp(regexVal);
             } catch {
-                results.push(`Invalid regex in badusername: ${regexVal}`);
+                results.push({ severity: "error", message: `Invalid regex in badusername: ${regexVal}` });
                 continue;
             }
 
             if (regex.test("")) {
-                results.push(`Bad username regex is too greedy: ${regexVal}`);
+                results.push({ severity: "error", message: `Bad username regex is too greedy: ${regexVal}` });
+            }
+
+            if (!regexIsSafe(regex)) {
+                results.push({ severity: "warning", message: `Bad username regex is not safe: ${regexVal}` });
             }
         }
 

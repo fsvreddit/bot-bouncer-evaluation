@@ -1,8 +1,9 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
+import { regexIsSafe } from "../utility.js";
 
 export class EvaluateBioText extends UserEvaluatorBase {
     override name = "Bio Text Bot";
@@ -22,8 +23,8 @@ export class EvaluateBioText extends UserEvaluatorBase {
         return problematicBioText.some(bioText => event.author?.description && new RegExp(bioText, "u").test(event.author.description));
     }
 
-    override validateVariables (): string[] {
-        const results: string[] = [];
+    override validateVariables (): ValidationIssue[] {
+        const results: ValidationIssue[] = [];
         const regexes = [
             ...this.getVariable<string[]>("bantext", []),
             ...this.getVariable<string[]>("reporttext", []),
@@ -34,12 +35,16 @@ export class EvaluateBioText extends UserEvaluatorBase {
             try {
                 regex = new RegExp(regexVal);
             } catch {
-                results.push(`Invalid regex in biotext: ${regexVal}`);
+                results.push({ severity: "error", message: `Invalid regex in biotext: ${regexVal}` });
                 continue;
             }
 
             if (regex.test("")) {
-                results.push(`Bio Text regex is too greedy: ${regexVal}`);
+                results.push({ severity: "error", message: `Bio Text regex is too greedy: ${regexVal}` });
+            }
+
+            if (!regexIsSafe(regex)) {
+                results.push({ severity: "warning", message: `Bio Text regex is not safe: ${regexVal.slice(0, 100)}` });
             }
         }
 

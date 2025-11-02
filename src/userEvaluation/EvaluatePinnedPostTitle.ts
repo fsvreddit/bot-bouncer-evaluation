@@ -1,17 +1,18 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
+import { regexIsSafe } from "../utility.js";
 
 export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
     override name = "Sticky Post Title Bot";
     override shortname = "pinnedpost";
     override banContentThreshold = 1;
 
-    override validateVariables (): string[] {
-        const results: string[] = [];
+    override validateVariables (): ValidationIssue[] {
+        const results: ValidationIssue[] = [];
         const regexes = [
             ...this.getVariable<string[]>("bantext", []),
             ...this.getVariable<string[]>("reporttext", []),
@@ -20,14 +21,18 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
         for (const regexVal of regexes) {
             let regex: RegExp;
             try {
-                regex = new RegExp(regexVal);
+                regex = new RegExp(regexVal, "u");
             } catch {
-                results.push(`Invalid regex in sticky post title: ${regexVal}`);
+                results.push({ severity: "error", message: `Invalid regex in sticky post title: ${regexVal}` });
                 continue;
             }
 
             if (regex.test("")) {
-                results.push(`Sticky post title regex is too greedy: ${regexVal}`);
+                results.push({ severity: "error", message: `Sticky post title regex is too greedy: ${regexVal}` });
+            }
+
+            if (!regexIsSafe(regex)) {
+                results.push({ severity: "warning", message: `Sticky post title regex is not safe: ${regexVal.slice(0, 100)}` });
             }
         }
 
