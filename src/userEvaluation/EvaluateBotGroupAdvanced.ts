@@ -562,7 +562,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         if (group.usernameRegex) {
             for (const regex of group.usernameRegex) {
-                regexes.push({ evaluatorName: this.name, regex });
+                regexes.push({ evaluatorName: this.name, subName: group.name, regex });
             }
         }
 
