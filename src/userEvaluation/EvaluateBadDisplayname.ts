@@ -1,8 +1,9 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
+import { uniq } from "lodash";
 
 export class EvaluateBadDisplayName extends UserEvaluatorBase {
     override name = "Bad Display Name Bot";
@@ -21,6 +22,15 @@ export class EvaluateBadDisplayName extends UserEvaluatorBase {
             this.addHitReason(`Display name matches regex: ${markdownEscape(matchedRegex)}`);
         }
         return matchedRegex !== undefined;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const regexes = this.getVariable<string[]>("regexes", []);
+        return uniq(regexes.map(regex => ({
+            evaluatorName: this.name,
+            regex,
+            flags: "u",
+        })));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

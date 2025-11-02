@@ -14,6 +14,13 @@ export interface ValidationIssue {
     message: string;
 }
 
+export interface EvaluatorRegex {
+    evaluatorName: string;
+    subName?: string;
+    regex: string;
+    flags?: string;
+}
+
 export abstract class UserEvaluatorBase {
     protected reasons: string[] = [];
     protected context: TriggerContext;
@@ -46,6 +53,10 @@ export abstract class UserEvaluatorBase {
     }
 
     public validateVariables (): ValidationIssue[] {
+        return [];
+    }
+
+    public gatherRegexes (): EvaluatorRegex[] {
         return [];
     }
 

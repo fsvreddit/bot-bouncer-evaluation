@@ -1,10 +1,10 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
-import { regexIsSafe } from "../utility.js";
+import { uniq } from "lodash";
 
 export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
     override name = "Sticky Post Title Bot";
@@ -30,13 +30,24 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
             if (regex.test("")) {
                 results.push({ severity: "error", message: `Sticky post title regex is too greedy: ${regexVal}` });
             }
-
-            if (!regexIsSafe(regex)) {
-                results.push({ severity: "warning", message: `Sticky post title regex is not safe: ${regexVal.slice(0, 100)}` });
-            }
         }
 
         return results;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const bannableTitles = this.getVariable<string[]>("bantext", []);
+        const reportableTitles = this.getVariable<string[]>("reporttext", []);
+        return uniq([
+            ...bannableTitles.map(title => ({
+                evaluatorName: this.name,
+                regex: title,
+            })),
+            ...reportableTitles.map(title => ({
+                evaluatorName: this.name,
+                regex: title,
+            })),
+        ]);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

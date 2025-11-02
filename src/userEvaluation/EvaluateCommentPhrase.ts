@@ -1,10 +1,10 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { subDays } from "date-fns";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
-import { regexIsSafe } from "../utility.js";
+import { uniq } from "lodash";
 
 export class EvaluateCommentPhrase extends UserEvaluatorBase {
     override name = "Comment Phrase";
@@ -28,13 +28,18 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
             if (regex.test("")) {
                 results.push({ severity: "error", message: `Bio Text regex is too greedy: ${regexVal}` });
             }
-
-            if (!regexIsSafe(regex)) {
-                results.push({ severity: "warning", message: `Bio Text regex is not safe: ${regexVal.slice(0, 100)}` });
-            }
         }
 
         return results;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const phrases = this.getVariable<string[]>("phrases", []);
+        return uniq(phrases.map(phrase => ({
+            evaluatorName: this.name,
+            subName: this.shortname,
+            regex: phrase,
+        })));
     }
 
     private eligibleComment (comment: Comment | CommentV2): boolean {

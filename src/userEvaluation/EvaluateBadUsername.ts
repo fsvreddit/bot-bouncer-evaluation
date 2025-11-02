@@ -1,10 +1,10 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { subWeeks } from "date-fns";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
-import { regexIsSafe } from "../utility.js";
+import { uniq } from "lodash";
 
 export class EvaluateBadUsername extends UserEvaluatorBase {
     override name = "Bad Username Bot";
@@ -40,13 +40,17 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
             if (regex.test("")) {
                 results.push({ severity: "error", message: `Bad username regex is too greedy: ${regexVal}` });
             }
-
-            if (!regexIsSafe(regex)) {
-                results.push({ severity: "warning", message: `Bad username regex is not safe: ${regexVal}` });
-            }
         }
 
         return results;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const regexes = this.getVariable<string[]>("regexes", []);
+        return uniq(regexes.map(regex => ({
+            evaluatorName: this.name,
+            regex,
+        })));
     }
 
     override preEvaluateComment (event: CommentCreate): boolean {

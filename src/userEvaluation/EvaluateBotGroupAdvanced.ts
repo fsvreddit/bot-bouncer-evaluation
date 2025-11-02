@@ -2,12 +2,11 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
-import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { compact } from "lodash";
-import { regexIsSafe } from "../utility.js";
+import { compact, uniq } from "lodash";
 
 interface AgeRange {
     dateFrom: string;
@@ -125,9 +124,6 @@ function validateRegexArray (regexes: string[]): ValidationIssue[] {
                 const regex = new RegExp(regexString, "u");
                 if (regex.test("")) {
                     errors.push({ severity: "error", message: `Regex ${regexString} appears to be too greedy.` });
-                }
-                if (!regexIsSafe(regex)) {
-                    errors.push({ severity: "warning", message: `Unsafe regex: ${regexString.slice(0, 100)}` });
                 }
             } catch {
                 errors.push({ severity: "error", message: `Invalid regex: ${regexString}` });
@@ -529,6 +525,81 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         return errors;
+    }
+
+    private getCriteriaGroupRegexes (criteria: CriteriaGroup, groupName: string): EvaluatorRegex[] {
+        if ("not" in criteria) {
+            return this.getCriteriaGroupRegexes(criteria.not, groupName);
+        } else if ("every" in criteria) {
+            return criteria.every.flatMap(subCriteria => this.getCriteriaGroupRegexes(subCriteria, groupName));
+        } else if ("some" in criteria) {
+            return criteria.some.flatMap(subCriteria => this.getCriteriaGroupRegexes(subCriteria, groupName));
+        } else {
+            const regexes: EvaluatorRegex[] = [];
+            if (criteria.bodyRegex) {
+                regexes.push(...criteria.bodyRegex.map(regex => ({ evaluatorName: this.name, subName: groupName, regex, flags: "u" })));
+            }
+
+            if (criteria.type === "post") {
+                if (criteria.titleRegex) {
+                    regexes.push(...criteria.titleRegex.map(regex => ({ evaluatorName: this.name, subName: groupName, regex, flags: "u" })));
+                }
+                if (criteria.urlRegex) {
+                    regexes.push(...criteria.urlRegex.map(regex => ({ evaluatorName: this.name, subName: groupName, regex })));
+                }
+            } else {
+                if (criteria.postTitleRegex) {
+                    regexes.push(...criteria.postTitleRegex.map(regex => ({ evaluatorName: this.name, subName: groupName, regex, flags: "u" })));
+                }
+            }
+
+            return regexes;
+        }
+    }
+
+    private getBotGroupRegexes (group: BotGroup): EvaluatorRegex[] {
+        const regexes: EvaluatorRegex[] = [];
+
+        if (group.usernameRegex) {
+            for (const regex of group.usernameRegex) {
+                regexes.push({ evaluatorName: this.name, regex });
+            }
+        }
+
+        if (group.bioRegex) {
+            for (const regex of group.bioRegex) {
+                regexes.push({ evaluatorName: this.name, subName: group.name, regex, flags: "u" });
+            }
+        }
+
+        if (group.displayNameRegex) {
+            for (const regex of group.displayNameRegex) {
+                regexes.push({ evaluatorName: this.name, subName: group.name, regex, flags: "u" });
+            }
+        }
+
+        if (group.socialLinkRegex) {
+            for (const regex of group.socialLinkRegex) {
+                regexes.push({ evaluatorName: this.name, subName: group.name, regex });
+            }
+        }
+
+        if (group.socialLinkTitleRegex) {
+            for (const regex of group.socialLinkTitleRegex) {
+                regexes.push({ evaluatorName: this.name, subName: group.name, regex, flags: "u" });
+            }
+        }
+
+        if (group.criteria) {
+            regexes.push(...this.getCriteriaGroupRegexes(group.criteria, group.name));
+        }
+
+        return regexes;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const groups = this.getBotGroups();
+        return uniq(groups.flatMap(group => this.getBotGroupRegexes(group)));
     }
 
     override getSubGroups (): string[] | undefined {

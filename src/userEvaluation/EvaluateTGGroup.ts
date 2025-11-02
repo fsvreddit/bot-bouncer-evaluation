@@ -1,9 +1,9 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { subMonths, subWeeks } from "date-fns";
-import { regexIsSafe } from "../utility.js";
+import { uniq } from "lodash";
 
 export class EvaluateTGGroup extends UserEvaluatorBase {
     override name = "Telegram Group Bot";
@@ -26,13 +26,19 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
             if (regex.test("")) {
                 results.push({ severity: "error", message: `TG Group regex is too greedy: ${regexVal}` });
             }
-
-            if (!regexIsSafe(regex)) {
-                results.push({ severity: "warning", message: `TG Group regex is not safe: ${regexVal.slice(0, 100)}` });
-            }
         }
 
         return results;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const bodyRegexes = this.getVariable<string[]>("bodyregex", []);
+        return uniq([
+            ...bodyRegexes.map(bodyRegex => ({
+                evaluatorName: this.name,
+                regex: bodyRegex,
+            })),
+        ]);
     }
 
     private eligiblePost (post: Post): boolean {

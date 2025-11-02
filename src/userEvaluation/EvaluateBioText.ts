@@ -1,9 +1,9 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import markdownEscape from "markdown-escape";
-import { regexIsSafe } from "../utility.js";
+import { uniq } from "lodash";
 
 export class EvaluateBioText extends UserEvaluatorBase {
     override name = "Bio Text Bot";
@@ -42,13 +42,25 @@ export class EvaluateBioText extends UserEvaluatorBase {
             if (regex.test("")) {
                 results.push({ severity: "error", message: `Bio Text regex is too greedy: ${regexVal}` });
             }
-
-            if (!regexIsSafe(regex)) {
-                results.push({ severity: "warning", message: `Bio Text regex is not safe: ${regexVal.slice(0, 100)}` });
-            }
         }
 
         return results;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const { bannableBioText, reportableBioText } = this.getBioText();
+        return uniq([
+            ...bannableBioText.map(regex => ({
+                evaluatorName: this.name,
+                regex,
+                flags: "u",
+            })),
+            ...reportableBioText.map(regex => ({
+                evaluatorName: this.name,
+                regex,
+                flags: "u",
+            })),
+        ]);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
