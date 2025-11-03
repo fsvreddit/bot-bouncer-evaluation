@@ -83,6 +83,10 @@ export abstract class UserEvaluatorBase {
         return this.variables[`generic:${name}`] as Type | undefined ?? defaultValue;
     }
 
+    protected getModuleVariable<Type> (module: string, name: string, defaultValue: Type): Type {
+        return this.variables[`${module}:${name}`] as Type | undefined ?? defaultValue;
+    }
+
     protected async getSocialLinks (username: string): Promise<UserSocialLink[]> {
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         if (this.socialLinks === undefined) {

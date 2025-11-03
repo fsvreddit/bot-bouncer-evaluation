@@ -21,10 +21,14 @@ import { EvaluateRapidFireBot } from "./userEvaluation/EvaluateRapidFireBot.js";
 import { EvaluateTGGroup } from "./userEvaluation/EvaluateTGGroup.js";
 import { EvaluateFirstPostWithSelfComment } from "./userEvaluation/EvaluateFirstPostWithSelfComment.js";
 import { EvaluateBotGroupAdvanced } from "./userEvaluation/EvaluateBotGroupAdvanced.js";
+import { EvaluateBioTextDefinedHandles } from "./userEvaluation/EvaluateBioTextDefinedHandles.js";
+import { EvaluatePostTitleDefinedHandles } from "./userEvaluation/EvaluatePostTitleDefinedHandles.js";
+import { EvaluateBadDisplayNameDefinedHandles } from "./userEvaluation/EvaluateBadDisplaynameDefinedHandles.js";
 
 export const ALL_EVALUATORS = [
     EvaluateBadUsername,
     EvaluateBioText,
+    EvaluateBioTextDefinedHandles,
     EvaluateMixedBot,
     EvaluateDomainSharer,
     EvaluateFirstCommentEmDash,
@@ -33,6 +37,7 @@ export const ALL_EVALUATORS = [
     EvaluateSoccerStreamBot,
     EvaluateRepeatedPhraseBot,
     EvaluatePostTitle,
+    EvaluatePostTitleDefinedHandles,
     EvaluateObfuscatedBioKeywords,
     EvaluateSocialLinks,
     EvaluateSuspiciousFirstPost,
@@ -40,6 +45,7 @@ export const ALL_EVALUATORS = [
     EvaluateInconsistentGenderBot,
     EvaluateOFLinksBot,
     EvaluateBadDisplayName,
+    EvaluateBadDisplayNameDefinedHandles,
     EvaluateWorldTraveller,
     EvaluateCommentPhrase,
     EvaluateRapidFireBot,

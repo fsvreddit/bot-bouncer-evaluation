@@ -2,30 +2,46 @@ import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
-import markdownEscape from "markdown-escape";
 import { uniq } from "lodash";
+import { parse } from "regjsparser";
 
-export class EvaluateBadDisplayName extends UserEvaluatorBase {
-    override name = "Bad Display Name Bot";
-    override shortname = "baddisplayname";
+export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
+    override name = "Bad Display Name Defined Handle Bot";
+    override shortname = "baddisplaynamedefinedhandles";
 
     public override banContentThreshold = 0;
 
-    private isBadDisplayName (displayName?: string) {
+    private isBadDisplayName (displayName?: string): boolean {
         if (!displayName) {
             return false;
         }
 
-        const regexes = this.getVariable<string[]>("regexes", []);
-        const matchedRegex = regexes.find(regex => new RegExp(regex, "u").test(displayName));
-        if (matchedRegex) {
-            this.addHitReason(`Display name matches regex: ${markdownEscape(matchedRegex)}`);
+        const regexes = this.gatherRegexes().map(r => r.regex);
+        const matchedRegexes = regexes.filter(regex => new RegExp(regex, "u").test(displayName));
+        if (matchedRegexes.length === 0) {
+            return false;
         }
-        return matchedRegex !== undefined;
+
+        this.addHitReason(`Display name matches regexes: ${matchedRegexes.map(r => `\`${r}\``).join(", ")}`);
+        return true;
     }
 
     override gatherRegexes (): EvaluatorRegex[] {
-        const regexes = this.getVariable<string[]>("regexes", []);
+        const prefix = this.getVariable<string>("prefix", "");
+        const suffix = this.getVariable<string>("suffix", "");
+
+        const definedHandles = this.getModuleVariable<string>("substitutions", "definedhandles", "");
+        if (!definedHandles) {
+            return [];
+        }
+
+        const parsed = parse(definedHandles, "u");
+        if (parsed.type !== "disjunction") {
+            return [];
+        }
+
+        const regexes = parsed.body.map(part => `${prefix}${part.raw}${suffix}`);
+
         return uniq(regexes.map(regex => ({
             evaluatorName: this.name,
             regex,
@@ -41,11 +57,11 @@ export class EvaluateBadDisplayName extends UserEvaluatorBase {
             try {
                 regex = new RegExp(regexVal, "u");
             } catch {
-                results.push({ severity: "error", message: `Invalid regex in baddisplayname: ${regexVal}` });
+                results.push({ severity: "error", message: `Invalid regex in baddisplaynamedefinedhandles: ${regexVal}` });
                 continue;
             }
             if (regex.test("")) {
-                results.push({ severity: "error", message: `Display name regex is too greedy: ${regexVal}` });
+                results.push({ severity: "error", message: `Display name defined handle regex is too greedy: ${regexVal}` });
             }
         }
         return results;
