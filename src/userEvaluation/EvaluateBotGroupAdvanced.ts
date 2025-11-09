@@ -437,6 +437,9 @@ function validateBotGroup (group: BotGroup): ValidationIssue[] {
 
     if (group.socialLinkTitleRegex) {
         errors.push(...validateRegexArray(group.socialLinkTitleRegex));
+        if (!group.socialLinkRegex || group.socialLinkRegex.length === 0) {
+            errors.push({ severity: "error", message: "socialLinkTitleRegex is specified but socialLinkRegex is missing. socialLinkRegex must be specified if socialLinkTitleRegex is used." });
+        }
     }
 
     if (group.criteria) {
