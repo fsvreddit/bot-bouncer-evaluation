@@ -1,7 +1,8 @@
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-api";
-import { getUserSocialLinks, UserExtended } from "../extendedDevvit.js";
+import { UserExtended } from "../extendedDevvit.js";
 import { isCommentId, isLinkId } from "@devvit/public-api/types/tid.js";
+import { getSocialLinksWithCache } from "./evaluatorHelpers.js";
 
 interface HistoryOptions {
     since?: Date;
@@ -90,7 +91,7 @@ export abstract class UserEvaluatorBase {
     protected async getSocialLinks (username: string): Promise<UserSocialLink[]> {
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         if (this.socialLinks === undefined) {
-            this.socialLinks = await getUserSocialLinks(username, this.context);
+            this.socialLinks = await getSocialLinksWithCache(username, this.context);
         }
         return this.socialLinks;
     }
