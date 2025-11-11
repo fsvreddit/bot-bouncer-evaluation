@@ -1,6 +1,6 @@
 import { TriggerContext, UserSocialLink } from "@devvit/public-api";
 import { getUserSocialLinks } from "../extendedDevvit";
-import { addHours } from "date-fns";
+import { addHours, addMinutes } from "date-fns";
 
 export function domainFromUrl (url: string): string | undefined {
     if (!url || url.startsWith("/")) {
@@ -14,14 +14,16 @@ export function domainFromUrl (url: string): string | undefined {
     return trimmedHostname;
 }
 
-export async function getSocialLinksWithCache (username: string, context: TriggerContext, cacheHours = 2): Promise <UserSocialLink[]> {
+export async function getSocialLinksWithCache (username: string, context: TriggerContext, cacheHours?: number): Promise <UserSocialLink[]> {
     const cacheKey = `bbe:socialLinks:${username}`;
     const cached = await context.redis.get(cacheKey);
     if (cached) {
         return JSON.parse(cached) as UserSocialLink[];
     }
 
+    const expirationTime = cacheHours ? addHours(new Date(), cacheHours) : addMinutes(new Date(), 10);
+
     const socialLinks = await getUserSocialLinks(username, context);
-    await context.redis.set(cacheKey, JSON.stringify(socialLinks), { expiration: addHours(new Date(), cacheHours) });
+    await context.redis.set(cacheKey, JSON.stringify(socialLinks), { expiration: expirationTime });
     return socialLinks;
 }
