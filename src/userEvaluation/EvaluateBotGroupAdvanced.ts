@@ -405,8 +405,12 @@ interface BotGroup {
     criteria?: CriteriaGroup;
 }
 
-function validateBotGroup (group: BotGroup): ValidationIssue[] {
+function validateBotGroup (group: BotGroup | null): ValidationIssue[] {
     const errors: ValidationIssue[] = [];
+    if (group === null) {
+        return [{ severity: "error", message: "Bot group contains no properties." }];
+    }
+
     if (!group.name) {
         errors.push({ severity: "error", message: "Bot group name is required." });
     }

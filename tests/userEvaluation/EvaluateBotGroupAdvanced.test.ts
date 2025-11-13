@@ -1147,6 +1147,26 @@ group1:
     console.log(variables);
     const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
     const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(1);
+});
+
+test("Validate empty groups", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+
+group2:
+    name: Test Group
+    criteria:
+        type: comment
+`;
+
+    const variables = yamlToVariables(yaml);
+    console.log(variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const errors = evaluator.validateVariables();
     console.log(errors);
     expect(errors.length).toEqual(1);
 });
