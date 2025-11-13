@@ -1,10 +1,6 @@
 import { JSONValue, TriggerContext, User } from "@devvit/public-api";
 import { parseAllDocuments } from "yaml";
 
-export function replaceAll (input: string, pattern: string, replacement: string): string {
-    return input.split(pattern).join(replacement);
-}
-
 export async function getUserOrUndefined (username: string, context: TriggerContext): Promise<User | undefined> {
     let user: User | undefined;
     try {
@@ -40,10 +36,10 @@ export function yamlToVariables (input: string): Record<string, JSONValue> {
     let yaml = input;
     for (const key in substitutionsList) {
         if (typeof substitutionsList[key] === "string") {
-            yaml = replaceAll(yaml, `{{${key}}}`, substitutionsList[key]);
+            yaml = yaml.replaceAll(`{{${key}}}`, substitutionsList[key]);
         } else {
             // Handle array substitutions
-            yaml = replaceAll(yaml, `{{${key}}}`, JSON.stringify(substitutionsList[key]));
+            yaml = yaml.replaceAll(`{{${key}}}`, JSON.stringify(substitutionsList[key]));
         }
     }
 

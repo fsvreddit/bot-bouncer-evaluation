@@ -1,5 +1,5 @@
 import { TriggerContext, UserSocialLink } from "@devvit/public-api";
-import { getUserSocialLinks } from "../extendedDevvit";
+import { getUserSocialLinks } from "devvit-helpers";
 import { addMinutes } from "date-fns";
 import { MAIN_APP_NAME } from "../constants";
 
@@ -23,7 +23,7 @@ export async function getSocialLinksWithCache (username: string, context: Trigge
         return JSON.parse(cached) as UserSocialLink[];
     }
 
-    const socialLinks = await getUserSocialLinks(username, context);
+    const socialLinks = await getUserSocialLinks(username, context.metadata);
     await redis.set(cacheKey, JSON.stringify(socialLinks), { expiration: addMinutes(new Date(), 5) });
     return socialLinks;
 }
