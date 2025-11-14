@@ -4,8 +4,6 @@ import { EvaluateFirstCommentEmDash } from "./userEvaluation/EvaluateFirstCommen
 import { EvaluateBadUsername } from "./userEvaluation/EvaluateBadUsername.js";
 import { EvaluatePinnedPostTitles } from "./userEvaluation/EvaluatePinnedPostTitle.js";
 import { EvaluateSelfComment } from "./userEvaluation/EvaluateSelfComment.js";
-import { EvaluateSoccerStreamBot } from "./userEvaluation/EvaluateSoccerStreamBot.js";
-import { EvaluateRepeatedPhraseBot } from "./userEvaluation/EvaluateRepeatedPhraseBot.js";
 import { EvaluatePostTitle } from "./userEvaluation/EvaluatePostTitle.js";
 import { EvaluateBioText } from "./userEvaluation/EvaluateBioText.js";
 import { EvaluateObfuscatedBioKeywords } from "./userEvaluation/EvaluateObfuscatedBioKeywords.js";
@@ -13,7 +11,6 @@ import { EvaluateSocialLinks } from "./userEvaluation/EvaluateSocialLinks.js";
 import { EvaluateSuspiciousFirstPost } from "./userEvaluation/EvaluateSuspiciousFirstPost.js";
 import { EvaluateInconsistentAgeBot } from "./userEvaluation/EvaluateInconsistentAgeBot.js";
 import { EvaluateInconsistentGenderBot } from "./userEvaluation/EvaluateInconsistentGenderBot.js";
-import { EvaluateOFLinksBot } from "./userEvaluation/EvaluateOFLinksBot.js";
 import { EvaluateBadDisplayName } from "./userEvaluation/EvaluateBadDisplayname.js";
 import { EvaluateWorldTraveller } from "./userEvaluation/EvaluateWorldTraveller.js";
 import { EvaluateCommentPhrase } from "./userEvaluation/EvaluateCommentPhrase.js";
@@ -25,31 +22,42 @@ import { EvaluateBioTextDefinedHandles } from "./userEvaluation/EvaluateBioTextD
 import { EvaluatePostTitleDefinedHandles } from "./userEvaluation/EvaluatePostTitleDefinedHandles.js";
 import { EvaluateBadDisplayNameDefinedHandles } from "./userEvaluation/EvaluateBadDisplaynameDefinedHandles.js";
 
+/**
+ * Array of all evaluators.
+ *
+ * In some scenarios, evaluators are run exactly in order, and may return true
+ * as soon as one evaluator detects a bot.
+ *
+ * As a result, order entries to prioritise faster evaluators that do not need to
+ * reference social links or account history first.
+ */
 export const ALL_EVALUATORS = [
+    // Evaluators that can work based on the UserExtended object only
     EvaluateBadUsername,
     EvaluateBioText,
     EvaluateBioTextDefinedHandles,
+    EvaluateBadDisplayName,
+    EvaluateBadDisplayNameDefinedHandles,
+    EvaluateObfuscatedBioKeywords,
+
+    // Evaluators that reference posts and comments, but not social links
     EvaluateMixedBot,
     EvaluateDomainSharer,
     EvaluateFirstCommentEmDash,
     EvaluatePinnedPostTitles,
     EvaluateSelfComment,
-    EvaluateSoccerStreamBot,
-    EvaluateRepeatedPhraseBot,
     EvaluatePostTitle,
     EvaluatePostTitleDefinedHandles,
-    EvaluateObfuscatedBioKeywords,
-    EvaluateSocialLinks,
     EvaluateSuspiciousFirstPost,
     EvaluateInconsistentAgeBot,
     EvaluateInconsistentGenderBot,
-    EvaluateOFLinksBot,
-    EvaluateBadDisplayName,
-    EvaluateBadDisplayNameDefinedHandles,
     EvaluateWorldTraveller,
     EvaluateCommentPhrase,
     EvaluateRapidFireBot,
     EvaluateTGGroup,
     EvaluateFirstPostWithSelfComment,
+
+    // Evaluators that need social links or other complicated data should be at the end
+    EvaluateSocialLinks,
     EvaluateBotGroupAdvanced,
 ];
