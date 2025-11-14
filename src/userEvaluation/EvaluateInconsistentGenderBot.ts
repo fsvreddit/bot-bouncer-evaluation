@@ -1,5 +1,5 @@
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { Comment, Post } from "@devvit/public-api";
 import { UserExtended } from "../extendedDevvit.js";
 import { compact, countBy } from "lodash";
@@ -17,11 +17,7 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
     }
 
     public getGenderFromTitle (title: string): string | undefined {
-        const genderRegexes = [
-            /^(?:18|19|[2-5]\d)(?: ?\[)?([MF])(?:4[FMART])\b/i,
-            /^([MF])(?:18|19|[2-5]\d)/i,
-            /^(?:18|19|[2-5]\d)([MF])/i,
-        ];
+        const genderRegexes = this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
 
         for (const regex of genderRegexes) {
             const match = regex.exec(title);
@@ -31,6 +27,30 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
         }
 
         return;
+    }
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const regexes = this.getVariable<string[]>("genderregexes", []);
+        return regexes.map(regex => ({
+            evaluatorName: this.name,
+            regex,
+            flags: "i",
+        }));
+    }
+
+    override validateVariables (): ValidationIssue[] {
+        const regexes = this.gatherRegexes();
+        const results: ValidationIssue[] = [];
+
+        for (const regexObj of regexes) {
+            try {
+                new RegExp(regexObj.regex, regexObj.flags);
+            } catch {
+                results.push({ severity: "error", message: `Invalid regex in inconsistentgender: ${regexObj.regex}` });
+            }
+        }
+
+        return results;
     }
 
     override preEvaluatePost (post: Post): boolean {
