@@ -1,5 +1,5 @@
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { Comment, Post } from "@devvit/public-api";
 import { UserExtended } from "../extendedDevvit.js";
 import { compact, uniq } from "lodash";
@@ -11,19 +11,36 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
     override banContentThreshold = 6;
     override canAutoBan = true;
 
+    override gatherRegexes (): EvaluatorRegex[] {
+        const regexes = this.getVariable<string[]>("ageregexes", []);
+        return regexes.map(regex => ({
+            evaluatorName: this.name,
+            regex,
+        }));
+    }
+
+    override validateVariables (): ValidationIssue[] {
+        const regexes = this.gatherRegexes().map(r => r.regex);
+        const results: ValidationIssue[] = [];
+
+        for (const regexVal of regexes) {
+            try {
+                new RegExp(regexVal);
+            } catch {
+                results.push({ severity: "error", message: `Invalid regex in inconsistentage: ${regexVal}` });
+            }
+        }
+
+        return results;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_event: CommentCreate): boolean {
         return false;
     }
 
-    private ageRegexes = [
-        /^F\s?(18|19|[2-4][0-9])(?![$+])/,
-        /^(18|19|[2-4][0-9])\s?F/,
-        /^(18|19|[2-4][0-9]) \[F/,
-    ];
-
-    private getAgeFromPostTitle (title: string): number | undefined {
-        for (const regex of this.ageRegexes) {
+    private getAgeFromPostTitle (title: string, regexes: RegExp[]): number | undefined {
+        for (const regex of regexes) {
             const match = title.match(regex);
             if (match) {
                 return parseInt(match[1]);
@@ -36,7 +53,8 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
             return false;
         }
 
-        return this.getAgeFromPostTitle(post.title) !== undefined;
+        const regexes = this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
+        return this.getAgeFromPostTitle(post.title, regexes) !== undefined;
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -55,7 +73,8 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
             return false;
         }
 
-        const agesFound = uniq(compact(nsfwPosts.map(post => this.getAgeFromPostTitle(post.title))));
+        const regexes = this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
+        const agesFound = uniq(compact(nsfwPosts.map(post => this.getAgeFromPostTitle(post.title, regexes))));
 
         if (agesFound.length < 3) {
             this.setReason(`User has not posted enough different ages in NSFW posts: ${agesFound.join(", ")}`);
