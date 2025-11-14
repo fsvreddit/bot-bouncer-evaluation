@@ -1,8 +1,16 @@
-import { Post, TriggerContext } from "@devvit/public-api";
+import { JSONValue, Post, TriggerContext } from "@devvit/public-api";
 import { EvaluateInconsistentGenderBot } from "../../src/userEvaluation/EvaluateInconsistentGenderBot.js";
 import { UserExtended } from "../../src/extendedDevvit.js";
 
 const mockContext = {} as unknown as TriggerContext;
+
+const mockVariables: Record<string, JSONValue> = {
+    "inconsistentgender:genderregexes": [
+        "^(?:18|19|[2-5]\\d)(?: ?\\[)?([MF])(?:4[FMART])\\b",
+        "^([MF])(?:18|19|[2-5]\\d)",
+        "^(?:18|19|[2-5]\\d)(M|F(?!b|tM))",
+    ],
+};
 
 test("User with consistent genders", () => {
     const history = Array.from({ length: 6 }, (_, i) => ({
@@ -14,7 +22,7 @@ test("User with consistent genders", () => {
         isNsfw: () => true,
     })) as unknown as Post[];
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, {});
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, mockVariables);
     const evaluationResult = evaluator.evaluate({} as unknown as UserExtended, history);
     expect(evaluationResult).toBeFalsy();
 });
@@ -47,7 +55,7 @@ test("User with inconsistent genders", () => {
         isNsfw: () => true,
     } as unknown as Post);
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, {});
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, mockVariables);
     const evaluationResult = evaluator.evaluate({} as unknown as UserExtended, history);
     expect(evaluationResult).toBeTruthy();
 });
@@ -62,7 +70,7 @@ test("Regex formats", () => {
         { title: "23M", expected: "M" },
     ];
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, {});
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, mockVariables);
 
     for (const { title, expected } of testCases) {
         const result = evaluator.getGenderFromTitle(title);
@@ -70,4 +78,17 @@ test("Regex formats", () => {
             assert.fail(`Expected "${expected}" but got "${result}" for title "${title}"`);
         }
     }
+});
+
+test("Validation fails if no capturing group found", () => {
+    const variables = {
+        "inconsistentgender:genderregexes": [
+            "^F\\s?(18|19|[2-4][0-9])(?![$+])",
+            "F(?:[0-9]{2})",
+        ],
+    };
+
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, variables);
+    const results = evaluator.validateVariables();
+    expect(results.length).toBe(1);
 });

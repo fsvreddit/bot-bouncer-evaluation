@@ -4,6 +4,7 @@ import { Comment, Post } from "@devvit/public-api";
 import { UserExtended } from "../extendedDevvit.js";
 import { compact, countBy } from "lodash";
 import { subWeeks } from "date-fns";
+import { parse } from "regjsparser";
 
 export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
     override name = "Inconsistent Gender Bot";
@@ -45,6 +46,16 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
         for (const regexObj of regexes) {
             try {
                 new RegExp(regexObj.regex, regexObj.flags);
+                const parsed = parse(regexObj.regex, "i");
+                if (parsed.type !== "alternative") {
+                    results.push({ severity: "error", message: `No capturing group found in regex: ${regexObj.regex}` });
+                    continue;
+                }
+                const capturingGroups = parsed.body.filter(part => part.type === "group" && part.behavior === "normal");
+                if (capturingGroups.length !== 1) {
+                    results.push({ severity: "error", message: `Expected exactly one capturing group in regex: ${regexObj.regex}` });
+                    continue;
+                }
             } catch {
                 results.push({ severity: "error", message: `Invalid regex in inconsistentgender: ${regexObj.regex}` });
             }

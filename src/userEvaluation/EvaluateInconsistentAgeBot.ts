@@ -4,6 +4,7 @@ import { Comment, Post } from "@devvit/public-api";
 import { UserExtended } from "../extendedDevvit.js";
 import { compact, uniq } from "lodash";
 import { subWeeks } from "date-fns";
+import { parse } from "regjsparser";
 
 export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
     override name = "Inconsistent Age Bot";
@@ -26,8 +27,18 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
         for (const regexVal of regexes) {
             try {
                 new RegExp(regexVal);
+                const parsed = parse(regexVal, "i");
+                if (parsed.type !== "alternative") {
+                    results.push({ severity: "error", message: `No capturing group found in regex: ${regexVal}` });
+                    continue;
+                }
+                const capturingGroups = parsed.body.filter(part => part.type === "group" && part.behavior === "normal");
+                if (capturingGroups.length !== 1) {
+                    results.push({ severity: "error", message: `Expected exactly one capturing group in regex: ${regexVal}` });
+                    continue;
+                }
             } catch {
-                results.push({ severity: "error", message: `Invalid regex in inconsistentage: ${regexVal}` });
+                results.push({ severity: "error", message: `Invalid regex: ${regexVal}` });
             }
         }
 

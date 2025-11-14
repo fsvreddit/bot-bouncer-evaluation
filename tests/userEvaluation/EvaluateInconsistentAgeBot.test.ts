@@ -13,7 +13,14 @@ const mockBasicHistory = [
 
 const mockUser = {} as unknown as UserExtended;
 
-const mockVariables = {} as unknown as Record<string, JSONValue>;
+const mockVariables: Record<string, JSONValue> = {
+    "inconsistentage:contentthreshold": 4,
+    "inconsistentage:ageregexes": [
+        "^F\\s?(18|19|[2-4][0-9])(?![$+])",
+        "^(18|19|[2-4][0-9])\\s?F",
+        "^(18|19|[2-4][0-9]) \\[F",
+    ],
+};
 
 test("User with three different sequential ages", () => {
     const history = [
@@ -39,4 +46,17 @@ test("Male user with three different sequential ages", () => {
     const evaluator = new EvaluateInconsistentAgeBot(mockContext, undefined, mockVariables);
     const result = evaluator.evaluate(mockUser, history);
     expect(result).toBeFalsy();
+});
+
+test("Validation fails if no capturing group found", () => {
+    const variables = {
+        "inconsistentage:ageregexes": [
+            "^F\\s?(18|19|[2-4][0-9])(?![$+])",
+            "F(?:[0-9]{2})",
+        ],
+    };
+
+    const evaluator = new EvaluateInconsistentAgeBot(mockContext, undefined, variables);
+    const results = evaluator.validateVariables();
+    expect(results.length).toBe(1);
 });
