@@ -57,7 +57,7 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
                     continue;
                 }
             } catch {
-                results.push({ severity: "error", message: `Invalid regex in inconsistentgender: ${regexObj.regex}` });
+                results.push({ severity: "error", message: `Invalid regex: ${regexObj.regex}` });
             }
         }
 
