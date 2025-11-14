@@ -1,6 +1,6 @@
 import { Comment, Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { CONTROL_SUBREDDIT } from "../constants.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { uniq } from "lodash";
@@ -17,6 +17,33 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
 
     override canAutoBan = true;
     override banContentThreshold = 10;
+
+    override validateVariables (): ValidationIssue[] {
+        const subGroups = this.getWTSubGroups();
+        const results: ValidationIssue[] = [];
+
+        const allSubs = new Set<string>();
+        const duplicateSubs = new Set<string>();
+
+        for (const group of subGroups) {
+            for (const sub of group.subs) {
+                if (allSubs.has(sub)) {
+                    duplicateSubs.add(sub);
+                } else {
+                    allSubs.add(sub);
+                }
+            }
+        }
+
+        if (duplicateSubs.size > 0) {
+            results.push({
+                severity: "warning",
+                message: `Subreddits found in more than one group: ${Array.from(duplicateSubs).join(", ")}`,
+            });
+        }
+
+        return results;
+    }
 
     private getWTSubGroups (): SubGroup[] {
         const subGroups = this.getVariable<string[]>("subgroups", []);
@@ -36,7 +63,7 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
-        return this.isInEligibleSubreddit();
+        return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -44,9 +71,8 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
         return this.isInEligibleSubreddit();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override preEvaluateUser (_: UserExtended): boolean {
-        return this.isInEligibleSubreddit();
+    override preEvaluateUser (user: UserExtended): boolean {
+        return user.nsfw && this.isInEligibleSubreddit();
     }
 
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
