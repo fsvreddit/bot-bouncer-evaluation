@@ -633,7 +633,6 @@ group4:
     expect(errors.length).toEqual(0);
 
     const evaluationResult = await evaluator.evaluate(user, history);
-    console.log(evaluator.getReasons());
     expect(evaluationResult).toBe(true);
 });
 
@@ -1144,7 +1143,6 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    console.log(variables);
     const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
@@ -1164,9 +1162,7 @@ group2:
 `;
 
     const variables = yamlToVariables(yaml);
-    console.log(variables);
     const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
     const errors = evaluator.validateVariables();
-    console.log(errors);
     expect(errors.length).toEqual(1);
 });
