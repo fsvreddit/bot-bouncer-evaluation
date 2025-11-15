@@ -21,6 +21,7 @@ import { EvaluateBotGroupAdvanced } from "./userEvaluation/EvaluateBotGroupAdvan
 import { EvaluateBioTextDefinedHandles } from "./userEvaluation/EvaluateBioTextDefinedHandles.js";
 import { EvaluatePostTitleDefinedHandles } from "./userEvaluation/EvaluatePostTitleDefinedHandles.js";
 import { EvaluateBadDisplayNameDefinedHandles } from "./userEvaluation/EvaluateBadDisplaynameDefinedHandles.js";
+import { EvaluatePostTitleMulti } from "./userEvaluation/EvaluatePostTitleMulti.js";
 
 /**
  * Array of all evaluators.
@@ -48,6 +49,7 @@ export const ALL_EVALUATORS = [
     EvaluateSelfComment,
     EvaluatePostTitle,
     EvaluatePostTitleDefinedHandles,
+    EvaluatePostTitleMulti,
     EvaluateSuspiciousFirstPost,
     EvaluateInconsistentAgeBot,
     EvaluateInconsistentGenderBot,
