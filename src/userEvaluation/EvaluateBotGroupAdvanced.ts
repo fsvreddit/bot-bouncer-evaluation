@@ -187,7 +187,11 @@ interface CommentCondition extends BaseItemCondition {
     postId?: string[];
     isTopLevel?: boolean;
     isCommentOnOwnPost?: boolean;
+    postAuthorNameRegex?: string[];
     postTitleRegex?: string[];
+    postBodyRegex?: string[];
+    postUrlRegex?: string[];
+    postCreatedAtAge?: AgeCriteria;
 }
 
 function validateCommentCondition (condition: CommentCondition): ValidationIssue[] {
@@ -214,12 +218,28 @@ function validateCommentCondition (condition: CommentCondition): ValidationIssue
         errors.push({ severity: "error", message: "isCommentOnOwnPost must be a boolean." });
     }
 
+    if (condition.postAuthorNameRegex) {
+        errors.push(...validateRegexArray(condition.postAuthorNameRegex));
+    }
+
     if (condition.postTitleRegex) {
         errors.push(...validateRegexArray(condition.postTitleRegex));
     }
 
+    if (condition.postBodyRegex) {
+        errors.push(...validateRegexArray(condition.postBodyRegex));
+    }
+
+    if (condition.postUrlRegex) {
+        errors.push(...validateRegexArray(condition.postUrlRegex));
+    }
+
+    if (condition.postCreatedAtAge) {
+        errors.push(...validateAgeCriteria(condition.postCreatedAtAge).map(error => ({ severity: error.severity, message: `Post created at age criteria: ${error.message}` })));
+    }
+
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postId", "isTopLevel", "isCommentOnOwnPost", "postTitleRegex"];
+    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postId", "isTopLevel", "isCommentOnOwnPost", "postAuthorNameRegex", "postTitleRegex", "postBodyRegex", "postUrlRegex", "postCreatedAtAge"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in comment condition: ${key}` });
@@ -375,7 +395,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): ValidationI
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postTitleRegex"];
+    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postAuthorNameRegex", "postTitleRegex", "postBodyRegex", "postUrlRegex", "postCreatedAtAge", "isCrossPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in criteria group: ${key}` });
@@ -507,6 +527,14 @@ function validateBotGroup (group: BotGroup | null): ValidationIssue[] {
     }
 
     return errors;
+}
+
+interface PostProperties {
+    authorName: string;
+    title: string;
+    body?: string;
+    url: string;
+    createdAt: number;
 }
 
 export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
@@ -850,25 +878,32 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return true;
     }
 
-    private cachedPostTitles: Record<string, string> = {};
+    private cachedPostProperties: Record<string, PostProperties> = {};
 
-    private async getPostTitle (postId: string): Promise<string> {
-        const localCachedTitle = this.cachedPostTitles[postId];
-        if (localCachedTitle) {
-            return localCachedTitle;
+    private async getPostProperties (postId: string): Promise<PostProperties> {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (this.cachedPostProperties[postId]) {
+            return this.cachedPostProperties[postId];
         }
 
-        const cacheKey = `bbe~postTitle~${postId}`;
-        const cachedPostTitle = await this.context.redis.get(cacheKey);
-        if (cachedPostTitle) {
-            this.cachedPostTitles[postId] = cachedPostTitle;
-            return cachedPostTitle;
+        const cacheKey = `bbe~postProperties~${postId}`;
+        const cachedPostProperties = await this.context.redis.get(cacheKey);
+        if (cachedPostProperties) {
+            this.cachedPostProperties[postId] = JSON.parse(cachedPostProperties) as PostProperties;
+            return this.cachedPostProperties[postId];
         }
 
-        const post = await this.context.reddit.getPostById(postId);
-        await this.context.redis.set(cacheKey, post.title, { expiration: addDays(new Date(), 1) });
-        this.cachedPostTitles[postId] = post.title;
-        return post.title;
+        const postProperties = await this.context.reddit.getPostById(postId).then(post => ({
+            authorName: post.authorName,
+            title: post.title,
+            body: post.body,
+            url: post.url,
+            createdAt: post.createdAt.getTime(),
+        }));
+
+        await this.context.redis.set(cacheKey, JSON.stringify(postProperties), { expiration: addDays(new Date(), 1) });
+        this.cachedPostProperties[postId] = postProperties;
+        return postProperties;
     }
 
     private async commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): Promise<boolean> {
@@ -893,9 +928,37 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             return condition.isCommentOnOwnPost === (parentPost?.authorName === comment.authorName);
         }
 
-        if (condition.postTitleRegex) {
-            const postTitle = await this.getPostTitle(comment.postId);
-            if (!this.anyRegexMatches(postTitle, condition.postTitleRegex)) {
+        let postProperties: PostProperties | undefined;
+        if (condition.postAuthorNameRegex || condition.postTitleRegex || condition.postBodyRegex || condition.postUrlRegex || condition.postCreatedAtAge) {
+            postProperties = await this.getPostProperties(comment.postId);
+        }
+
+        if (condition.postAuthorNameRegex && postProperties) {
+            if (!this.anyRegexMatches(postProperties.authorName, condition.postAuthorNameRegex)) {
+                return false;
+            }
+        }
+
+        if (condition.postTitleRegex && postProperties) {
+            if (!this.anyRegexMatches(postProperties.title, condition.postTitleRegex)) {
+                return false;
+            }
+        }
+
+        if (condition.postBodyRegex && postProperties) {
+            if (!postProperties.body || !this.anyRegexMatches(postProperties.body, condition.postBodyRegex)) {
+                return false;
+            }
+        }
+
+        if (condition.postUrlRegex && postProperties) {
+            if (!this.anyRegexMatches(postProperties.url, condition.postUrlRegex)) {
+                return false;
+            }
+        }
+
+        if (condition.postCreatedAtAge && postProperties) {
+            if (!this.matchesAgeCriteria(new Date(postProperties.createdAt), condition.postCreatedAtAge)) {
                 return false;
             }
         }
