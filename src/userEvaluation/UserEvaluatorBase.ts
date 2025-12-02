@@ -27,7 +27,7 @@ interface HitReasonDetailed {
     details: { key: string; value: string }[];
 }
 
-type HitReason = string | HitReasonDetailed;
+export type HitReason = string | HitReasonDetailed;
 
 export abstract class UserEvaluatorBase {
     protected context: TriggerContext;
