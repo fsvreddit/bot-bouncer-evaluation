@@ -83,7 +83,6 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
         const userPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.isNsfw());
         if (userPosts.length === 0) {
-            this.setReason("User has no NSFW posts");
             return false;
         }
 

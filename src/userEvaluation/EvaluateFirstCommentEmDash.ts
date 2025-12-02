@@ -54,7 +54,6 @@ export class EvaluateFirstCommentEmDash extends UserEvaluatorBase {
 
     override preEvaluateUser (user: UserExtended): boolean {
         if (user.createdAt < subMonths(new Date(), 2)) {
-            this.setReason("Account is too old");
             return false;
         }
 
@@ -75,17 +74,14 @@ export class EvaluateFirstCommentEmDash extends UserEvaluatorBase {
         }
 
         if (comments.length === 0) {
-            this.setReason("User has no comments");
             return false;
         }
 
         if (comments.some(comment => !this.eligibleComment(comment))) {
-            this.setReason("User has non-toplevel comments");
             return false;
         }
 
         if (comments.some(comment => posts.some(post => post.id === comment.parentId))) {
-            this.setReason("User has comments on their own posts");
             return false;
         }
 
@@ -104,8 +100,6 @@ export class EvaluateFirstCommentEmDash extends UserEvaluatorBase {
         const emDashThresholdMet = comments.filter(comment => this.emDashRegex.test(comment.body)).length / comments.length > emDashThreshold;
 
         if (!firstCommentContainsEmDash && !emDashThresholdMet) {
-            this.setReason("User's first comment doesn't contain an em dash, or they have insufficient comments with them");
-
             const karmaFarmingSubs = this.getGenericVariable<string[]>("karmafarminglinksubs", []);
             const postCountNeeded = this.getVariable<number>("postcount", 3);
             const subsNeeded = this.getVariable<number>("distinctsubs", 3);
@@ -120,7 +114,6 @@ export class EvaluateFirstCommentEmDash extends UserEvaluatorBase {
         }
 
         if (posts.length > 0 && posts.some(post => !this.eligiblePost(post))) {
-            this.setReason("User has non-matching posts");
             return false;
         }
 

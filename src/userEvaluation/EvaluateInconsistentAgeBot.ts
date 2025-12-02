@@ -80,7 +80,6 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
         this.banContentThreshold = contentThreshold;
 
         if (nsfwPosts.length < 4) {
-            this.setReason("User has not posted enough NSFW posts in the last 2 weeks");
             return false;
         }
 
@@ -88,7 +87,6 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
         const agesFound = uniq(compact(nsfwPosts.map(post => this.getAgeFromPostTitle(post.title, regexes))));
 
         if (agesFound.length < 3) {
-            this.setReason(`User has not posted enough different ages in NSFW posts: ${agesFound.join(", ")}`);
             return false;
         }
 

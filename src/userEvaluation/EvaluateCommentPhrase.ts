@@ -77,13 +77,11 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
         const userComments = this.getComments(history);
         const matchingComments = userComments.filter(comment => this.eligibleComment(comment));
         if (matchingComments.length === 0) {
-            this.setReason("No matching comments found.");
             return false;
         }
 
         const minNumberOfMatchingComments = this.getVariable<number>("minnumberofmatchingcomments", 1);
         if (matchingComments.length < minNumberOfMatchingComments) {
-            this.setReason(`Not enough matching comments found. Found ${matchingComments.length}, required ${minNumberOfMatchingComments}.`);
             return false;
         }
 
@@ -94,7 +92,6 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
 
         if (!matchedPhrase) {
             // Impossible to reach this point.
-            this.setReason("No matching phrases found.");
             return false;
         }
 

@@ -44,23 +44,19 @@ export class EvaluateSuspiciousFirstPost extends UserEvaluatorBase {
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
         const comments = this.getComments(history);
         if (comments.length > 1) {
-            this.setReason("User has multiple comments.");
             return false;
         }
 
         const posts = this.getPosts(history, { omitRemoved: false });
         if (posts.length === 0) {
-            this.setReason("User has no posts.");
             return false;
         }
 
         if (posts.length > 1) {
-            this.setReason("User has multiple posts.");
             return false;
         }
 
         if (!posts.every(post => this.eligiblePost(post))) {
-            this.setReason("User has missing or mismatching posts.");
             return false;
         }
 
@@ -68,7 +64,6 @@ export class EvaluateSuspiciousFirstPost extends UserEvaluatorBase {
             const commentDate = comments[0].createdAt;
             const postDate = posts[0].createdAt;
             if (commentDate > postDate) {
-                this.setReason("User has a comment after the post.");
                 return false;
             }
         }

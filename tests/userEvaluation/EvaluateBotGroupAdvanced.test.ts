@@ -1166,3 +1166,64 @@ group2:
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
+
+test("Match reasons are emitted correctly", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    bioRegex:
+      - 'fieryava'
+    criteria:
+      every:
+        - type: post
+          subredditName:
+            - Frieren
+        - type: comment
+          bodyRegex:
+            - 'LoveHoonga'
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+        userDescription: "40F, Doctor. Find me on my link below! fieryava",
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t1_123", body: "LoveHoonga is great for AI girlfriends" } as unknown as Comment,
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(0);
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(true);
+    const actualHitReasons = evaluator.hitReasons;
+
+    const expectedHitReasons = [
+        {
+            reason: "Test Group",
+            details: [
+                {
+                    key: "bioRegex",
+                    value: "40F, Doctor. Find me on my link below! fieryava",
+                },
+                {
+                    key: "post subredditName",
+                    value: "Frieren",
+                },
+                {
+                    key: "comment bodyRegex",
+                    value: "LoveHoonga is great for AI girlfriends",
+                },
+            ],
+        },
+    ];
+
+    expect(actualHitReasons).toEqual(expectedHitReasons);
+});

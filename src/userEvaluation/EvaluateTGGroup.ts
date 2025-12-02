@@ -72,7 +72,6 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
         const recentPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.nsfw);
         if (recentPosts.length === 0) {
-            this.setReason("User has no NSFW posts");
             return false;
         }
 

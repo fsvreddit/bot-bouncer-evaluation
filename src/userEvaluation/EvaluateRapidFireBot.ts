@@ -21,17 +21,14 @@ export class EvaluateRapidFireBot extends UserEvaluatorBase {
 
     override preEvaluateUser (user: UserExtended): boolean {
         if (user.commentKarma > this.getVariable<number>("maxcommentkarma", 500)) {
-            this.setReason("User has too much karma");
             return false;
         }
 
         if (user.linkKarma > this.getVariable<number>("maxpostkarma", 500)) {
-            this.setReason("User has too much karma");
             return false;
         }
 
         if (user.createdAt < subDays(new Date(), this.getVariable<number>("maxaccountageindays", 28))) {
-            this.setReason("Account is too old");
             return false;
         }
 

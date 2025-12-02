@@ -63,7 +63,6 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
 
         const userPosts = this.getPosts(history, { since: subWeeks(new Date(), dateCutoff) }).filter(post => post.nsfw);
         if (userPosts.length === 0) {
-            this.setReason("User has no NSFW posts");
             return false;
         }
 
@@ -73,7 +72,6 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
         const matchesNeeded = this.getVariable<number>("matchesNeeded", 4);
 
         if (matchedRegexes.length < matchesNeeded) {
-            this.setReason(`User only has ${matchedRegexes.length} matching post titles, needs ${matchesNeeded}`);
             return false;
         }
 

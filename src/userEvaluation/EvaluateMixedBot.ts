@@ -64,13 +64,11 @@ export class EvaluateMixedBot extends UserEvaluatorBase {
 
     override evaluate (user: UserExtended, history: (Post | Comment)[]): boolean {
         if (history.length > 90) {
-            this.setReason("User has too many items in history");
             return false;
         }
 
         const olderContentCount = history.filter(item => item.createdAt < subYears(new Date(), 5)).length;
         if (user.createdAt > subYears(new Date(), 5) && olderContentCount > 5) {
-            this.setReason("User has too much old content");
             return false;
         }
 
@@ -78,27 +76,22 @@ export class EvaluateMixedBot extends UserEvaluatorBase {
         const comments = this.getComments(history, { since: subMonths(new Date(), 1) });
 
         if (posts.length === 0 || comments.length === 0) {
-            this.setReason("User has missing posts or comments");
             return false;
         }
 
         if (!posts.every(post => this.eligiblePost(post))) {
-            this.setReason("Mismatching post");
             return false;
         }
 
         if (!comments.every(comment => this.eligibleComment(comment))) {
-            this.setReason("Mismatching comment");
             return false;
         }
 
         if (!posts.some(post => post.title === post.title.toLowerCase() || post.title === post.title.toUpperCase())) {
-            this.setReason("No single-case post");
             return false;
         }
 
         if (!comments.some(comment => this.emDashRegex.test(comment.body))) {
-            this.setReason("No comment with an em-dash");
             return false;
         }
 

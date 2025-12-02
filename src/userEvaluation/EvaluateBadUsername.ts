@@ -63,13 +63,11 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
 
     override preEvaluateUser (user: UserExtended): boolean {
         if (!this.isBadUsername(user.username)) {
-            this.setReason("Username does not match regexes");
             return false;
         }
 
         const maxAgeWeeks = this.getVariable<number>("maxageweeks", 4);
         if (user.createdAt < subWeeks(new Date(), maxAgeWeeks)) {
-            this.setReason("Account is too old");
             return false;
         }
 

@@ -60,18 +60,15 @@ export class EvaluateSelfComment extends UserEvaluatorBase {
 
         const posts = this.getPosts(history, { omitRemoved: true });
         if (posts.length === 0 || !posts.every(post => this.eligiblePost(post))) {
-            this.setReason("User has missing or mismatching posts");
             return false;
         }
 
         const comments = this.getComments(history);
         if (comments.length === 0 || !comments.every(comment => this.eligibleComment(comment))) {
-            this.setReason("User has missing or mismatching comments");
             return false;
         }
 
         if (!posts.some(post => comments.some(comment => comment.parentId === post.id && !ignoredSubreddits.includes(post.subredditName)))) {
-            this.setReason("User has no posts with self comments");
             return false;
         }
 
@@ -79,12 +76,10 @@ export class EvaluateSelfComment extends UserEvaluatorBase {
         for (const comment of comments.filter(comment => !ignoredSubreddits.includes(comment.subredditName))) {
             const post = posts.find(post => post.id === comment.parentId);
             if (!post || post.authorId !== user.id) {
-                this.setReason("Comment on someone else's post");
                 return false;
             }
 
             if (comment.createdAt > addMinutes(post.createdAt, maxCommentAge)) {
-                this.setReason("Comment is too long after post creation");
                 return false;
             }
         }

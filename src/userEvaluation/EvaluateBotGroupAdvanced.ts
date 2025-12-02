@@ -6,7 +6,7 @@ import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvalua
 import { UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { compact, uniq } from "lodash";
+import { uniq } from "lodash";
 
 interface AgeRange {
     dateFrom: string;
@@ -537,6 +537,16 @@ interface PostProperties {
     createdAt: number;
 }
 
+interface MatchReason {
+    key: string;
+    value: string;
+}
+
+interface CriteriaMatchResult {
+    matched: boolean;
+    reasons?: MatchReason[];
+}
+
 export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     override name = "Bot Group Advanced";
     override shortname = "botgroupadvanced";
@@ -684,34 +694,36 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             || subredditNames.some(subreddit => subreddit === "$profile" && subredditName === `u_${authorName}`);
     }
 
-    private postOrCommentMatchesCondition (item: Post | Comment | CommentV2, condition: CommentCondition | PostCondition) {
+    private postOrCommentMatchesCondition (item: Post | Comment | CommentV2, condition: CommentCondition | PostCondition): CriteriaMatchResult {
+        const matchReasons: MatchReason[] = [];
+
         if (condition.edited !== undefined && "edited" in item && item.edited !== condition.edited) {
-            return false;
+            return { matched: false };
         }
 
         if (condition.minBodyLength) {
             if (item.body === undefined) {
-                return false;
+                return { matched: false };
             }
             if (item.body.length < condition.minBodyLength) {
-                return false;
+                return { matched: false };
             }
         }
 
         if (condition.maxBodyLength) {
             const body = item.body ?? "";
             if (body.length > condition.maxBodyLength) {
-                return false;
+                return { matched: false };
             }
         }
 
         if (condition.minParaCount) {
             if (item.body === undefined) {
-                return false;
+                return { matched: false };
             }
             const paraCount = item.body.split("\n").filter(para => para.trim() !== "").length;
             if (paraCount < condition.minParaCount) {
-                return false;
+                return { matched: false };
             }
         }
 
@@ -719,47 +731,57 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const body = item.body ?? "";
             const paraCount = body.split("\n").filter(para => para.trim() !== "").length;
             if (paraCount > condition.maxParaCount) {
-                return false;
+                return { matched: false };
             }
         }
 
         if (condition.bodyRegex) {
             if (item.body === undefined) {
-                return false; // Body regex check requires body to be present
+                return { matched: false }; // Body regex check requires body to be present
+            }
+
+            if (this.anyRegexMatches(item.body, condition.bodyRegex)) {
+                matchReasons.push({ key: "bodyRegex", value: item.body });
             }
             if (!this.anyRegexMatches(item.body, condition.bodyRegex)) {
-                return false;
+                return { matched: false };
             }
         }
 
-        if (condition.subredditName && !this.anySubredditMatches(item, condition.subredditName)) {
-            return false;
+        if (condition.subredditName) {
+            if (this.anySubredditMatches(item, condition.subredditName)) {
+                if ("subredditName" in item) {
+                    matchReasons.push({ key: "subredditName", value: item.subredditName });
+                }
+            } else {
+                return { matched: false };
+            }
         }
 
         if (condition.notSubredditName && this.anySubredditMatches(item, condition.notSubredditName)) {
-            return false;
+            return { matched: false };
         }
 
         if (condition.age) {
             const referenceDate = item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt);
             if (!this.matchesAgeCriteria(referenceDate, condition.age)) {
-                return false;
+                return { matched: false };
             }
         }
 
         if (condition.minKarma !== undefined) {
             if (item.score < condition.minKarma) {
-                return false;
+                return { matched: false };
             }
         }
 
         if (condition.maxKarma !== undefined) {
             if (item.score > condition.maxKarma) {
-                return false;
+                return { matched: false };
             }
         }
 
-        return true;
+        return { matched: true, reasons: matchReasons };
     }
 
     private collectCommentConditionsForPreEvalation (criteria: CriteriaGroup): CommentCondition[] {
@@ -822,7 +844,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const commentConditions: CommentCondition[] = this.collectCommentConditionsForPreEvalation(group.criteria);
             for (const condition of commentConditions) {
                 const conditionMatches = await this.commentMatchesCondition(comment.comment, condition);
-                if (!conditionMatches) {
+                if (!conditionMatches.matched) {
                     continue;
                 }
             }
@@ -837,45 +859,56 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return this.preEvaluateComment(event);
     }
 
-    private postMatchesCondition (post: Post, condition: PostCondition) {
-        if (!this.postOrCommentMatchesCondition(post, condition)) {
-            return false;
+    private postMatchesCondition (post: Post, condition: PostCondition): CriteriaMatchResult {
+        const conditionMatch = this.postOrCommentMatchesCondition(post, condition);
+        if (!conditionMatch.matched) {
+            return { matched: false };
         }
 
+        const matchReasons = [...(conditionMatch.reasons ?? []).map(reason => ({ key: `post ${reason.key}`, value: reason.value }))];
+
         if (condition.pinned !== undefined && post.stickied !== condition.pinned) {
-            return false;
+            return { matched: false };
         }
 
         if (condition.nsfw !== undefined && post.nsfw !== condition.nsfw) {
-            return false;
+            return { matched: false };
         }
 
-        if (condition.titleRegex && !this.anyRegexMatches(post.title, condition.titleRegex)) {
-            return false;
+        if (condition.titleRegex) {
+            if (this.anyRegexMatches(post.title, condition.titleRegex)) {
+                matchReasons.push({ key: "titleRegex", value: post.title });
+            } else {
+                return { matched: false };
+            }
         }
 
-        if (condition.urlRegex && !this.anyRegexMatches(post.url, condition.urlRegex)) {
-            return false;
+        if (condition.urlRegex) {
+            if (this.anyRegexMatches(post.url, condition.urlRegex)) {
+                matchReasons.push({ key: "urlRegex", value: post.url });
+            } else {
+                return { matched: false };
+            }
         }
 
         if (condition.domain) {
             const domain = domainFromUrl(post.url);
             if (!domain) {
-                return false;
+                return { matched: false };
             }
             if (!condition.domain.includes(domain)) {
-                return false;
+                return { matched: false };
             }
         }
 
         if (condition.isCrossPost !== undefined) {
             const isCrossPost = post.url.startsWith("/r/");
             if (isCrossPost !== condition.isCrossPost) {
-                return false;
+                return { matched: false };
             }
         }
 
-        return true;
+        return { matched: true, reasons: matchReasons };
     }
 
     private cachedPostProperties: Record<string, PostProperties> = {};
@@ -906,26 +939,33 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return postProperties;
     }
 
-    private async commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): Promise<boolean> {
-        if (!this.postOrCommentMatchesCondition(comment, condition)) {
-            return false;
+    private async commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): Promise<CriteriaMatchResult> {
+        const conditionMatch = this.postOrCommentMatchesCondition(comment, condition);
+        if (!conditionMatch.matched) {
+            return { matched: false };
         }
 
+        const matchReasons = [...(conditionMatch.reasons ?? []).map(reason => ({ key: `comment ${reason.key}`, value: reason.value }))];
+
         if (condition.postId && !condition.postId.some(postId => comment.postId === `t3_${postId}`)) {
-            return false;
+            return { matched: false };
         }
 
         if (condition.isTopLevel !== undefined && condition.isTopLevel !== isLinkId(comment.parentId)) {
-            return false;
+            return { matched: false };
         }
 
         if (condition.isCommentOnOwnPost !== undefined) {
             if (!history || !(comment instanceof Comment)) {
-                return false;
+                return { matched: false };
             }
             const posts = this.getPosts(history);
             const parentPost = posts.find(post => post.id === comment.postId);
-            return condition.isCommentOnOwnPost === (parentPost?.authorName === comment.authorName);
+
+            const matchesCriteria = condition.isCommentOnOwnPost === (parentPost?.authorName === comment.authorName);
+            if (!matchesCriteria) {
+                return { matched: false };
+            }
         }
 
         let postProperties: PostProperties | undefined;
@@ -934,36 +974,48 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         if (condition.postAuthorNameRegex && postProperties) {
-            if (!this.anyRegexMatches(postProperties.authorName, condition.postAuthorNameRegex)) {
-                return false;
+            if (this.anyRegexMatches(postProperties.authorName, condition.postAuthorNameRegex)) {
+                matchReasons.push({ key: "postAuthorNameRegex", value: postProperties.authorName });
+            } else {
+                return { matched: false };
             }
         }
 
         if (condition.postTitleRegex && postProperties) {
-            if (!this.anyRegexMatches(postProperties.title, condition.postTitleRegex)) {
-                return false;
+            if (this.anyRegexMatches(postProperties.title, condition.postTitleRegex)) {
+                matchReasons.push({ key: "postTitleRegex", value: postProperties.title });
+            } else {
+                return { matched: false };
             }
         }
 
         if (condition.postBodyRegex && postProperties) {
-            if (!postProperties.body || !this.anyRegexMatches(postProperties.body, condition.postBodyRegex)) {
-                return false;
+            if (!postProperties.body) {
+                return { matched: false };
+            }
+
+            if (this.anyRegexMatches(postProperties.body, condition.postBodyRegex)) {
+                matchReasons.push({ key: "postBodyRegex", value: postProperties.body });
+            } else {
+                return { matched: false };
             }
         }
 
         if (condition.postUrlRegex && postProperties) {
-            if (!this.anyRegexMatches(postProperties.url, condition.postUrlRegex)) {
-                return false;
+            if (this.anyRegexMatches(postProperties.url, condition.postUrlRegex)) {
+                matchReasons.push({ key: "postUrlRegex", value: postProperties.url });
+            } else {
+                return { matched: false };
             }
         }
 
         if (condition.postCreatedAtAge && postProperties) {
             if (!this.matchesAgeCriteria(new Date(postProperties.createdAt), condition.postCreatedAtAge)) {
-                return false;
+                return { matched: false };
             }
         }
 
-        return true;
+        return { matched: true, reasons: matchReasons };
     }
 
     private collectPostConditionsForPreEvalation (criteria: CriteriaGroup): PostCondition[] {
@@ -995,107 +1047,113 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             };
 
             const postConditions: PostCondition[] = this.collectPostConditionsForPreEvalation(group.criteria);
-            return postConditions.some(condition => this.postMatchesCondition(post, condition));
+            return postConditions.some(condition => this.postMatchesCondition(post, condition).matched);
         });
     }
 
-    private async accountMatchesGroup (user: UserExtended, group: BotGroup): Promise<boolean> {
+    private async accountMatchesGroup (user: UserExtended, group: BotGroup): Promise<CriteriaMatchResult> {
         if (group.usernameRegex && !this.anyRegexMatches(user.username, group.usernameRegex)) {
-            this.setReason(`Username does not match regex in group ${group.name}`);
-            return false;
+            return { matched: false };
         }
 
         if (group.age && !this.matchesAgeCriteria(user.createdAt, group.age)) {
-            this.setReason(`Account age does not match criteria in group ${group.name}`);
-            return false;
+            return { matched: false };
         }
 
         if (group.maxCommentKarma && user.commentKarma > group.maxCommentKarma) {
-            this.setReason(`Comment karma exceeds limit in group ${group.name}`);
-            return false;
+            return { matched: false };
         }
 
         if (group.maxLinkKarma && user.linkKarma > group.maxLinkKarma) {
-            this.setReason(`Link karma exceeds limit in group ${group.name}`);
-            return false;
+            return { matched: false };
         }
 
         if (group.minCommentKarma && user.commentKarma < group.minCommentKarma) {
-            this.setReason(`Comment karma below minimum in group ${group.name}`);
-            return false;
+            return { matched: false };
         }
 
         if (group.minLinkKarma && user.linkKarma < group.minLinkKarma) {
-            this.setReason(`Link karma below minimum in group ${group.name}`);
-            return false;
+            return { matched: false };
         }
 
         if (group.nsfw !== undefined && user.nsfw !== group.nsfw) {
-            this.setReason(`User is not marked as NSFW in group ${group.name}`);
-            return false;
+            return { matched: false };
         }
+
+        if (group.hasVerifiedEmail !== undefined && user.hasVerifiedEmail !== group.hasVerifiedEmail) {
+            return { matched: false };
+        }
+
+        if (group.hasRedditPremium !== undefined && user.isGold !== group.hasRedditPremium) {
+            return { matched: false };
+        }
+
+        if (group.isSubredditModerator !== undefined && user.isModerator !== group.isSubredditModerator) {
+            return { matched: false };
+        }
+
+        const matchReasons: MatchReason[] = [];
 
         if (group.bioRegex) {
             if (!user.userDescription) {
-                this.setReason(`User does not have a bio in group ${group.name}`);
-                return false;
+                return { matched: false };
             }
-            if (!this.anyRegexMatches(user.userDescription, group.bioRegex)) {
-                this.setReason(`Bio does not match regex in group ${group.name}`);
-                return false;
+
+            if (this.anyRegexMatches(user.userDescription, group.bioRegex)) {
+                matchReasons.push({ key: "bioRegex", value: user.userDescription });
+            } else {
+                return { matched: false };
             }
         }
 
         if (group.displayNameRegex) {
             if (!user.displayName) {
-                this.setReason(`User does not have a display name in group ${group.name}`);
-                return false;
+                return { matched: false };
             }
-            if (!this.anyRegexMatches(user.displayName, group.displayNameRegex)) {
-                this.setReason(`Display name does not match regex in group ${group.name}`);
-                return false;
+
+            if (this.anyRegexMatches(user.displayName, group.displayNameRegex)) {
+                matchReasons.push({ key: "displayNameRegex", value: user.displayName });
+            } else {
+                return { matched: false };
             }
         }
 
         if (group.socialLinkRegex) {
             const userSocialLinks = await this.getSocialLinks(user.username);
-            if (!userSocialLinks.some(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex))) {
-                this.setReason(`No matching social links found for user in group ${group.name}`);
-                return false;
+            if (userSocialLinks.length === 0) {
+                return { matched: false };
+            }
+
+            const matchingSocialLink = userSocialLinks.find(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex));
+            if (matchingSocialLink) {
+                matchReasons.push({ key: "socialLinkRegex", value: matchingSocialLink.outboundUrl });
+            } else {
+                return { matched: false };
             }
         }
 
         if (group.socialLinkTitleRegex) {
             const userSocialLinks = await this.getSocialLinks(user.username);
-            if (!userSocialLinks.some(userLink => group.socialLinkTitleRegex && userLink.title && this.anyRegexMatches(userLink.title, group.socialLinkTitleRegex))) {
-                this.setReason(`No matching social link titles found for user in group ${group.name}`);
-                return false;
+            if (userSocialLinks.length === 0) {
+                return { matched: false };
+            }
+
+            const matchingSocialLink = userSocialLinks.find(userLink => group.socialLinkTitleRegex && userLink.title && this.anyRegexMatches(userLink.title, group.socialLinkTitleRegex));
+            if (matchingSocialLink) {
+                matchReasons.push({ key: "socialLinkTitleRegex", value: matchingSocialLink.title });
+            } else {
+                return { matched: false };
             }
         }
 
-        if (group.hasVerifiedEmail !== undefined && user.hasVerifiedEmail !== group.hasVerifiedEmail) {
-            this.setReason(`User has verified email status does not match in group ${group.name}`);
-            return false;
-        }
-
-        if (group.hasRedditPremium !== undefined && user.isGold !== group.hasRedditPremium) {
-            this.setReason(`User has Reddit Premium status does not match in group ${group.name}`);
-            return false;
-        }
-
-        if (group.isSubredditModerator !== undefined && user.isModerator !== group.isSubredditModerator) {
-            this.setReason(`User is subreddit moderator status does not match in group ${group.name}`);
-            return false;
-        }
-
-        return true;
+        return { matched: true, reasons: matchReasons };
     }
 
     override async preEvaluateUser (user: UserExtended): Promise<boolean> {
         const botGroups = this.getBotGroups();
         for (const group of botGroups) {
             const matches = await this.accountMatchesGroup(user, group);
-            if (matches) {
+            if (matches.matched) {
                 return true;
             }
         }
@@ -1103,37 +1161,53 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return false;
     }
 
-    private async historyMatchesCriteriaGroup (history: (Post | Comment)[], criteria: CriteriaGroup): Promise<boolean> {
+    private async historyMatchesCriteriaGroup (history: (Post | Comment)[], criteria: CriteriaGroup): Promise<CriteriaMatchResult> {
         if ("not" in criteria) {
-            return !await this.historyMatchesCriteriaGroup(history, criteria.not);
+            const matchesGroup = await this.historyMatchesCriteriaGroup(history, criteria.not);
+            return { matched: !matchesGroup.matched };
         } else if ("every" in criteria) {
-            return (await Promise.all(criteria.every.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)))).every(Boolean);
+            const allMatch = await Promise.all(criteria.every.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)));
+            if (!allMatch.every(result => result.matched)) {
+                return { matched: false };
+            }
+
+            return { matched: true, reasons: allMatch.flatMap(result => result.reasons ?? []) };
         } else if ("some" in criteria) {
-            return (await Promise.all(criteria.some.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)))).some(Boolean);
+            const someMatch = await Promise.all(criteria.some.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)));
+            if (!someMatch.some(result => result.matched)) {
+                return { matched: false };
+            }
+
+            return { matched: true, reasons: someMatch.filter(item => item.matched).flatMap(result => result.reasons ?? []) };
         } else if ("type" in criteria) {
             if (criteria.type === "post") {
                 const posts = this.getPosts(history);
-                const matchingPosts = posts.filter(post => this.postMatchesCondition(post, criteria));
+
+                const matches = posts.map(post => this.postMatchesCondition(post, criteria)).filter(result => result.matched);
                 const matchesNeeded = criteria.matchesNeeded ?? 1;
-                if (matchingPosts.length < matchesNeeded) {
-                    return false;
-                } else {
-                    return true;
+
+                if (matches.length < matchesNeeded) {
+                    return { matched: false };
                 }
+
+                return { matched: true, reasons: uniq(matches.flatMap(result => result.reasons ?? [])) };
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             } else if (criteria.type === "comment") {
                 const comments = this.getComments(history);
-                const matchingComments = await Promise.all(comments.map(async comment => await this.commentMatchesCondition(comment, criteria, history)));
+
+                const matches = await Promise.all(comments.map(async comment => await this.commentMatchesCondition(comment, criteria, history)));
+                const matchingComments = matches.filter(result => result.matched);
                 const matchesNeeded = criteria.matchesNeeded ?? 1;
-                if (compact(matchingComments).length < matchesNeeded) {
-                    return false;
-                } else {
-                    return true;
+
+                if (matchingComments.length < matchesNeeded) {
+                    return { matched: false };
                 }
+
+                return { matched: true, reasons: uniq(matchingComments.flatMap(result => result.reasons ?? [])) };
             }
         }
 
-        return false; // Default case, no specific conditions
+        return { matched: false }; // Default case, no specific conditions
     }
 
     override async evaluate (user: UserExtended, history: (Post | Comment)[]): Promise<boolean> {
@@ -1141,20 +1215,22 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         for (const group of botGroups) {
             const accountMatches = await this.accountMatchesGroup(user, group);
-            if (!accountMatches) {
-                this.setReason(`User does not match account criteria in group ${group.name}`);
+            if (!accountMatches.matched) {
                 continue;
             }
 
+            const matchReasons: MatchReason[] = [...(accountMatches.reasons ?? [])];
+
             if (group.criteria) {
                 const historyMatchesGroup = await this.historyMatchesCriteriaGroup(history, group.criteria);
-                if (!historyMatchesGroup) {
-                    this.setReason(`User does not match history criteria in group ${group.name}`);
+                if (!historyMatchesGroup.matched) {
                     continue;
                 }
+
+                matchReasons.push(...(historyMatchesGroup.reasons ?? []));
             }
 
-            this.addHitReason(group.name);
+            this.addHitReason({ reason: group.name, details: matchReasons });
         }
 
         return this.hitReasons !== undefined && this.hitReasons.length > 0;

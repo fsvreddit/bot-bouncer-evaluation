@@ -63,7 +63,6 @@ export class EvaluateBadDisplayName extends UserEvaluatorBase {
 
     override preEvaluateUser (user: UserExtended): boolean {
         if (!this.isBadDisplayName(user.displayName)) {
-            this.setReason("Display name does not match regexes");
             return false;
         }
 

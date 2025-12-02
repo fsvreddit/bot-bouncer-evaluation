@@ -22,8 +22,14 @@ export interface EvaluatorRegex {
     flags?: string;
 }
 
+interface HitReasonDetailed {
+    reason: string;
+    details: { key: string; value: string }[];
+}
+
+type HitReason = string | HitReasonDetailed;
+
 export abstract class UserEvaluatorBase {
-    protected reasons: string[] = [];
     protected context: TriggerContext;
     private variables: Record<string, unknown> = {};
 
@@ -31,14 +37,6 @@ export abstract class UserEvaluatorBase {
     abstract shortname: string;
 
     public socialLinks: UserSocialLink[] | undefined;
-
-    public setReason (reason: string) {
-        this.reasons.push(reason);
-    }
-
-    public getReasons () {
-        return this.reasons;
-    }
 
     public banContentThreshold = 10;
     public canAutoBan = true;
@@ -96,7 +94,7 @@ export abstract class UserEvaluatorBase {
         return this.socialLinks;
     }
 
-    protected addHitReason (reason: string) {
+    protected addHitReason (reason: HitReason) {
         if (!this.hitReasons) {
             this.hitReasons = [reason];
         } else {
@@ -104,7 +102,7 @@ export abstract class UserEvaluatorBase {
         }
     }
 
-    public hitReasons: string[] | undefined = undefined;
+    public hitReasons: HitReason[] | undefined = undefined;
 
     abstract preEvaluateComment (event: CommentCreate): boolean | Promise<boolean>;
 

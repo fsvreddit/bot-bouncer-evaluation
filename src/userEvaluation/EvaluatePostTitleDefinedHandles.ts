@@ -82,19 +82,16 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
         const userPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.isNsfw());
         if (userPosts.length === 0) {
-            this.setReason("User has no NSFW posts");
             return false;
         }
 
         const regexes = this.gatherRegexes().map(r => new RegExp(r.regex, "u"));
         if (regexes.length === 0) {
-            this.setReason("No defined handle regexes configured");
             return false;
         }
 
         const matchedBanRegexes = regexes.filter(title => userPosts.some(post => title.test(post.title)));
         if (matchedBanRegexes.length === 0) {
-            this.setReason("No post titles matched defined handle regexes");
             return false;
         }
 

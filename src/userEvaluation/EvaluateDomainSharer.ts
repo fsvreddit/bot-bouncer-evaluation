@@ -75,7 +75,6 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
         const contentInAllowedSubs = history.filter(item => !this.ignoredSubreddits().includes(item.subredditName));
 
         if (contentInAllowedSubs.length < 5) {
-            this.setReason("Not enough content to review.");
             return false;
         }
 
@@ -92,7 +91,6 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
         }
 
         if (domains.length === 0) {
-            this.setReason("User has not shared domains");
             return false;
         }
 
@@ -108,7 +106,6 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
             this.addHitReason(`User has shared ${contentInAllowedSubs.length} posts with the same domain: ${dominantDomains.map(item => item.domain).join(", ")}`);
             return true;
         } else {
-            this.setReason("User content is not dominated by one domain");
             return false;
         }
     }
