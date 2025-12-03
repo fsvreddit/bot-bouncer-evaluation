@@ -1230,7 +1230,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 matchReasons.push(...(historyMatchesGroup.reasons ?? []));
             }
 
-            this.addHitReason({ reason: group.name, details: matchReasons });
+            this.addHitReason({ reason: group.name, details: uniq(matchReasons) });
         }
 
         return this.hitReasons !== undefined && this.hitReasons.length > 0;
