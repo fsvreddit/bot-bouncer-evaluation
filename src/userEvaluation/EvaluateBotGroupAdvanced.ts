@@ -573,11 +573,11 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     }
 
     private uniqueMatchReasons (reasons: MatchReason[]): MatchReason[] {
-        const uniqueReasons: Record<string, string> = {};
+        const uniqueReasons: Record<string, MatchReason> = {};
         for (const reason of reasons) {
-            uniqueReasons[reason.key] = reason.value;
+            uniqueReasons[`${reason.key}:${reason.value}`] = reason;
         }
-        return Object.entries(uniqueReasons).map(([key, value]) => ({ key, value }));
+        return Object.values(uniqueReasons);
     }
 
     private getCriteriaGroupRegexes (criteria: CriteriaGroup, groupName: string): EvaluatorRegex[] {
