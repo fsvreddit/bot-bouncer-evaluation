@@ -743,19 +743,6 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        if (condition.bodyRegex) {
-            if (item.body === undefined) {
-                return { matched: false }; // Body regex check requires body to be present
-            }
-
-            if (this.anyRegexMatches(item.body, condition.bodyRegex)) {
-                matchReasons.push({ key: "bodyRegex", value: item.body });
-            }
-            if (!this.anyRegexMatches(item.body, condition.bodyRegex)) {
-                return { matched: false };
-            }
-        }
-
         if (condition.subredditName) {
             if (this.anySubredditMatches(item, condition.subredditName)) {
                 if ("subredditName" in item) {
@@ -785,6 +772,19 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         if (condition.maxKarma !== undefined) {
             if (item.score > condition.maxKarma) {
+                return { matched: false };
+            }
+        }
+
+        if (condition.bodyRegex) {
+            if (item.body === undefined) {
+                return { matched: false }; // Body regex check requires body to be present
+            }
+
+            if (this.anyRegexMatches(item.body, condition.bodyRegex)) {
+                matchReasons.push({ key: "bodyRegex", value: item.body });
+            }
+            if (!this.anyRegexMatches(item.body, condition.bodyRegex)) {
                 return { matched: false };
             }
         }
