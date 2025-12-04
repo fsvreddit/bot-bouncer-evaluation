@@ -572,6 +572,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return errors;
     }
 
+    private uniqueMatchReasons (reasons: MatchReason[]): MatchReason[] {
+        const uniqueReasons: Record<string, string> = {};
+        for (const reason of reasons) {
+            uniqueReasons[reason.key] = reason.value;
+        }
+        return Object.entries(uniqueReasons).map(([key, value]) => ({ key, value }));
+    }
+
     private getCriteriaGroupRegexes (criteria: CriteriaGroup, groupName: string): EvaluatorRegex[] {
         if ("not" in criteria) {
             return this.getCriteriaGroupRegexes(criteria.not, groupName);
@@ -1190,7 +1198,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                     return { matched: false };
                 }
 
-                return { matched: true, reasons: uniq(matches.flatMap(result => result.reasons ?? [])) };
+                return { matched: true, reasons: this.uniqueMatchReasons(matches.flatMap(result => result.reasons ?? [])) };
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             } else if (criteria.type === "comment") {
                 const comments = this.getComments(history);
@@ -1203,7 +1211,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                     return { matched: false };
                 }
 
-                return { matched: true, reasons: uniq(matchingComments.flatMap(result => result.reasons ?? [])) };
+                return { matched: true, reasons: this.uniqueMatchReasons(matchingComments.flatMap(result => result.reasons ?? [])) };
             }
         }
 
@@ -1230,7 +1238,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 matchReasons.push(...(historyMatchesGroup.reasons ?? []));
             }
 
-            this.addHitReason({ reason: group.name, details: uniq(matchReasons) });
+            this.addHitReason({ reason: group.name, details: this.uniqueMatchReasons(matchReasons) });
         }
 
         return this.hitReasons !== undefined && this.hitReasons.length > 0;
