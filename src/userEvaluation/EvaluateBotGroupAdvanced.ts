@@ -705,6 +705,13 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     private postOrCommentMatchesCondition (item: Post | Comment | CommentV2, condition: CommentCondition | PostCondition): CriteriaMatchResult {
         const matchReasons: MatchReason[] = [];
 
+        if (condition.age) {
+            const referenceDate = item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt);
+            if (!this.matchesAgeCriteria(referenceDate, condition.age)) {
+                return { matched: false };
+            }
+        }
+
         if (condition.edited !== undefined && "edited" in item && item.edited !== condition.edited) {
             return { matched: false };
         }
@@ -755,13 +762,6 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         if (condition.notSubredditName && this.anySubredditMatches(item, condition.notSubredditName)) {
             return { matched: false };
-        }
-
-        if (condition.age) {
-            const referenceDate = item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt);
-            if (!this.matchesAgeCriteria(referenceDate, condition.age)) {
-                return { matched: false };
-            }
         }
 
         if (condition.minKarma !== undefined) {
@@ -981,6 +981,12 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             postProperties = await this.getPostProperties(comment.postId);
         }
 
+        if (condition.postCreatedAtAge && postProperties) {
+            if (!this.matchesAgeCriteria(new Date(postProperties.createdAt), condition.postCreatedAtAge)) {
+                return { matched: false };
+            }
+        }
+
         if (condition.postAuthorNameRegex && postProperties) {
             if (this.anyRegexMatches(postProperties.authorName, condition.postAuthorNameRegex)) {
                 matchReasons.push({ key: "postAuthorNameRegex", value: postProperties.authorName });
@@ -1013,12 +1019,6 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (this.anyRegexMatches(postProperties.url, condition.postUrlRegex)) {
                 matchReasons.push({ key: "postUrlRegex", value: postProperties.url });
             } else {
-                return { matched: false };
-            }
-        }
-
-        if (condition.postCreatedAtAge && postProperties) {
-            if (!this.matchesAgeCriteria(new Date(postProperties.createdAt), condition.postCreatedAtAge)) {
                 return { matched: false };
             }
         }
