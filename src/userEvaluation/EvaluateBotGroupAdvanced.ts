@@ -197,17 +197,17 @@ interface CommentCondition extends BaseItemCondition {
 function validateCommentCondition (condition: CommentCondition): ValidationIssue[] {
     const errors: ValidationIssue[] = [];
 
-    if (condition.postId !== undefined && !Array.isArray(condition.postId)) {
-        errors.push({ severity: "error", message: "postId must be an array." });
-    }
-
-    if (condition.postId?.some(postId => typeof postId !== "string")) {
-        errors.push({ severity: "error", message: "postId must be an array of strings." });
-    }
-
-    const validPostIdRegex = /^[a-z0-9]{6,8}$/;
-    if (condition.postId && !condition.postId.every(id => validPostIdRegex.test(id))) {
-        errors.push({ severity: "error", message: `Invalid postId(s): ${condition.postId.filter(id => !validPostIdRegex.test(id)).join(", ")}. Must be a 6-8 character lower-case alphanumeric string.` });
+    if (condition.postId !== undefined) {
+        if (!Array.isArray(condition.postId)) {
+            errors.push({ severity: "error", message: "postId must be an array." });
+        } else if (condition.postId.some(postId => typeof postId !== "string")) {
+            errors.push({ severity: "error", message: "postId must be an array of strings." });
+        } else {
+            const validPostIdRegex = /^[a-z0-9]{6,8}$/;
+            if (!condition.postId.every(id => validPostIdRegex.test(id))) {
+                errors.push({ severity: "error", message: `Invalid postId(s): ${condition.postId.filter(id => !validPostIdRegex.test(id)).join(", ")}. Must be a 6-8 character lower-case alphanumeric string.` });
+            }
+        }
     }
 
     if (condition.isTopLevel !== undefined && typeof condition.isTopLevel !== "boolean") {
