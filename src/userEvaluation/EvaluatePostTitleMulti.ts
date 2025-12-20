@@ -35,6 +35,17 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
         return results;
     }
 
+    override getVariableOverrides (): Record<string, unknown> {
+        const regexes = this.getVariable<(string | string[])[]>("regexes", []);
+        if (regexes.some(r => Array.isArray(r))) {
+            return {
+                regexes: regexes.flat(),
+            };
+        } else {
+            return {};
+        }
+    }
+
     override gatherRegexes (): EvaluatorRegex[] {
         const bannableTitles = this.getVariable<string[]>("regexes", []);
         return bannableTitles.map(title => ({

@@ -63,6 +63,10 @@ export abstract class UserEvaluatorBase {
         return;
     }
 
+    public getVariableOverrides (): Record<string, unknown> {
+        return {};
+    }
+
     protected getAllVariables (filter?: string): Record<string, unknown> {
         const result: Record<string, unknown> = {};
         const root = this.shortname + ":" + (filter ?? "");

@@ -1,6 +1,7 @@
 import { Post, TriggerContext } from "@devvit/public-api";
 import { EvaluatePostTitleMulti } from "../../src/userEvaluation/EvaluatePostTitleMulti";
 import { UserExtended } from "../../src/extendedDevvit";
+import { yamlToVariables } from "../../src";
 
 const variables = {
     "posttitlemulti:regexes": [
@@ -65,5 +66,22 @@ test("Validate regex starts with anchor", () => {
     expect(results[0]).toEqual({
         severity: "warning",
         message: "Regex must be anchored to start with `^`: free money",
+    });
+});
+
+test("Validate variable overrides", () => {
+    const yaml = `
+name: posttitlemulti
+regexes:
+  - abc
+  - def
+  - [ghi, jkl]
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, undefined, variables);
+    const overrides = evaluator.getVariableOverrides();
+    expect(overrides).toEqual({
+        regexes: ["abc", "def", "ghi", "jkl"],
     });
 });

@@ -25,6 +25,17 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
         return results;
     }
 
+    override getVariableOverrides (): Record<string, unknown> {
+        const badLinks = this.getVariable<(string | string[])[]>("badlinks", []);
+        if (badLinks.some(link => Array.isArray(link))) {
+            return {
+                badlinks: badLinks.flat(),
+            };
+        } else {
+            return {};
+        }
+    }
+
     private getDomains (): string[] {
         const domains = new Set<string>(this.getGenericVariable<string[]>("redditdomains", []));
         domains.add("redgifs.com");

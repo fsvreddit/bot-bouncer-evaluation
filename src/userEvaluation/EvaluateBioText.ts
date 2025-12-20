@@ -47,6 +47,20 @@ export class EvaluateBioText extends UserEvaluatorBase {
         return results;
     }
 
+    override getVariableOverrides (): Record<string, unknown> {
+        const { bannableBioText, reportableBioText } = this.getBioText();
+        const results: Record<string, unknown> = {};
+        if (bannableBioText.some(r => Array.isArray(r))) {
+            results.bantext = bannableBioText.flat();
+        }
+
+        if (reportableBioText.some(r => Array.isArray(r))) {
+            results.reporttext = reportableBioText.flat();
+        }
+
+        return results;
+    }
+
     override gatherRegexes (): EvaluatorRegex[] {
         const { bannableBioText, reportableBioText } = this.getBioText();
         return uniq([
