@@ -31,8 +31,8 @@ function getSubstitutionsListFromYaml (yaml: string): Record<string, string | st
     return substitutions;
 }
 
-export function yamlToVariables (input: string): Record<string, JSONValue> {
-    const substitutionsList = getSubstitutionsListFromYaml(input);
+export function yamlToVariables (input: string, extraSubstitutions: Record<string, string | string[]> = {}): Record<string, JSONValue> {
+    const substitutionsList = { ...getSubstitutionsListFromYaml(input), ...extraSubstitutions };
     let yaml = input;
     for (const key in substitutionsList) {
         if (typeof substitutionsList[key] === "string") {
