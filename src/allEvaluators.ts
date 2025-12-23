@@ -22,6 +22,7 @@ import { EvaluateBioTextDefinedHandles } from "./userEvaluation/EvaluateBioTextD
 import { EvaluatePostTitleDefinedHandles } from "./userEvaluation/EvaluatePostTitleDefinedHandles.js";
 import { EvaluateBadDisplayNameDefinedHandles } from "./userEvaluation/EvaluateBadDisplaynameDefinedHandles.js";
 import { EvaluatePostTitleMulti } from "./userEvaluation/EvaluatePostTitleMulti.js";
+import { EvaluateWarmupBot } from "./userEvaluation/EvaluateWarmupBot.js";
 
 /**
  * Array of all evaluators.
@@ -60,6 +61,7 @@ export const ALL_EVALUATORS = [
     EvaluateFirstPostWithSelfComment,
 
     // Evaluators that need social links or other complicated data should be at the end
+    EvaluateWarmupBot,
     EvaluateSocialLinks,
     EvaluateBotGroupAdvanced,
 ];
