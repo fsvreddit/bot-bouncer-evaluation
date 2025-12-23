@@ -90,7 +90,9 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
             return false;
         }
 
-        const matchedBanRegexes = regexes.filter(title => userPosts.some(post => title.test(post.title)));
+        const distinctTitles = uniq(userPosts.map(post => post.title));
+
+        const matchedBanRegexes = regexes.filter(title => distinctTitles.some(postTitle => title.test(postTitle)));
         if (matchedBanRegexes.length === 0) {
             return false;
         }

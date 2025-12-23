@@ -3,6 +3,7 @@ import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
 import { subWeeks } from "date-fns";
+import { uniq } from "lodash";
 
 export class EvaluatePostTitleMulti extends UserEvaluatorBase {
     override name = "Bad Post Title Multi Bot";
@@ -77,8 +78,10 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
             return false;
         }
 
+        const distinctTitles = uniq(userPosts.map(post => post.title));
+
         const regexes = this.gatherRegexes();
-        const matchedRegexes = regexes.filter(regexObj => userPosts.some(post => new RegExp(regexObj.regex, regexObj.flags).test(post.title)));
+        const matchedRegexes = regexes.filter(regexObj => distinctTitles.some(postTitle => new RegExp(regexObj.regex, regexObj.flags).test(postTitle)));
 
         const matchesNeeded = this.getVariable<number>("matchesNeeded", 4);
 

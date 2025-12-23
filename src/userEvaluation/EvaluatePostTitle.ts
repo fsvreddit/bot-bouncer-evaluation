@@ -88,7 +88,9 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
 
         const { bannableTitles, reportableTitles } = this.getTitles();
 
-        const matchedBanRegex = bannableTitles.find(title => userPosts.some(post => new RegExp(title, "u").test(post.title)));
+        const distinctTitles = uniq(userPosts.map(post => post.title));
+
+        const matchedBanRegex = bannableTitles.find(title => distinctTitles.some(postTitle => new RegExp(title, "u").test(postTitle)));
         if (matchedBanRegex) {
             const matchedPost = userPosts.find(post => new RegExp(matchedBanRegex, "u").test(post.title));
             this.addHitReason(`Post title "${matchedPost?.title}" matched bannable regex: ${markdownEscape(matchedBanRegex)}`);
@@ -96,7 +98,7 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
             return true;
         }
 
-        const matchedReportRegex = reportableTitles.find(title => userPosts.some(post => new RegExp(title, "u").test(post.title)));
+        const matchedReportRegex = reportableTitles.find(title => distinctTitles.some(postTitle => new RegExp(title, "u").test(postTitle)));
         if (matchedReportRegex) {
             const matchedPost = userPosts.find(post => new RegExp(matchedReportRegex, "u").test(post.title));
             this.addHitReason(`Post title "${matchedPost?.title}" matched reportable regex: ${markdownEscape(matchedReportRegex)}`);
