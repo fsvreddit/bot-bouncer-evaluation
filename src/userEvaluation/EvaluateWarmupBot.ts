@@ -24,12 +24,12 @@ export class EvaluateWarmupBot extends UserEvaluatorBase {
             try {
                 regex = new RegExp(regexVal);
             } catch {
-                results.push({ severity: "error", message: `Invalid regex in biotext: ${regexVal}` });
+                results.push({ severity: "error", message: `Invalid rege: ${regexVal}` });
                 continue;
             }
 
             if (regex.test("")) {
-                results.push({ severity: "error", message: `Bio Text regex is too greedy: ${regexVal}` });
+                results.push({ severity: "error", message: `Regex is too greedy: ${regexVal}` });
             }
         }
 
