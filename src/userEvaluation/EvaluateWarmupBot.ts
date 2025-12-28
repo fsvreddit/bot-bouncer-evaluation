@@ -65,6 +65,17 @@ export class EvaluateWarmupBot extends UserEvaluatorBase {
             return false;
         }
 
+        const postTitleRegexes = this.getVariable<string[]>("postTitleRegexes", []);
+        if (postTitleRegexes.length === 0) {
+            return false;
+        }
+
+        const userPosts = this.getPosts(history);
+
+        if (!userPosts.some(post => postTitleRegexes.some(regex => new RegExp(regex).test(post.title)))) {
+            return false;
+        }
+
         const userSubreddits = uniq(history.map(item => item.subredditName));
         const matchedSubreddits = userSubreddits.filter(subreddit => subredditRegexes.some(regex => new RegExp(regex).test(subreddit)));
 
