@@ -664,7 +664,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return botGroups.map(group => group.name);
     }
 
-    private matchesAgeCriteria (date: Date, age: AgeCriteria): boolean {
+    private matchesAgeCriteria (date: Date, age: AgeCriteria, baseline = new Date()): boolean {
+        // For absolute date range checks, baseline is not used.
         if ("dateFrom" in age) {
             const dateFrom = parse(age.dateFrom, "yyyy-MM-dd", new Date());
             if (date < dateFrom) {
@@ -678,15 +679,16 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
+        // Baseline is only used for relative checks.
         if ("maxAgeInDays" in age && age.maxAgeInDays) {
-            const maxAgeDate = subDays(new Date(), age.maxAgeInDays);
+            const maxAgeDate = subDays(baseline, age.maxAgeInDays);
             if (date < maxAgeDate) {
                 return false;
             }
         }
 
         if ("minAgeInDays" in age && age.minAgeInDays) {
-            const minAgeDate = subDays(new Date(), age.minAgeInDays);
+            const minAgeDate = subDays(baseline, age.minAgeInDays);
             if (date > minAgeDate) {
                 return false;
             }
@@ -982,7 +984,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         if (condition.postCreatedAtAge && postProperties) {
-            if (!this.matchesAgeCriteria(new Date(postProperties.createdAt), condition.postCreatedAtAge)) {
+            if (!this.matchesAgeCriteria(new Date(postProperties.createdAt), condition.postCreatedAtAge, comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt))) {
                 return { matched: false };
             }
         }
