@@ -75,7 +75,7 @@ export class EvaluateSelfComment extends UserEvaluatorBase {
         const maxCommentAge = this.getVariable<number>("commentmaxminutes", 1);
         for (const comment of comments.filter(comment => !ignoredSubreddits.includes(comment.subredditName))) {
             const post = posts.find(post => post.id === comment.parentId);
-            if (!post || post.authorId !== user.id) {
+            if (post?.authorId !== user.id) {
                 return false;
             }
 

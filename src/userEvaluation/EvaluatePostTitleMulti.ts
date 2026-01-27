@@ -73,7 +73,7 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
         const dateCutoff = this.getVariable<number>("dateCutoffWeeks", 4);
 
-        const userPosts = this.getPosts(history, { since: subWeeks(new Date(), dateCutoff) }).filter(post => post.nsfw);
+        const userPosts = this.getPosts(history, { since: subWeeks(new Date(), dateCutoff) }).filter(post => post.nsfw && !post.url.startsWith("/r/"));
         if (userPosts.length === 0) {
             return false;
         }

@@ -80,7 +80,7 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
     }
 
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
-        const userPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.isNsfw());
+        const userPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.isNsfw() && !post.url.startsWith("/r/"));
         if (userPosts.length === 0) {
             return false;
         }

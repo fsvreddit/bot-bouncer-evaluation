@@ -17,7 +17,7 @@ export function domainFromUrl (url: string): string | undefined {
 
 export async function getSocialLinksWithCache (username: string, context: TriggerContext): Promise <UserSocialLink[]> {
     const cacheKey = `bbe:socialLinks:${username}`;
-    const redis = context.appName === MAIN_APP_NAME ? context.redis.global : context.redis;
+    const redis = context.appSlug === MAIN_APP_NAME ? context.redis.global : context.redis;
     const cached = await redis.get(cacheKey);
     if (cached) {
         return JSON.parse(cached) as UserSocialLink[];
