@@ -21,6 +21,7 @@ function fakePostHistory (titles: string[]) {
         createdAt: new Date(),
         id: `t3_post${index}`,
         nsfw: true,
+        url: "https://example.com",
     } as unknown as Post));
 }
 
