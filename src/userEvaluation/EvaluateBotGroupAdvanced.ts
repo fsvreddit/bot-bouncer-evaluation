@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-api";
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
@@ -551,6 +551,16 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     override name = "Bot Group Advanced";
     override shortname = "botgroupadvanced";
     override banContentThreshold = 0; // No content ban threshold for this evaluator to support account properties only checks
+
+    private verboseLogging = false;
+
+    constructor (context: TriggerContext, socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
+        super(context, socialLinks, variables);
+
+        if (this.getVariable<boolean>("verboseLogging", false)) {
+            this.verboseLogging = true;
+        }
+    }
 
     private anyRegexMatches (input: string, regexes: string[]): boolean {
         return regexes.some(regex => new RegExp(regex, "u").test(input));
@@ -1220,12 +1230,25 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return { matched: false }; // Default case, no specific conditions
     }
 
+    private logEvaluationTime (startTime: number, username: string, groupName: string) {
+        if (!this.verboseLogging) {
+            return;
+        }
+
+        const endTime = Date.now();
+        if (endTime - startTime > 500) {
+            console.log(`Evaluation for user ${username} and group took ${endTime - startTime} ms "${groupName}"`);
+        }
+    }
+
     override async evaluate (user: UserExtended, history: (Post | Comment)[]): Promise<boolean> {
         const botGroups = this.getBotGroups();
 
         for (const group of botGroups) {
+            const startTime = Date.now();
             const accountMatches = await this.accountMatchesGroup(user, group);
             if (!accountMatches.matched) {
+                this.logEvaluationTime(startTime, user.username, group.name);
                 continue;
             }
 
@@ -1234,6 +1257,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (group.criteria) {
                 const historyMatchesGroup = await this.historyMatchesCriteriaGroup(history, group.criteria);
                 if (!historyMatchesGroup.matched) {
+                    this.logEvaluationTime(startTime, user.username, group.name);
                     continue;
                 }
 
@@ -1241,6 +1265,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
 
             this.addHitReason({ reason: group.name, details: this.uniqueMatchReasons(matchReasons) });
+            this.logEvaluationTime(startTime, user.username, group.name);
         }
 
         return this.hitReasons !== undefined && this.hitReasons.length > 0;
