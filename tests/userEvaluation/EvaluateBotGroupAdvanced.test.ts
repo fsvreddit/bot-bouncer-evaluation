@@ -4,6 +4,14 @@ import { EvaluateBotGroupAdvanced } from "../../src/userEvaluation/EvaluateBotGr
 import { yamlToVariables } from "../../src/utility";
 import { Comment, Post, TriggerContext } from "@devvit/public-api";
 
+const fakeContext: TriggerContext = {
+    reddit: {
+        subredditName: "testsubreddit",
+        // eslint-disable-next-line @typescript-eslint/require-await
+        getCurrentSubredditName: async () => "testsubreddit",
+    },
+} as unknown as TriggerContext;
+
 test("Simple account properties evaluation", async () => {
     const yaml = `
 name: botgroupadvanced
@@ -26,7 +34,7 @@ group1:
     } as unknown as UserExtended;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -65,7 +73,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -110,7 +118,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -154,7 +162,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -200,7 +208,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -245,7 +253,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -286,7 +294,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -325,7 +333,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -354,7 +362,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -388,7 +396,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -425,7 +433,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -449,7 +457,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -483,7 +491,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -521,7 +529,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -557,7 +565,7 @@ group4:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -592,7 +600,7 @@ group4:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -628,7 +636,7 @@ group4:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -667,7 +675,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -706,7 +714,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -745,7 +753,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -784,7 +792,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -823,7 +831,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -862,7 +870,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -901,7 +909,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -940,7 +948,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
@@ -973,7 +981,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -995,7 +1003,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1015,7 +1023,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1053,7 +1061,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1072,7 +1080,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1096,7 +1104,7 @@ group1:
     } as unknown as UserExtended;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -1122,7 +1130,7 @@ group1:
     } as unknown as UserExtended;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
@@ -1143,7 +1151,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -1162,7 +1170,7 @@ group2:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -1198,7 +1206,7 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
     const evaluationResult = await evaluator.evaluate(user, history);
@@ -1226,4 +1234,60 @@ group1:
     ];
 
     expect(actualHitReasons).toEqual(expectedHitReasons);
+});
+
+test("Distinct subs criteria with enough subreddits in history", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    criteria:
+      type: post
+      distinctSubsNeeded: 2
+      bodyRegex:
+        - 'Test'
+`;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_234", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate({} as unknown as UserExtended, history);
+    expect(evaluationResult).toBe(true);
+});
+
+test("Distinct subs criteria with insufficient subreddits in history", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    criteria:
+      type: post
+      distinctSubsNeeded: 3
+      bodyRegex:
+        - 'Test'
+`;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+        { subredditName: "Frieren", createdAt: subDays(new Date(), 1), id: "t3_234", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate({} as unknown as UserExtended, history);
+    expect(evaluationResult).toBe(false);
 });

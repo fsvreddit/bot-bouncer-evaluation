@@ -83,6 +83,7 @@ interface SomeCondition {
 
 interface BaseItemCondition {
     matchesNeeded?: number;
+    distinctSubsNeeded?: number;
     age?: AgeCriteria;
     edited?: boolean;
     subredditName?: string[];
@@ -172,7 +173,7 @@ function validatePostCondition (condition: PostCondition): ValidationIssue[] {
     }
 
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "titleRegex", "nsfw", "urlRegex", "domain", "isCrossPost"];
+    const expectedKeys = ["type", "pinned", "matchesNeeded", "distinctSubsNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "titleRegex", "nsfw", "urlRegex", "domain", "isCrossPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in post condition: ${key}` });
@@ -239,7 +240,7 @@ function validateCommentCondition (condition: CommentCondition): ValidationIssue
     }
 
     const keys = Object.keys(condition);
-    const expectedKeys = ["type", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postId", "isTopLevel", "isCommentOnOwnPost", "postAuthorNameRegex", "postTitleRegex", "postBodyRegex", "postUrlRegex", "postCreatedAtAge"];
+    const expectedKeys = ["type", "matchesNeeded", "distinctSubsNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postId", "isTopLevel", "isCommentOnOwnPost", "postAuthorNameRegex", "postTitleRegex", "postBodyRegex", "postUrlRegex", "postCreatedAtAge"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in comment condition: ${key}` });
@@ -254,6 +255,10 @@ function validateCondition (condition: PostCondition | CommentCondition): Valida
 
     if (condition.matchesNeeded !== undefined && typeof condition.matchesNeeded !== "number") {
         errors.push({ severity: "error", message: "matchesNeeded must be a number." });
+    }
+
+    if (condition.distinctSubsNeeded !== undefined && typeof condition.distinctSubsNeeded !== "number") {
+        errors.push({ severity: "error", message: "distinctSubsNeeded must be a number." });
     }
 
     if (condition.matchesNeeded !== undefined && condition.matchesNeeded < 1) {
@@ -395,7 +400,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): ValidationI
     }
 
     const keys = Object.keys(criteria);
-    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postAuthorNameRegex", "postTitleRegex", "postBodyRegex", "postUrlRegex", "postCreatedAtAge", "isCrossPost"];
+    const expectedKeys = ["not", "every", "some", "type", "pinned", "matchesNeeded", "distinctSubsNeeded", "age", "edited", "subredditName", "notSubredditName", "bodyRegex", "titleRegex", "nsfw", "urlRegex", "domain", "postId", "isTopLevel", "isCommentOnOwnPost", "minBodyLength", "maxBodyLength", "minParaCount", "maxParaCount", "minKarma", "maxKarma", "postAuthorNameRegex", "postTitleRegex", "postBodyRegex", "postUrlRegex", "postCreatedAtAge", "isCrossPost"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in criteria group: ${key}` });
@@ -1200,31 +1205,44 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
             return { matched: true, reasons: someMatch.filter(item => item.matched).flatMap(result => result.reasons ?? []) };
         } else if ("type" in criteria) {
+            let matches: CriteriaMatchResult[];
+            let subredditsMatched: string[];
+
             if (criteria.type === "post") {
                 const posts = this.getPosts(history);
 
-                const matches = posts.map(post => this.postMatchesCondition(post, criteria)).filter(result => result.matched);
-                const matchesNeeded = criteria.matchesNeeded ?? 1;
+                const matchResults = posts.map(post => ({
+                    subredditName: post.subredditName,
+                    matchResult: this.postMatchesCondition(post, criteria),
+                })).filter(result => result.matchResult.matched);
 
-                if (matches.length < matchesNeeded) {
-                    return { matched: false };
-                }
-
-                return { matched: true, reasons: this.uniqueMatchReasons(matches.flatMap(result => result.reasons ?? [])) };
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            } else if (criteria.type === "comment") {
+                matches = matchResults.map(result => result.matchResult);
+                subredditsMatched = uniq(matchResults.map(result => result.subredditName));
+            } else { // comments
                 const comments = this.getComments(history);
 
-                const matches = await Promise.all(comments.map(async comment => await this.commentMatchesCondition(comment, criteria, history)));
-                const matchingComments = matches.filter(result => result.matched);
-                const matchesNeeded = criteria.matchesNeeded ?? 1;
+                const currentSubreddit = this.context.subredditName ?? await this.context.reddit.getCurrentSubredditName();
 
-                if (matchingComments.length < matchesNeeded) {
-                    return { matched: false };
-                }
+                const matchResults = await Promise.all(comments.map(async comment => ({
+                    subredditName: "subredditName" in comment ? comment.subredditName : currentSubreddit,
+                    matchResult: await this.commentMatchesCondition(comment, criteria, history),
+                }))).then(results => results.filter(result => result.matchResult.matched));
 
-                return { matched: true, reasons: this.uniqueMatchReasons(matchingComments.flatMap(result => result.reasons ?? [])) };
+                matches = matchResults.map(result => result.matchResult);
+                subredditsMatched = uniq(matchResults.map(result => result.subredditName));
             }
+
+            const matchesNeeded = criteria.matchesNeeded ?? 1;
+            if (matches.length < matchesNeeded) {
+                return { matched: false };
+            }
+
+            const distinctSubredditsNeeded = criteria.distinctSubsNeeded ?? 1;
+            if (subredditsMatched.length < distinctSubredditsNeeded) {
+                return { matched: false };
+            }
+
+            return { matched: true, reasons: this.uniqueMatchReasons(matches.flatMap(result => result.reasons ?? [])) };
         }
 
         return { matched: false }; // Default case, no specific conditions
