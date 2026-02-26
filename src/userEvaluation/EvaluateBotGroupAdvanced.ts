@@ -1191,12 +1191,19 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const matchesGroup = await this.historyMatchesCriteriaGroup(history, criteria.not);
             return { matched: !matchesGroup.matched };
         } else if ("every" in criteria) {
-            const allMatch = await Promise.all(criteria.every.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)));
-            if (!allMatch.every(result => result.matched)) {
-                return { matched: false };
+            const matchReasons: MatchReason[] = [];
+            for (const subCriteria of criteria.every) {
+                const criteriaResult = await this.historyMatchesCriteriaGroup(history, subCriteria);
+                if (!criteriaResult.matched) {
+                    return { matched: false };
+                }
+
+                if (criteriaResult.reasons) {
+                    matchReasons.push(...criteriaResult.reasons);
+                }
             }
 
-            return { matched: true, reasons: allMatch.flatMap(result => result.reasons ?? []) };
+            return { matched: true, reasons: matchReasons };
         } else if ("some" in criteria) {
             const someMatch = await Promise.all(criteria.some.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)));
             if (!someMatch.some(result => result.matched)) {
