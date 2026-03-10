@@ -41,6 +41,6 @@
     ],
     "peerDependencies": {
         "@devvit/protos": "^0.12.13",
-        "@devvit/public-api": "^0.12.14"
+        "@devvit/public-api": "^0.12.13"
     }
 }
