@@ -47,7 +47,8 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
     }
 
     private getTitles () {
-        return this.getVariable<string[]>("bantext", []);
+        const prefixesToIgnore = this.getVariable<string[]>("ignoredRegexPrefixes", []);
+        return this.getVariable<string[]>("bantext", []).filter(title => !prefixesToIgnore.some(prefix => title.startsWith(prefix)));
     }
 
     override preEvaluatePost (post: Post): boolean {
