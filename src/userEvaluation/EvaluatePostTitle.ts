@@ -13,10 +13,7 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
 
     override validateVariables (): ValidationIssue[] {
         const results: ValidationIssue[] = [];
-        const regexes = [
-            ...this.getVariable<string[]>("bantext", []),
-            ...this.getVariable<string[]>("reporttext", []),
-        ];
+        const regexes = this.gatherRegexes().map(r => r.regex);
 
         for (const regexVal of regexes) {
             let regex: RegExp;
@@ -36,17 +33,12 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
     }
 
     override gatherRegexes (): EvaluatorRegex[] {
-        const { bannableTitles, reportableTitles } = this.getTitles();
-        return uniq([
-            ...bannableTitles.map(title => ({
-                evaluatorName: this.name,
-                regex: title,
-            })),
-            ...reportableTitles.map(title => ({
-                evaluatorName: this.name,
-                regex: title,
-            })),
-        ]);
+        const bannableTitles = this.getTitles();
+        return uniq(bannableTitles.map(title => ({
+            evaluatorName: this.name,
+            regex: title,
+            flags: "u",
+        })));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -55,25 +47,19 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
     }
 
     private getTitles () {
-        const bannableTitles = this.getVariable<string[]>("bantext", []);
-        const reportableTitles = this.getVariable<string[]>("reporttext", []);
-        return { bannableTitles, reportableTitles };
+        return this.getVariable<string[]>("bantext", []);
     }
 
     override preEvaluatePost (post: Post): boolean {
-        const { bannableTitles, reportableTitles } = this.getTitles();
-        const problematicTitles = [...bannableTitles, ...reportableTitles];
-        return problematicTitles.some(title => new RegExp(title, "u").test(post.title));
+        const bannableTitles = this.getTitles();
+        return bannableTitles.some(title => new RegExp(title, "u").test(post.title));
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
-        const { bannableTitles, reportableTitles } = this.getTitles();
+        const maxCommentKarma = this.getVariable<number>("maxCommentKarma", 2000);
+        const maxLinkKarma = this.getVariable<number>("maxLinkKarma", 5000);
 
-        if (bannableTitles.length === 0 && reportableTitles.length === 0) {
-            return false;
-        }
-
-        if (user.commentKarma > 1000 && user.linkKarma > 2000) {
+        if (user.commentKarma > maxCommentKarma && user.linkKarma > maxLinkKarma) {
             return false;
         }
 
@@ -81,28 +67,28 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
     }
 
     override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
-        const userPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.isNsfw() && !post.url.startsWith("/r/"));
+        const userPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.nsfw && !post.url.startsWith("/r/"));
         if (userPosts.length === 0) {
             return false;
         }
 
-        const { bannableTitles, reportableTitles } = this.getTitles();
+        const bannableTitles = this.gatherRegexes().map(title => ({ pattern: title.regex, regex: new RegExp(title.regex, title.flags) }));
 
-        const distinctTitles = uniq(userPosts.map(post => post.title));
+        const nonMatchingTitles = new Set<string>();
 
-        const matchedBanRegex = bannableTitles.find(title => distinctTitles.some(postTitle => new RegExp(title, "u").test(postTitle)));
-        if (matchedBanRegex) {
-            const matchedPost = userPosts.find(post => new RegExp(matchedBanRegex, "u").test(post.title));
-            this.addHitReason(`Post title "${matchedPost?.title}" matched bannable regex: ${markdownEscape(matchedBanRegex)}`);
+        for (const title of userPosts.map(post => post.title)) {
+            if (nonMatchingTitles.has(title)) {
+                continue;
+            }
+
+            const matchedBanRegex = bannableTitles.find(bannable => bannable.regex.test(title));
+            if (!matchedBanRegex) {
+                nonMatchingTitles.add(title);
+                continue;
+            }
+
+            this.addHitReason(`Post title "${title}" matched bannable regex: ${markdownEscape(matchedBanRegex.pattern)}`);
             this.canAutoBan = true;
-            return true;
-        }
-
-        const matchedReportRegex = reportableTitles.find(title => distinctTitles.some(postTitle => new RegExp(title, "u").test(postTitle)));
-        if (matchedReportRegex) {
-            const matchedPost = userPosts.find(post => new RegExp(matchedReportRegex, "u").test(post.title));
-            this.addHitReason(`Post title "${matchedPost?.title}" matched reportable regex: ${markdownEscape(matchedReportRegex)}`);
-            this.canAutoBan = false;
             return true;
         }
 

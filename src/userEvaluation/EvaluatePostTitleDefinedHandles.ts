@@ -5,6 +5,7 @@ import { UserExtended } from "../extendedDevvit.js";
 import { subWeeks } from "date-fns";
 import { uniq } from "lodash";
 import { parse } from "regjsparser";
+import markdownEscape from "markdown-escape";
 
 export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
     override name = "Bad Post Title Defined Handles Bot";
@@ -66,13 +67,10 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
-        const problematicTitles = this.gatherRegexes().map(r => r.regex);
+        const maxCommentKarma = this.getVariable<number>("maxCommentKarma", 2000);
+        const maxLinkKarma = this.getVariable<number>("maxLinkKarma", 5000);
 
-        if (problematicTitles.length === 0) {
-            return false;
-        }
-
-        if (user.commentKarma > 1000 && user.linkKarma > 2000) {
+        if (user.commentKarma > maxCommentKarma && user.linkKarma > maxLinkKarma) {
             return false;
         }
 
@@ -85,24 +83,29 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
             return false;
         }
 
-        const regexes = this.gatherRegexes().map(r => new RegExp(r.regex, "u"));
+        const regexes = this.gatherRegexes().map(r => ({ pattern: r.regex, regex: new RegExp(r.regex, r.flags) }));
         if (regexes.length === 0) {
             return false;
         }
 
-        const distinctTitles = uniq(userPosts.map(post => post.title));
+        const nonMatchingTitles = new Set<string>();
 
-        const matchedBanRegexes = regexes.filter(title => distinctTitles.some(postTitle => title.test(postTitle)));
-        if (matchedBanRegexes.length === 0) {
-            return false;
-        }
+        for (const title of userPosts.map(post => post.title)) {
+            if (nonMatchingTitles.has(title)) {
+                continue;
+            }
 
-        for (const matchedBanRegex of matchedBanRegexes) {
-            const matchedPost = userPosts.find(post => matchedBanRegex.test(post.title));
-            this.addHitReason(`Post title "${matchedPost?.title}" matched bannable regex: \`${matchedBanRegex}\``);
+            const matchedRegex = regexes.find(r => r.regex.test(title));
+            if (!matchedRegex) {
+                nonMatchingTitles.add(title);
+                continue;
+            }
+
+            this.addHitReason(`Post title "${title}" matched bannable regex: ${markdownEscape(matchedRegex.pattern)}`);
             this.canAutoBan = true;
+            return true;
         }
 
-        return true;
+        return false;
     }
 }

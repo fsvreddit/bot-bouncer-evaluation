@@ -13,22 +13,19 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
 
     override validateVariables (): ValidationIssue[] {
         const results: ValidationIssue[] = [];
-        const regexes = [
-            ...this.getVariable<string[]>("bantext", []),
-            ...this.getVariable<string[]>("reporttext", []),
-        ];
+        const regexes = this.gatherRegexes();
 
         for (const regexVal of regexes) {
             let regex: RegExp;
             try {
-                regex = new RegExp(regexVal, "u");
+                regex = new RegExp(regexVal.regex, regexVal.flags);
             } catch {
-                results.push({ severity: "error", message: `Invalid regex in sticky post title: ${regexVal}` });
+                results.push({ severity: "error", message: `Invalid regex in sticky post title: ${regexVal.regex}` });
                 continue;
             }
 
             if (regex.test("")) {
-                results.push({ severity: "error", message: `Sticky post title regex is too greedy: ${regexVal}` });
+                results.push({ severity: "error", message: `Sticky post title regex is too greedy: ${regexVal.regex}` });
             }
         }
 
@@ -37,17 +34,11 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
 
     override gatherRegexes (): EvaluatorRegex[] {
         const bannableTitles = this.getVariable<string[]>("bantext", []);
-        const reportableTitles = this.getVariable<string[]>("reporttext", []);
-        return uniq([
-            ...bannableTitles.map(title => ({
-                evaluatorName: this.name,
-                regex: title,
-            })),
-            ...reportableTitles.map(title => ({
-                evaluatorName: this.name,
-                regex: title,
-            })),
-        ]);
+        return uniq(bannableTitles.map(title => ({
+            evaluatorName: this.name,
+            regex: title,
+            flags: "u",
+        })));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -61,14 +52,10 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
-        const bannableTitles = this.getVariable<string[]>("bantext", []);
-        const reportableTitles = this.getVariable<string[]>("reporttext", []);
+        const maxCommentKarma = this.getVariable<number>("maxCommentKarma", 2000);
+        const maxLinkKarma = this.getVariable<number>("maxLinkKarma", 5000);
 
-        if (bannableTitles.length === 0 && reportableTitles.length === 0) {
-            return false;
-        }
-
-        if (user.commentKarma > 2000 || user.linkKarma > 2000) {
+        if (user.commentKarma > maxCommentKarma || user.linkKarma > maxLinkKarma) {
             return false;
         }
         return true;
@@ -80,21 +67,12 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
             return false;
         }
 
-        const bannableTitles = this.getVariable<string[]>("bantext", []);
-        const matchedBanRegex = bannableTitles.find(title => stickyPosts.some(post => new RegExp(title, "u").test(post.title)));
+        const regexes = this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
+        const matchedBanRegex = regexes.find(regex => stickyPosts.some(post => regex.test(post.title)));
         if (matchedBanRegex) {
-            const matchedPost = stickyPosts.find(post => new RegExp(matchedBanRegex, "u").test(post.title));
-            this.addHitReason(`Sticky post title "${matchedPost?.title}" matched regex: ${markdownEscape(matchedBanRegex)}`);
+            const matchedPost = stickyPosts.find(post => matchedBanRegex.test(post.title));
+            this.addHitReason(`Sticky post title "${matchedPost?.title}" matched regex: ${markdownEscape(matchedBanRegex.source)}`);
             this.canAutoBan = true;
-            return true;
-        }
-
-        const reportableTitles = this.getVariable<string[]>("reporttext", []);
-        const matchedReportRegex = reportableTitles.find(title => stickyPosts.some(post => new RegExp(title, "u").test(post.title)));
-        if (matchedReportRegex) {
-            const matchedPost = stickyPosts.find(post => new RegExp(matchedReportRegex, "u").test(post.title));
-            this.addHitReason(`Sticky post title "${matchedPost?.title}" matched regex: ${markdownEscape(matchedReportRegex)}`);
-            this.canAutoBan = false;
             return true;
         }
 
