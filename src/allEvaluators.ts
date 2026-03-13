@@ -1,6 +1,4 @@
 import { EvaluateDomainSharer } from "./userEvaluation/EvaluateDomainSharer.js";
-import { EvaluateMixedBot } from "./userEvaluation/EvaluateMixedBot.js";
-import { EvaluateFirstCommentEmDash } from "./userEvaluation/EvaluateFirstCommentEmDash.js";
 import { EvaluateBadUsername } from "./userEvaluation/EvaluateBadUsername.js";
 import { EvaluatePinnedPostTitles } from "./userEvaluation/EvaluatePinnedPostTitle.js";
 import { EvaluateSelfComment } from "./userEvaluation/EvaluateSelfComment.js";
@@ -14,9 +12,7 @@ import { EvaluateInconsistentGenderBot } from "./userEvaluation/EvaluateInconsis
 import { EvaluateBadDisplayName } from "./userEvaluation/EvaluateBadDisplayname.js";
 import { EvaluateWorldTraveller } from "./userEvaluation/EvaluateWorldTraveller.js";
 import { EvaluateCommentPhrase } from "./userEvaluation/EvaluateCommentPhrase.js";
-import { EvaluateRapidFireBot } from "./userEvaluation/EvaluateRapidFireBot.js";
 import { EvaluateTGGroup } from "./userEvaluation/EvaluateTGGroup.js";
-import { EvaluateFirstPostWithSelfComment } from "./userEvaluation/EvaluateFirstPostWithSelfComment.js";
 import { EvaluateBotGroupAdvanced } from "./userEvaluation/EvaluateBotGroupAdvanced.js";
 import { EvaluateBioTextDefinedHandles } from "./userEvaluation/EvaluateBioTextDefinedHandles.js";
 import { EvaluatePostTitleDefinedHandles } from "./userEvaluation/EvaluatePostTitleDefinedHandles.js";
@@ -43,9 +39,7 @@ export const ALL_EVALUATORS = [
     EvaluateObfuscatedBioKeywords,
 
     // Evaluators that reference posts and comments, but not social links
-    EvaluateMixedBot,
     EvaluateDomainSharer,
-    EvaluateFirstCommentEmDash,
     EvaluatePinnedPostTitles,
     EvaluateSelfComment,
     EvaluatePostTitle,
@@ -56,9 +50,7 @@ export const ALL_EVALUATORS = [
     EvaluateInconsistentGenderBot,
     EvaluateWorldTraveller,
     EvaluateCommentPhrase,
-    EvaluateRapidFireBot,
     EvaluateTGGroup,
-    EvaluateFirstPostWithSelfComment,
 
     // Evaluators that need social links or other complicated data should be at the end
     EvaluateWarmupBot,
