@@ -16,8 +16,6 @@ test("Default username regex criteria permitted on Bot Group Advanced Internal",
 name: botgroupadvancedinternal
 killswitch: false
 
-defaultUsernameRegex: '^(?:[A-Z][a-z]+[_-]?){2}\\d{3,4}$'
-
 group1:
     name: Test Group
     matchesDefaultUsernameRegex: true
@@ -48,8 +46,6 @@ test("Default username regex matches autogen user", async () => {
     const yaml = `name: botgroupadvancedinternal
 killswitch: false
 
-defaultUsernameRegex: '^(?:[A-Z][a-z]+[_-]?){2}\\d{3,4}$'
-
 group1:
     name: Test Group
     matchesDefaultUsernameRegex: true
@@ -66,8 +62,6 @@ group1:
 test("Default username regex does not match non-autogen user", async () => {
     const yaml = `name: botgroupadvancedinternal
 killswitch: false
-
-defaultUsernameRegex: '^(?:[A-Z][a-z]+[_-]?){2}\\d{3,4}$'
 
 group1:
     name: Test Group
