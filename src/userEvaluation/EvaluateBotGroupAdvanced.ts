@@ -413,6 +413,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): ValidationI
 interface BotGroup {
     name: string;
     usernameRegex?: string[];
+    matchesDefaultUsernameRegex?: boolean;
     maxCommentKarma?: number;
     maxLinkKarma?: number;
     minCommentKarma?: number;
@@ -430,7 +431,7 @@ interface BotGroup {
     criteria?: CriteriaGroup;
 }
 
-function validateBotGroup (group: BotGroup | null): ValidationIssue[] {
+function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): ValidationIssue[] {
     const errors: ValidationIssue[] = [];
     if (group === null) {
         return [{ severity: "error", message: "Bot group contains no properties." }];
@@ -446,6 +447,14 @@ function validateBotGroup (group: BotGroup | null): ValidationIssue[] {
 
     if (group.usernameRegex) {
         errors.push(...validateRegexArray(group.usernameRegex));
+    }
+
+    if (group.matchesDefaultUsernameRegex !== undefined && typeof group.matchesDefaultUsernameRegex !== "boolean") {
+        errors.push({ severity: "error", message: "matchesDefaultUsernameRegex must be a boolean." });
+    }
+
+    if (group.matchesDefaultUsernameRegex !== undefined && !allowNewFeatures) {
+        errors.push({ severity: "error", message: "matchesDefaultUsernameRegex is not allowed in this evaluator." });
     }
 
     if (group.age) {
@@ -524,7 +533,7 @@ function validateBotGroup (group: BotGroup | null): ValidationIssue[] {
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "usernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
+    const expectedKeys = ["name", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in bot group: ${key}` });
@@ -559,6 +568,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
     private verboseLogging = false;
 
+    public allowNewFeatures = false;
+
     constructor (context: TriggerContext, socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
         super(context, socialLinks, variables);
 
@@ -581,7 +592,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         const errors: ValidationIssue[] = [];
         const groups = this.getAllVariables("group") as Record<string, BotGroup>;
         for (const [key, group] of Object.entries(groups)) {
-            errors.push(...validateBotGroup(group).map(error => ({ severity: error.severity, message: `Bot group ${key}: ${error.message}` })));
+            errors.push(...validateBotGroup(group, this.allowNewFeatures).map(error => ({ severity: error.severity, message: `Bot group ${key}: ${error.message}` })));
         }
 
         return errors;
@@ -1079,6 +1090,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     private async accountMatchesGroup (user: UserExtended, group: BotGroup): Promise<CriteriaMatchResult> {
         if (group.usernameRegex && !this.anyRegexMatches(user.username, group.usernameRegex)) {
             return { matched: false };
+        }
+
+        if (group.matchesDefaultUsernameRegex !== undefined) {
+            const defaultUsernameRegex = /^(?:[A-Z][a-z]+[_-]?){2}\d{3,4}$/;
+            const matchesDefaultRegex = defaultUsernameRegex.test(user.username);
+            if (group.matchesDefaultUsernameRegex !== matchesDefaultRegex) {
+                return { matched: false };
+            }
         }
 
         if (group.age && !this.matchesAgeCriteria(user.createdAt, group.age)) {

@@ -19,6 +19,7 @@ import { EvaluatePostTitleDefinedHandles } from "./userEvaluation/EvaluatePostTi
 import { EvaluateBadDisplayNameDefinedHandles } from "./userEvaluation/EvaluateBadDisplaynameDefinedHandles.js";
 import { EvaluatePostTitleMulti } from "./userEvaluation/EvaluatePostTitleMulti.js";
 import { EvaluateWarmupBot } from "./userEvaluation/EvaluateWarmupBot.js";
+import { EvaluateBotGroupAdvancedInternal } from "./userEvaluation/EvaluateBotGroupAdvancedInternal.js";
 
 /**
  * Array of all evaluators.
@@ -56,4 +57,9 @@ export const ALL_EVALUATORS = [
     EvaluateWarmupBot,
     EvaluateSocialLinks,
     EvaluateBotGroupAdvanced,
+];
+
+// Evaluators that will only run on internal tools and not subreddits that may be out of date.
+export const ALL_INTERNAL_EVALUATORS = [
+    EvaluateBotGroupAdvancedInternal,
 ];

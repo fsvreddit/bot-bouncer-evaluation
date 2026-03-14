@@ -1291,3 +1291,19 @@ group1:
     const evaluationResult = await evaluator.evaluate({} as unknown as UserExtended, history);
     expect(evaluationResult).toBe(false);
 });
+
+test("Default username regex criteria not permitted on Bot Group Advanced", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    matchesDefaultUsernameRegex: true
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toBeGreaterThan(0);
+});
