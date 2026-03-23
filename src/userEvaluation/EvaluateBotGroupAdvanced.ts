@@ -570,6 +570,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
     public allowNewFeatures = false;
 
+    private evaluationError: string | undefined;
+
     constructor (context: TriggerContext, socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
         super(context, socialLinks, variables);
 
@@ -949,7 +951,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
     private cachedPostProperties: Record<string, PostProperties> = {};
 
-    private async getPostProperties (postId: string): Promise<PostProperties> {
+    private async getPostProperties (postId: string): Promise<PostProperties | undefined> {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this.cachedPostProperties[postId]) {
             return this.cachedPostProperties[postId];
@@ -962,17 +964,23 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             return this.cachedPostProperties[postId];
         }
 
-        const postProperties = await this.context.reddit.getPostById(postId).then(post => ({
-            authorName: post.authorName,
-            title: post.title,
-            body: post.body,
-            url: post.url,
-            createdAt: post.createdAt.getTime(),
-        }));
+        try {
+            const postProperties = await this.context.reddit.getPostById(postId).then(post => ({
+                authorName: post.authorName,
+                title: post.title,
+                body: post.body,
+                url: post.url,
+                createdAt: post.createdAt.getTime(),
+            }));
 
-        await this.context.redis.set(cacheKey, JSON.stringify(postProperties), { expiration: addDays(new Date(), 1) });
-        this.cachedPostProperties[postId] = postProperties;
-        return postProperties;
+            await this.context.redis.set(cacheKey, JSON.stringify(postProperties), { expiration: addDays(new Date(), 1) });
+            this.cachedPostProperties[postId] = postProperties;
+            return postProperties;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            this.evaluationError = `Error fetching post properties for postId ${postId}: ${message}`;
+            return;
+        }
     }
 
     private async commentMatchesCondition (comment: Comment | CommentV2, condition: CommentCondition, history?: (Post | Comment)[]): Promise<CriteriaMatchResult> {
@@ -1310,6 +1318,10 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
             this.addHitReason({ reason: group.name, details: this.uniqueMatchReasons(matchReasons) });
             this.logEvaluationTime(startTime, user.username, group.name);
+        }
+
+        if (this.evaluationError) {
+            console.error(`Evaluation error for user ${user.username}: ${this.evaluationError}`);
         }
 
         return this.hitReasons !== undefined && this.hitReasons.length > 0;
