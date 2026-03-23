@@ -1017,13 +1017,19 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             postProperties = await this.getPostProperties(comment.postId);
         }
 
-        if (condition.postCreatedAtAge && postProperties) {
+        if (condition.postCreatedAtAge) {
+            if (!postProperties) {
+                return { matched: false };
+            }
             if (!this.matchesAgeCriteria(new Date(postProperties.createdAt), condition.postCreatedAtAge, comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt))) {
                 return { matched: false };
             }
         }
 
-        if (condition.postAuthorNameRegex && postProperties) {
+        if (condition.postAuthorNameRegex) {
+            if (!postProperties) {
+                return { matched: false };
+            }
             if (this.anyRegexMatches(postProperties.authorName, condition.postAuthorNameRegex)) {
                 matchReasons.push({ key: "postAuthorNameRegex", value: postProperties.authorName });
             } else {
@@ -1031,7 +1037,10 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        if (condition.postTitleRegex && postProperties) {
+        if (condition.postTitleRegex) {
+            if (!postProperties?.title) {
+                return { matched: false };
+            }
             if (this.anyRegexMatches(postProperties.title, condition.postTitleRegex)) {
                 matchReasons.push({ key: "postTitleRegex", value: postProperties.title });
             } else {
@@ -1039,8 +1048,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        if (condition.postBodyRegex && postProperties) {
-            if (!postProperties.body) {
+        if (condition.postBodyRegex) {
+            if (!postProperties?.body) {
                 return { matched: false };
             }
 
@@ -1051,7 +1060,10 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        if (condition.postUrlRegex && postProperties) {
+        if (condition.postUrlRegex) {
+            if (!postProperties?.url) {
+                return { matched: false };
+            }
             if (this.anyRegexMatches(postProperties.url, condition.postUrlRegex)) {
                 matchReasons.push({ key: "postUrlRegex", value: postProperties.url });
             } else {
