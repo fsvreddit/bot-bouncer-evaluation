@@ -3,7 +3,7 @@ import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
-import { UserExtended } from "../extendedDevvit.js";
+import { getPostPropertiesByIds, PostProperties, UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { uniq } from "lodash";
@@ -543,14 +543,6 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
     return errors;
 }
 
-interface PostProperties {
-    authorName: string;
-    title: string;
-    body?: string;
-    url: string;
-    createdAt: number;
-}
-
 interface MatchReason {
     key: string;
     value: string;
@@ -949,11 +941,28 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return { matched: true, reasons: matchReasons };
     }
 
+    private userPostIds: string[] | undefined;
+
     private cachedPostProperties: Record<string, PostProperties> = {};
 
     private async getPostProperties (postId: string): Promise<PostProperties | undefined> {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this.cachedPostProperties[postId]) {
+            return this.cachedPostProperties[postId];
+        }
+
+        if (Object.keys(this.cachedPostProperties).length === 0) {
+            // Cache *all* posts from the user's history.
+            try {
+                this.cachedPostProperties = await getPostPropertiesByIds(this.userPostIds ?? [], this.context);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                this.evaluationError = `Error fetching bulk post properties for user's history: ${message}`;
+            }
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (this.cachedPostProperties[postId]) { // Unless an error occurs, this will always match.
             return this.cachedPostProperties[postId];
         }
 
@@ -1306,6 +1315,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     }
 
     override async evaluate (user: UserExtended, history: (Post | Comment)[]): Promise<boolean> {
+        this.userPostIds = uniq(this.getComments(history).map(comment => comment.postId));
+
         const botGroups = this.getBotGroups();
 
         for (const group of botGroups) {
