@@ -102,39 +102,3 @@ export async function getUserExtendedFromUser (user: User, context: TriggerConte
         username: user.username,
     };
 }
-
-export interface PostProperties {
-    authorName: string;
-    title: string;
-    body?: string;
-    url: string;
-    createdAt: number;
-}
-
-export async function getPostPropertiesByIds (postIds: string[], context: TriggerContext): Promise<Record<string, PostProperties>> {
-    if (postIds.length === 0) {
-        return {};
-    }
-
-    const postResults = await getExtendedDevvit().redditAPIPlugins.Listings.ById({
-        postIds: postIds.join(","),
-    }, context.metadata);
-
-    const results: Record<string, PostProperties> = {};
-
-    for (const post of postResults.data?.children ?? []) {
-        if (!post.data?.id || !post.data.author || !post.data.title || !post.data.url || !post.data.created) {
-            continue;
-        }
-
-        results[post.data.id] = {
-            authorName: post.data.author,
-            title: post.data.title,
-            body: post.data.selftext,
-            url: post.data.url,
-            createdAt: post.data.created * 1000,
-        };
-    }
-
-    return results;
-}
