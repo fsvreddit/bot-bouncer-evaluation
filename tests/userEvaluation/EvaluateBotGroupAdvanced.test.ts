@@ -1337,7 +1337,7 @@ group1:
     expect(result).toBe(true);
 });
 
-test("Social Links rule matches without matching social link", async () => {
+test("Social Links rule does not match without matching social link", async () => {
     const yaml = `
 name: botgroupadvanced
 killswitch: false
@@ -1355,6 +1355,33 @@ group1:
     const socialLinks: UserSocialLink[] = [{
         outboundUrl: "https://twitter.com/testuser43",
     } as unknown as UserSocialLink];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, socialLinks, variables);
+
+    const preEvaluateResult = await evaluator.preEvaluateUser(user);
+    expect(preEvaluateResult).toBe(false);
+
+    const result = await evaluator.evaluate(user, []);
+    expect(result).toBe(false);
+});
+
+test("Social Links rule matches without any social link", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    socialLinkRegex:
+        - 'example\\.com/testuser43'
+`;
+
+    const user: UserExtended = {
+        username: "testuser43",
+    } as unknown as UserExtended;
+
+    const socialLinks: UserSocialLink[] = [];
 
     const variables = yamlToVariables(yaml);
     const evaluator = new EvaluateBotGroupAdvanced(fakeContext, socialLinks, variables);
