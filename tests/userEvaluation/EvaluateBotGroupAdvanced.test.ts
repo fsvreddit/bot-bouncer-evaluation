@@ -2,7 +2,7 @@ import { subDays } from "date-fns";
 import { UserExtended } from "../../src/extendedDevvit";
 import { EvaluateBotGroupAdvanced } from "../../src/userEvaluation/EvaluateBotGroupAdvanced";
 import { yamlToVariables } from "../../src/utility";
-import { Comment, Post, TriggerContext } from "@devvit/public-api";
+import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-api";
 
 const fakeContext: TriggerContext = {
     reddit: {
@@ -1306,4 +1306,62 @@ group1:
     const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
+});
+
+test("Social Links rule matches with matching social link", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    socialLinkRegex:
+        - 'example\\.com/testuser43'
+`;
+
+    const user: UserExtended = {
+        username: "testuser43",
+    } as unknown as UserExtended;
+
+    const socialLinks: UserSocialLink[] = [{
+        outboundUrl: "https://example.com/testuser43",
+    } as unknown as UserSocialLink];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, socialLinks, variables);
+
+    const preEvaluateResult = await evaluator.preEvaluateUser(user);
+    expect(preEvaluateResult).toBe(true);
+
+    const result = await evaluator.evaluate(user, []);
+    expect(result).toBe(true);
+});
+
+test("Social Links rule matches without matching social link", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    socialLinkRegex:
+        - 'example\\.com/testuser43'
+`;
+
+    const user: UserExtended = {
+        username: "testuser43",
+    } as unknown as UserExtended;
+
+    const socialLinks: UserSocialLink[] = [{
+        outboundUrl: "https://twitter.com/testuser43",
+    } as unknown as UserSocialLink];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, socialLinks, variables);
+
+    const preEvaluateResult = await evaluator.preEvaluateUser(user);
+    expect(preEvaluateResult).toBe(false);
+
+    const result = await evaluator.evaluate(user, []);
+    expect(result).toBe(false);
 });

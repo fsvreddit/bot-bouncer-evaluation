@@ -1108,7 +1108,41 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         });
     }
 
-    private async accountMatchesGroup (user: UserExtended, group: BotGroup): Promise<CriteriaMatchResult> {
+    private async accountMatchesSocialLinkCriteria (user: UserExtended, group: BotGroup): Promise<CriteriaMatchResult> {
+        const matchReasons: MatchReason[] = [];
+
+        if (group.socialLinkRegex) {
+            const userSocialLinks = await this.getSocialLinks(user.username);
+            if (userSocialLinks.length === 0) {
+                return { matched: false };
+            }
+
+            const matchingSocialLink = userSocialLinks.find(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex));
+            if (matchingSocialLink) {
+                matchReasons.push({ key: "socialLinkRegex", value: matchingSocialLink.outboundUrl });
+            } else {
+                return { matched: false };
+            }
+        }
+
+        if (group.socialLinkTitleRegex) {
+            const userSocialLinks = await this.getSocialLinks(user.username);
+            if (userSocialLinks.length === 0) {
+                return { matched: false };
+            }
+
+            const matchingSocialLink = userSocialLinks.find(userLink => group.socialLinkTitleRegex && userLink.title && this.anyRegexMatches(userLink.title, group.socialLinkTitleRegex));
+            if (matchingSocialLink) {
+                matchReasons.push({ key: "socialLinkTitleRegex", value: matchingSocialLink.title });
+            } else {
+                return { matched: false };
+            }
+        }
+
+        return { matched: true, reasons: matchReasons };
+    }
+
+    private async accountMatchesGroup (user: UserExtended, group: BotGroup, evaluateSocialLinks = true): Promise<CriteriaMatchResult> {
         if (group.usernameRegex && !this.anyRegexMatches(user.username, group.usernameRegex)) {
             return { matched: false };
         }
@@ -1183,31 +1217,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        if (group.socialLinkRegex) {
-            const userSocialLinks = await this.getSocialLinks(user.username);
-            if (userSocialLinks.length === 0) {
+        if (evaluateSocialLinks) {
+            const socialLinkEvaluationResult = await this.accountMatchesSocialLinkCriteria(user, group);
+            if (!socialLinkEvaluationResult.matched) {
                 return { matched: false };
             }
 
-            const matchingSocialLink = userSocialLinks.find(userLink => group.socialLinkRegex && this.anyRegexMatches(userLink.outboundUrl, group.socialLinkRegex));
-            if (matchingSocialLink) {
-                matchReasons.push({ key: "socialLinkRegex", value: matchingSocialLink.outboundUrl });
-            } else {
-                return { matched: false };
-            }
-        }
-
-        if (group.socialLinkTitleRegex) {
-            const userSocialLinks = await this.getSocialLinks(user.username);
-            if (userSocialLinks.length === 0) {
-                return { matched: false };
-            }
-
-            const matchingSocialLink = userSocialLinks.find(userLink => group.socialLinkTitleRegex && userLink.title && this.anyRegexMatches(userLink.title, group.socialLinkTitleRegex));
-            if (matchingSocialLink) {
-                matchReasons.push({ key: "socialLinkTitleRegex", value: matchingSocialLink.title });
-            } else {
-                return { matched: false };
+            if (socialLinkEvaluationResult.reasons?.length) {
+                matchReasons.push(...socialLinkEvaluationResult.reasons);
             }
         }
 
@@ -1311,7 +1328,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         for (const group of botGroups) {
             const startTime = Date.now();
-            const accountMatches = await this.accountMatchesGroup(user, group);
+            const accountMatches = await this.accountMatchesGroup(user, group, false);
             if (!accountMatches.matched) {
                 this.logEvaluationTime(startTime, user.username, group.name);
                 continue;
@@ -1327,6 +1344,12 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 }
 
                 matchReasons.push(...(historyMatchesGroup.reasons ?? []));
+            }
+
+            const socialLinksMatches = await this.accountMatchesSocialLinkCriteria(user, group);
+            if (!socialLinksMatches.matched) {
+                this.logEvaluationTime(startTime, user.username, group.name);
+                continue;
             }
 
             this.addHitReason({ reason: group.name, details: this.uniqueMatchReasons(matchReasons) });
