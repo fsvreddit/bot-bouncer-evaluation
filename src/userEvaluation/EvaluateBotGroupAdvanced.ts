@@ -1,4 +1,4 @@
-import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-api";
+import { Comment, Post, RedisClient, TriggerContext, UserSocialLink } from "@devvit/public-api";
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
@@ -7,6 +7,7 @@ import { UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { uniq } from "lodash";
+import { MAIN_APP_NAME } from "../constants.js";
 
 interface AgeRange {
     dateFrom: string;
@@ -567,6 +568,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     override banContentThreshold = 0; // No content ban threshold for this evaluator to support account properties only checks
 
     private verboseLogging = false;
+    private redis: RedisClient | Omit<RedisClient, "global">;
 
     public allowNewFeatures = false;
 
@@ -576,9 +578,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         super(context, socialLinks, variables);
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-        if (this.getVariable<boolean>("verboseLogging", false)) {
-            this.verboseLogging = true;
-        }
+        this.verboseLogging = this.getVariable<boolean>("verboseLogging", false);
+        this.redis = context.appSlug === MAIN_APP_NAME ? context.redis.global : context.redis;
     }
 
     private anyRegexMatches (input: string, regexes: string[]): boolean {
@@ -969,7 +970,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         const cacheKey = `bbe~postProperties~${postId}`;
-        const cachedPostProperties = await this.context.redis.get(cacheKey);
+        const cachedPostProperties = await this.redis.get(cacheKey);
         if (cachedPostProperties) {
             this.cachedPostProperties[postId] = JSON.parse(cachedPostProperties) as PostProperties;
             this.postPropertiesStatistics.cacheHits++;
@@ -986,7 +987,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 createdAt: post.createdAt.getTime(),
             }));
 
-            await this.context.redis.set(cacheKey, JSON.stringify(postProperties), { expiration: addDays(new Date(), 1) });
+            await this.redis.set(cacheKey, JSON.stringify(postProperties), { expiration: addDays(new Date(), 7) });
             this.cachedPostProperties[postId] = postProperties;
             this.postPropertiesStatistics.cacheMisses++;
             this.postPropertiesStatistics.totalTime += Date.now() - now;
