@@ -952,9 +952,19 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
     private cachedPostProperties: Record<string, PostProperties> = {};
 
+    private postPropertiesStatistics = {
+        totalTime: 0,
+        inMemoryHits: 0,
+        cacheHits: 0,
+        cacheMisses: 0,
+        errors: 0,
+    };
+
     private async getPostProperties (postId: string): Promise<PostProperties | undefined> {
+        const now = Date.now();
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this.cachedPostProperties[postId]) {
+            this.postPropertiesStatistics.inMemoryHits++;
             return this.cachedPostProperties[postId];
         }
 
@@ -962,6 +972,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         const cachedPostProperties = await this.context.redis.get(cacheKey);
         if (cachedPostProperties) {
             this.cachedPostProperties[postId] = JSON.parse(cachedPostProperties) as PostProperties;
+            this.postPropertiesStatistics.cacheHits++;
+            this.postPropertiesStatistics.totalTime += Date.now() - now;
             return this.cachedPostProperties[postId];
         }
 
@@ -976,10 +988,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
             await this.context.redis.set(cacheKey, JSON.stringify(postProperties), { expiration: addDays(new Date(), 1) });
             this.cachedPostProperties[postId] = postProperties;
+            this.postPropertiesStatistics.cacheMisses++;
+            this.postPropertiesStatistics.totalTime += Date.now() - now;
             return postProperties;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             this.evaluationError = `Error fetching post properties for postId ${postId}: ${message}`;
+            this.postPropertiesStatistics.errors++;
+            this.postPropertiesStatistics.totalTime += Date.now() - now;
             return;
         }
     }
@@ -1358,6 +1374,10 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         if (this.evaluationError) {
             console.error(`Evaluation error for user ${user.username}: ${this.evaluationError}`);
+        }
+
+        if (this.verboseLogging && this.postPropertiesStatistics.totalTime > 1000) {
+            console.log(`Post properties fetching statistics for user ${user.username}:`, this.postPropertiesStatistics);
         }
 
         return this.hitReasons !== undefined && this.hitReasons.length > 0;
