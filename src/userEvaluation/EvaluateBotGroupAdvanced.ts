@@ -4,7 +4,7 @@ import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
-import { addDays, endOfDay, parse, subDays } from "date-fns";
+import { addDays, endOfDay, parse, subDays, subMinutes } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { uniq } from "lodash";
 import { MAIN_APP_NAME } from "../constants.js";
@@ -17,6 +17,8 @@ interface AgeRange {
 interface AgeInDays {
     maxAgeInDays?: number;
     minAgeInDays?: number;
+    maxAgeInMinutes?: number;
+    minAgeInMinutes?: number;
 }
 
 type AgeCriteria = AgeRange | AgeInDays;
@@ -55,8 +57,30 @@ function validateAgeCriteria (age: AgeCriteria): ValidationIssue[] {
         errors.push({ severity: "error", message: "Age criteria must specify either date range, maxAgeInDays, or minAgeInDays." });
     }
 
+    if (Object.keys(age).includes("maxAgeInMinutes")) {
+        const { maxAgeInMinutes, maxAgeInDays } = age as AgeInDays;
+        if (typeof maxAgeInMinutes !== "number" || maxAgeInMinutes <= 0) {
+            errors.push({ severity: "error", message: "maxAgeInMinutes must be a positive number." });
+        }
+
+        if (maxAgeInDays !== 1) {
+            errors.push({ severity: "error", message: "maxAgeInMinutes cannot be specified without maxAgeInDays being set to 1." });
+        }
+    }
+
+    if (Object.keys(age).includes("minAgeInMinutes")) {
+        const { minAgeInMinutes, minAgeInDays } = age as AgeInDays;
+        if (typeof minAgeInMinutes !== "number" || minAgeInMinutes <= 0) {
+            errors.push({ severity: "error", message: "minAgeInMinutes must be a positive number." });
+        }
+
+        if (!minAgeInDays) {
+            errors.push({ severity: "error", message: "minAgeInMinutes cannot be specified without minAgeInDays being set." });
+        }
+    }
+
     const keys = Object.keys(age);
-    const expectedKeys = ["dateFrom", "dateTo", "maxAgeInDays", "minAgeInDays"];
+    const expectedKeys = ["dateFrom", "dateTo", "maxAgeInDays", "minAgeInDays", "maxAgeInMinutes", "minAgeInMinutes"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in age criteria: ${key}` });
@@ -724,6 +748,20 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
         if ("minAgeInDays" in age && age.minAgeInDays) {
             const minAgeDate = subDays(baseline, age.minAgeInDays);
+            if (date > minAgeDate) {
+                return false;
+            }
+        }
+
+        if ("maxAgeInMinutes" in age && age.maxAgeInMinutes) {
+            const maxAgeDate = subMinutes(baseline, age.maxAgeInMinutes);
+            if (date < maxAgeDate) {
+                return false;
+            }
+        }
+
+        if ("minAgeInMinutes" in age && age.minAgeInMinutes) {
+            const minAgeDate = subMinutes(baseline, age.minAgeInMinutes);
             if (date > minAgeDate) {
                 return false;
             }
