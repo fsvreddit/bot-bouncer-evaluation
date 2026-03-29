@@ -413,6 +413,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): ValidationI
 
 interface BotGroup {
     name: string;
+    descriptionForAI?: string;
     usernameRegex?: string[];
     matchesDefaultUsernameRegex?: boolean;
     maxCommentKarma?: number;
@@ -444,6 +445,10 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
 
     if (typeof group.name !== "string") {
         errors.push({ severity: "error", message: "Bot group name must be a string. You may need to enclose the group name in single quotes." });
+    }
+
+    if (group.descriptionForAI !== undefined && typeof group.descriptionForAI !== "string") {
+        errors.push({ severity: "error", message: "descriptionForAI must be a string." });
     }
 
     if (group.usernameRegex) {
@@ -534,7 +539,7 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
+    const expectedKeys = ["name", "descriptionForAI", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in bot group: ${key}` });
