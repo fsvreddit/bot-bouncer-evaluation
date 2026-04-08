@@ -6,7 +6,7 @@ import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvalua
 import { UserExtended } from "../extendedDevvit.js";
 import { addDays, endOfDay, parse, subDays, subMinutes } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { uniq } from "lodash";
+import { countBy, uniq } from "lodash";
 import { MAIN_APP_NAME } from "../constants.js";
 
 interface AgeRange {
@@ -453,6 +453,7 @@ interface BotGroup {
     hasVerifiedEmail?: boolean;
     hasRedditPremium?: boolean;
     isSubredditModerator?: boolean;
+    hasMoreThanOneCommentOnPosts?: boolean;
 
     criteria?: CriteriaGroup;
 }
@@ -562,8 +563,12 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
         errors.push({ severity: "error", message: "Is subreddit moderator must be a boolean." });
     }
 
+    if (group.hasMoreThanOneCommentOnPosts !== undefined && typeof group.hasMoreThanOneCommentOnPosts !== "boolean") {
+        errors.push({ severity: "error", message: "Has more than one comment on posts must be a boolean." });
+    }
+
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "descriptionForAI", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "criteria"];
+    const expectedKeys = ["name", "descriptionForAI", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "hasMoreThanOneCommentOnPosts", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in bot group: ${key}` });
@@ -606,8 +611,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     constructor (context: TriggerContext, socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
         super(context, socialLinks, variables);
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-        this.verboseLogging = this.getVariable<boolean>("verboseLogging", false);
+        this.verboseLogging = this.getVariable("verboseLogging", false);
         this.redis = context.appSlug === MAIN_APP_NAME ? context.redis.global : context.redis;
     }
 
@@ -1410,6 +1414,16 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (!socialLinksMatches.matched) {
                 this.logEvaluationTime(startTime, user.username, group.name);
                 continue;
+            }
+
+            if (group.hasMoreThanOneCommentOnPosts !== undefined) {
+                const comments = this.getComments(history);
+                const commentCounts = countBy(comments.map(comment => comment.postId));
+                const hasMultipleComments = Object.values(commentCounts).some(count => count > 1);
+                if (group.hasMoreThanOneCommentOnPosts !== hasMultipleComments) {
+                    this.logEvaluationTime(startTime, user.username, group.name);
+                    continue;
+                }
             }
 
             this.addHitReason({ reason: group.name, details: this.uniqueMatchReasons(matchReasons) });

@@ -48,7 +48,7 @@ export abstract class UserEvaluatorBase {
     }
 
     public evaluatorDisabled () {
-        return this.getVariable<boolean>("killswitch", false);
+        return this.getVariable("killswitch", false);
     }
 
     public validateVariables (): ValidationIssue[] {
@@ -122,7 +122,12 @@ export abstract class UserEvaluatorBase {
     abstract evaluate (user: UserExtended, history: (Post | Comment)[]): boolean | Promise<boolean>;
 
     private getContent (history: (Post | Comment)[], options?: HistoryOptions): (Post | Comment)[] {
+        const ignoredSubs = this.getGenericVariable<string[]>("ignoredsubs", []);
+
         const filteredHistory = history.filter((item) => {
+            if (ignoredSubs.includes(item.subredditName)) {
+                return false;
+            }
             if (options?.since && item.createdAt < options.since) {
                 return false;
             }

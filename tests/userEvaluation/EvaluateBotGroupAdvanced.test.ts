@@ -1392,3 +1392,34 @@ group1:
     const result = await evaluator.evaluate(user, []);
     expect(result).toBe(false);
 });
+
+test("Validate that hasMoreThanOneCommentOnPosts criteria prevents matching when user has more than one comment on a post", async () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+    name: Test Group
+    hasMoreThanOneCommentOnPosts: false
+    criteria:
+        type: comment
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 20),
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t3_123", body: "Test Body" } as unknown as Comment,
+        { subredditName: "Hentai", createdAt: subDays(new Date(), 1), id: "t1_124", authorName: "testuser43", postId: "t3_123", parentId: "t3_123", body: "Test Body" } as unknown as Comment,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user, history);
+    expect(evaluationResult).toBe(false);
+});
