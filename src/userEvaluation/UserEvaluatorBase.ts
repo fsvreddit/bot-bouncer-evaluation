@@ -55,6 +55,12 @@ export abstract class UserEvaluatorBase {
         this.history = history;
     }
 
+    public setHistory (history: (Post | Comment)[]) {
+        this.history = history;
+        this.userPosts = undefined;
+        this.userComments = undefined;
+    }
+
     public evaluatorDisabled () {
         return this.getVariable("killswitch", false);
     }
