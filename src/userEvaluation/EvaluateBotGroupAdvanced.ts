@@ -1315,7 +1315,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const matchReasons: MatchReason[] = [];
 
             // check "not" groups first to allow for early exits
-            for (const subCriteria of criteria.every.sort((a, b) => ("not" in a ? -1 : 1))) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            for (const subCriteria of criteria.every.sort((a, _) => ("not" in a ? -1 : 1))) {
                 const criteriaResult = await this.historyMatchesCriteriaGroup(subCriteria);
                 if (!criteriaResult.matched) {
                     return { matched: false };
