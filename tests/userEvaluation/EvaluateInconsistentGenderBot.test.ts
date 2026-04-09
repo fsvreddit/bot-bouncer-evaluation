@@ -22,8 +22,8 @@ test("User with consistent genders", () => {
         isNsfw: () => true,
     })) as unknown as Post[];
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, mockVariables);
-    const evaluationResult = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, history, undefined, mockVariables);
+    const evaluationResult = evaluator.evaluate({} as unknown as UserExtended);
     expect(evaluationResult).toBeFalsy();
 });
 
@@ -55,8 +55,8 @@ test("User with inconsistent genders", () => {
         isNsfw: () => true,
     } as unknown as Post);
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, mockVariables);
-    const evaluationResult = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, history, undefined, mockVariables);
+    const evaluationResult = evaluator.evaluate({} as unknown as UserExtended);
     expect(evaluationResult).toBeTruthy();
 });
 
@@ -70,7 +70,7 @@ test("Regex formats", () => {
         { title: "23M", expected: "M" },
     ];
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, mockVariables);
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, [], undefined, mockVariables);
 
     for (const { title, expected } of testCases) {
         const result = evaluator.getGenderFromTitle(title);
@@ -88,7 +88,7 @@ test("Validation fails if no capturing group found", () => {
         ],
     };
 
-    const evaluator = new EvaluateInconsistentGenderBot(mockContext, undefined, variables);
+    const evaluator = new EvaluateInconsistentGenderBot(mockContext, [], undefined, variables);
     const results = evaluator.validateVariables();
     expect(results.length).toBe(1);
 });

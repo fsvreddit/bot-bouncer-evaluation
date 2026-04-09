@@ -29,8 +29,8 @@ test("Post title matches bannable regex", () => {
         "click here for free money",
     ]);
 
-    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, undefined, variables);
-    const result = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, history, undefined, variables);
+    const result = evaluator.evaluate({} as unknown as UserExtended);
     expect(result).toBe(true);
 });
 
@@ -40,8 +40,8 @@ test("Post title does not match bannable regex", () => {
         "another safe post",
     ]);
 
-    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, undefined, variables);
-    const result = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, history, undefined, variables);
+    const result = evaluator.evaluate({} as unknown as UserExtended);
     expect(result).toBe(false);
 });
 
@@ -55,8 +55,8 @@ test("ignoredRegexPrefixes removes certain titles from bannable list", () => {
         "posttitle:ignoredRegexPrefixes": ["free"],
     };
 
-    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, undefined, localVariables);
-    const result = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, history, undefined, localVariables);
+    const result = evaluator.evaluate({} as unknown as UserExtended);
     expect(result).toBe(false);
 });
 
@@ -70,7 +70,7 @@ test("ignoredRegexPrefixes removes certain titles from bannable list but with an
         "posttitle:ignoredRegexPrefixes": ["free"],
     };
 
-    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, undefined, localVariables);
-    const result = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, history, undefined, localVariables);
+    const result = evaluator.evaluate({} as unknown as UserExtended);
     expect(result).toBe(true);
 });

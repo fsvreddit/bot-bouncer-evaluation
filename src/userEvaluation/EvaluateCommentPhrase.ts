@@ -73,8 +73,9 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
         return user.commentKarma < maxCommentKarma && user.createdAt > subDays(new Date(), maxAgeInDays);
     }
 
-    override evaluate (_user: UserExtended, history: (Post | Comment)[]): boolean {
-        const userComments = this.getComments(history);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override evaluate (_: UserExtended): boolean {
+        const userComments = this.getComments();
         const matchingComments = userComments.filter(comment => this.eligibleComment(comment));
         if (matchingComments.length === 0) {
             return false;

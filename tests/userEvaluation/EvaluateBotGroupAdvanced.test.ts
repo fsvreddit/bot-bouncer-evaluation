@@ -34,11 +34,11 @@ group1:
     } as unknown as UserExtended;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, []);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -73,11 +73,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -118,11 +118,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -162,11 +162,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -208,11 +208,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -253,11 +253,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -294,11 +294,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -333,11 +333,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -362,7 +362,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -396,11 +396,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -433,11 +433,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -457,7 +457,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -491,11 +491,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -529,11 +529,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -565,11 +565,11 @@ group4:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -600,11 +600,11 @@ group4:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -636,11 +636,11 @@ group4:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -675,11 +675,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -714,11 +714,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -753,11 +753,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -792,11 +792,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -831,11 +831,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -870,11 +870,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -909,11 +909,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -948,11 +948,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -981,7 +981,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -1003,7 +1003,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1023,7 +1023,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1042,7 +1042,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced({} as unknown as TriggerContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1061,7 +1061,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1080,7 +1080,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1104,11 +1104,11 @@ group1:
     } as unknown as UserExtended;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
-    const evaluationResult = await evaluator.evaluate(user, []);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
 
@@ -1130,11 +1130,11 @@ group1:
     } as unknown as UserExtended;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 
-    const evaluationResult = await evaluator.evaluate(user, []);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
 
@@ -1151,7 +1151,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -1170,7 +1170,7 @@ group2:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(1);
 });
@@ -1206,10 +1206,10 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
     const actualHitReasons = evaluator.hitReasons;
 
@@ -1256,11 +1256,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluationResult = await evaluator.evaluate({} as unknown as UserExtended);
     expect(evaluationResult).toBe(true);
 });
 
@@ -1284,11 +1284,11 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluationResult = await evaluator.evaluate({} as unknown as UserExtended);
     expect(evaluationResult).toBe(false);
 });
 
@@ -1303,7 +1303,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toBeGreaterThan(0);
 });
@@ -1328,12 +1328,12 @@ group1:
     } as unknown as UserSocialLink];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, socialLinks, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], socialLinks, variables);
 
     const preEvaluateResult = await evaluator.preEvaluateUser(user);
     expect(preEvaluateResult).toBe(true);
 
-    const result = await evaluator.evaluate(user, []);
+    const result = await evaluator.evaluate(user);
     expect(result).toBe(true);
 });
 
@@ -1357,12 +1357,12 @@ group1:
     } as unknown as UserSocialLink];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, socialLinks, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], socialLinks, variables);
 
     const preEvaluateResult = await evaluator.preEvaluateUser(user);
     expect(preEvaluateResult).toBe(false);
 
-    const result = await evaluator.evaluate(user, []);
+    const result = await evaluator.evaluate(user);
     expect(result).toBe(false);
 });
 
@@ -1384,12 +1384,12 @@ group1:
     const socialLinks: UserSocialLink[] = [];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, socialLinks, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], socialLinks, variables);
 
     const preEvaluateResult = await evaluator.preEvaluateUser(user);
     expect(preEvaluateResult).toBe(false);
 
-    const result = await evaluator.evaluate(user, []);
+    const result = await evaluator.evaluate(user);
     expect(result).toBe(false);
 });
 
@@ -1416,10 +1416,10 @@ group1:
     ];
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors).toEqual([]);
 
-    const evaluationResult = await evaluator.evaluate(user, history);
+    const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });

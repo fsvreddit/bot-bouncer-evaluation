@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
@@ -85,7 +85,7 @@ export class EvaluateBioTextDefinedHandles extends UserEvaluatorBase {
         return regexes.some(bioText => user.userDescription && new RegExp(bioText, "u").test(user.userDescription));
     }
 
-    override evaluate (user: UserExtended, history: (Post | Comment)[]): boolean {
+    override evaluate (user: UserExtended): boolean {
         if (!user.userDescription) {
             return false;
         }
@@ -104,6 +104,6 @@ export class EvaluateBioTextDefinedHandles extends UserEvaluatorBase {
         this.canAutoBan = true;
         this.addHitReason(`Bio text matched regexes: ${bannableBioTextFound.map(bio => `\`${bio}\``).join(", ")}`);
 
-        return user.nsfw || this.getPosts(history).some(post => post.isNsfw());
+        return user.nsfw || this.getPosts().some(post => post.isNsfw());
     }
 }

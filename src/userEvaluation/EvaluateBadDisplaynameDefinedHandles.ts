@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
@@ -86,7 +86,7 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override evaluate (_user: UserExtended, _history: (Post | Comment)[]): boolean {
+    override evaluate (_user: UserExtended): boolean {
         return true;
     }
 }

@@ -33,8 +33,8 @@ test("Insufficient Matches", () => {
         "act now to claim your prize",
     ]);
 
-    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, undefined, variables);
-    const result = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, history, undefined, variables);
+    const result = evaluator.evaluate({} as unknown as UserExtended);
     expect(result).toBe(false);
 });
 
@@ -48,8 +48,8 @@ test("Sufficient matches", () => {
         "please visit this link to learn more",
     ]);
 
-    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, undefined, variables);
-    const result = evaluator.evaluate({} as unknown as UserExtended, history);
+    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, history, undefined, variables);
+    const result = evaluator.evaluate({} as unknown as UserExtended);
     expect(result).toBe(true);
 });
 
@@ -61,7 +61,7 @@ test("Validate regex starts with anchor", () => {
         ],
     };
 
-    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, [], undefined, variables);
     const results = evaluator.validateVariables();
     expect(results).toHaveLength(1);
     expect(results[0]).toEqual({
@@ -80,7 +80,7 @@ regexes:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluatePostTitleMulti({} as unknown as TriggerContext, [], undefined, variables);
     const overrides = evaluator.getVariableOverrides();
     expect(overrides).toEqual({
         regexes: ["abc", "def", "ghi", "jkl"],

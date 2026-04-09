@@ -30,8 +30,8 @@ test("User with three different sequential ages", () => {
         { createdAt: new Date(), id: "t3_fake8", subredditName: "gonewild", title: "F25 Hello", url: "https://www.reddit.com/r/gonewild/comments/t3_fake8", isNsfw: () => true },
     ] as unknown as Post[];
 
-    const evaluator = new EvaluateInconsistentAgeBot(mockContext, undefined, mockVariables);
-    const result = evaluator.evaluate(mockUser, history);
+    const evaluator = new EvaluateInconsistentAgeBot(mockContext, history, undefined, mockVariables);
+    const result = evaluator.evaluate(mockUser);
     expect(result).toBeTruthy();
 });
 
@@ -43,8 +43,8 @@ test("Male user with three different sequential ages", () => {
         { createdAt: new Date(), id: "t3_fake8", subredditName: "gonewild", title: "M25 Hello", url: "https://www.reddit.com/r/gonewild/comments/t3_fake8", isNsfw: () => true },
     ] as unknown as Post[];
 
-    const evaluator = new EvaluateInconsistentAgeBot(mockContext, undefined, mockVariables);
-    const result = evaluator.evaluate(mockUser, history);
+    const evaluator = new EvaluateInconsistentAgeBot(mockContext, history, undefined, mockVariables);
+    const result = evaluator.evaluate(mockUser);
     expect(result).toBeFalsy();
 });
 
@@ -56,7 +56,7 @@ test("Validation fails if no capturing group found", () => {
         ],
     };
 
-    const evaluator = new EvaluateInconsistentAgeBot(mockContext, undefined, variables);
+    const evaluator = new EvaluateInconsistentAgeBot(mockContext, [], undefined, variables);
     const results = evaluator.validateVariables();
     expect(results.length).toBe(1);
 });

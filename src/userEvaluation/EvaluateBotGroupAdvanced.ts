@@ -608,8 +608,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
     private evaluationError: string | undefined;
 
-    constructor (context: TriggerContext, socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
-        super(context, socialLinks, variables);
+    constructor (context: TriggerContext, history: (Post | Comment)[], socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
+        super(context, history, socialLinks, variables);
 
         this.verboseLogging = this.getVariable("verboseLogging", false);
         this.redis = context.appSlug === MAIN_APP_NAME ? context.redis.global : context.redis;
@@ -1068,7 +1068,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (!history || !(comment instanceof Comment)) {
                 return { matched: false };
             }
-            const posts = this.getPosts(history);
+            const posts = this.getPosts();
             const parentPost = posts.find(post => post.id === comment.postId);
 
             const matchesCriteria = condition.isCommentOnOwnPost === (parentPost?.authorName === comment.authorName);
@@ -1307,14 +1307,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return false;
     }
 
-    private async historyMatchesCriteriaGroup (history: (Post | Comment)[], criteria: CriteriaGroup): Promise<CriteriaMatchResult> {
+    private async historyMatchesCriteriaGroup (criteria: CriteriaGroup): Promise<CriteriaMatchResult> {
         if ("not" in criteria) {
-            const matchesGroup = await this.historyMatchesCriteriaGroup(history, criteria.not);
+            const matchesGroup = await this.historyMatchesCriteriaGroup(criteria.not);
             return { matched: !matchesGroup.matched };
         } else if ("every" in criteria) {
             const matchReasons: MatchReason[] = [];
             for (const subCriteria of criteria.every) {
-                const criteriaResult = await this.historyMatchesCriteriaGroup(history, subCriteria);
+                const criteriaResult = await this.historyMatchesCriteriaGroup(subCriteria);
                 if (!criteriaResult.matched) {
                     return { matched: false };
                 }
@@ -1326,7 +1326,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
             return { matched: true, reasons: matchReasons };
         } else if ("some" in criteria) {
-            const someMatch = await Promise.all(criteria.some.map(subCriteria => this.historyMatchesCriteriaGroup(history, subCriteria)));
+            const someMatch = await Promise.all(criteria.some.map(subCriteria => this.historyMatchesCriteriaGroup(subCriteria)));
             if (!someMatch.some(result => result.matched)) {
                 return { matched: false };
             }
@@ -1337,7 +1337,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             let subredditsMatched: string[];
 
             if (criteria.type === "post") {
-                const posts = this.getPosts(history);
+                const posts = this.getPosts();
 
                 const matchResults = posts.map(post => ({
                     subredditName: post.subredditName,
@@ -1347,13 +1347,13 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 matches = matchResults.map(result => result.matchResult);
                 subredditsMatched = uniq(matchResults.map(result => result.subredditName));
             } else { // comments
-                const comments = this.getComments(history);
+                const comments = this.getComments();
 
                 const currentSubreddit = this.context.subredditName ?? await this.context.reddit.getCurrentSubredditName();
 
                 const matchResults = await Promise.all(comments.map(async comment => ({
                     subredditName: "subredditName" in comment ? comment.subredditName : currentSubreddit,
-                    matchResult: await this.commentMatchesCondition(comment, criteria, history),
+                    matchResult: await this.commentMatchesCondition(comment, criteria),
                 }))).then(results => results.filter(result => result.matchResult.matched));
 
                 matches = matchResults.map(result => result.matchResult);
@@ -1387,7 +1387,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
     }
 
-    override async evaluate (user: UserExtended, history: (Post | Comment)[]): Promise<boolean> {
+    override async evaluate (user: UserExtended): Promise<boolean> {
         const botGroups = this.getBotGroups();
 
         for (const group of botGroups) {
@@ -1401,7 +1401,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const matchReasons: MatchReason[] = [...(accountMatches.reasons ?? [])];
 
             if (group.criteria) {
-                const historyMatchesGroup = await this.historyMatchesCriteriaGroup(history, group.criteria);
+                const historyMatchesGroup = await this.historyMatchesCriteriaGroup(group.criteria);
                 if (!historyMatchesGroup.matched) {
                     this.logEvaluationTime(startTime, user.username, group.name);
                     continue;
@@ -1417,7 +1417,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
 
             if (group.hasMoreThanOneCommentOnPosts !== undefined) {
-                const comments = this.getComments(history);
+                const comments = this.getComments();
                 const commentCounts = countBy(comments.map(comment => comment.postId));
                 const hasMultipleComments = Object.values(commentCounts).some(count => count > 1);
                 if (group.hasMoreThanOneCommentOnPosts !== hasMultipleComments) {

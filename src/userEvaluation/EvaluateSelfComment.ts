@@ -54,16 +54,15 @@ export class EvaluateSelfComment extends UserEvaluatorBase {
         return user.createdAt > subDays(new Date(), ageInDays) && user.commentKarma < maxKarma;
     }
 
-    override evaluate (user: UserExtended, history: (Post | Comment)[]): boolean {
+    override evaluate (user: UserExtended): boolean {
         const ignoredSubreddits = this.getVariable<string[]>("ignoredsubs", []);
-        ignoredSubreddits.push(...history.filter(item => item.subredditName.toLowerCase().includes("onlyfans")).map(item => item.subredditName));
 
-        const posts = this.getPosts(history, { omitRemoved: true });
+        const posts = this.getPosts({ omitRemoved: true }).filter(post => !ignoredSubreddits.includes(post.subredditName) && !post.subredditName.toLowerCase().includes("onlyfans"));
         if (posts.length === 0 || !posts.every(post => this.eligiblePost(post))) {
             return false;
         }
 
-        const comments = this.getComments(history);
+        const comments = this.getComments();
         if (comments.length === 0 || !comments.every(comment => this.eligibleComment(comment))) {
             return false;
         }

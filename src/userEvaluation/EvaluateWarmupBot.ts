@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
@@ -58,7 +58,7 @@ export class EvaluateWarmupBot extends UserEvaluatorBase {
         return user.isModerator;
     }
 
-    override async evaluate (user: UserExtended, history: (Post | Comment)[]): Promise<boolean> {
+    override async evaluate (user: UserExtended): Promise<boolean> {
         const subredditRegexes = this.getVariable<string[]>("subredditRegexes", []);
 
         if (subredditRegexes.length === 0) {
@@ -70,7 +70,9 @@ export class EvaluateWarmupBot extends UserEvaluatorBase {
             return false;
         }
 
-        const userPosts = this.getPosts(history);
+        const userPosts = this.getPosts();
+        const userComments = this.getComments();
+        const history = [...userPosts, ...userComments];
 
         if (!userPosts.some(post => postTitleRegexes.some(regex => new RegExp(regex).test(post.title)))) {
             return false;

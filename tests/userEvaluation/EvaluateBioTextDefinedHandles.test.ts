@@ -27,29 +27,29 @@ function createMockUser (bioText: string): UserExtended {
 }
 
 test("User with matching bio text defined handle", () => {
-    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, [], undefined, variables);
     const mockUser = createMockUser("Hello, I am @handle2 and I love Reddit!");
-    const result = evaluator.evaluate(mockUser, []);
+    const result = evaluator.evaluate(mockUser);
     expect(result).toBeTruthy();
 });
 
 test("User with nonmatching bio text defined handle 1", () => {
-    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, [], undefined, variables);
     const mockUser = createMockUser("Hello, I am handle2 and I love Reddit!");
-    const result = evaluator.evaluate(mockUser, []);
+    const result = evaluator.evaluate(mockUser);
     expect(result).toBeFalsy();
 });
 
 test("User with nonmatching bio text defined handle 2", () => {
-    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, [], undefined, variables);
     const mockUser = createMockUser("Hello, I am @handle5 and I love Reddit!");
-    const result = evaluator.evaluate(mockUser, []);
+    const result = evaluator.evaluate(mockUser);
     expect(result).toBeFalsy();
 });
 
 test("User with nonmatching bio text defined handle 3", () => {
-    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, undefined, variables);
+    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, [], undefined, variables);
     const mockUser = createMockUser("A very ordinary Redditor with no special interests.");
-    const result = evaluator.evaluate(mockUser, []);
+    const result = evaluator.evaluate(mockUser);
     expect(result).toBeFalsy();
 });

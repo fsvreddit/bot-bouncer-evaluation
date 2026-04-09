@@ -41,10 +41,18 @@ export abstract class UserEvaluatorBase {
     public banContentThreshold = 10;
     public canAutoBan = true;
 
-    constructor (context: TriggerContext, socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
+    protected history: (Post | Comment)[];
+    private userPosts: Post[] | undefined;
+    private userComments: Comment[] | undefined;
+    protected ignoredSubs: Set<string>;
+
+    constructor (context: TriggerContext, history: (Post | Comment)[], socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
         this.context = context;
         this.socialLinks = socialLinks;
         this.variables = variables;
+
+        this.ignoredSubs = new Set(this.getGenericVariable<string[]>("ignoredsubs", []));
+        this.history = history;
     }
 
     public evaluatorDisabled () {
@@ -119,15 +127,10 @@ export abstract class UserEvaluatorBase {
 
     abstract preEvaluateUser (user: UserExtended): boolean | Promise<boolean>;
 
-    abstract evaluate (user: UserExtended, history: (Post | Comment)[]): boolean | Promise<boolean>;
+    abstract evaluate (user: UserExtended): boolean | Promise<boolean>;
 
     private getContent (history: (Post | Comment)[], options?: HistoryOptions): (Post | Comment)[] {
-        const ignoredSubs = this.getGenericVariable<string[]>("ignoredsubs", []);
-
         const filteredHistory = history.filter((item) => {
-            if (ignoredSubs.includes(item.subredditName)) {
-                return false;
-            }
             if (options?.since && item.createdAt < options.since) {
                 return false;
             }
@@ -142,13 +145,13 @@ export abstract class UserEvaluatorBase {
         return filteredHistory;
     }
 
-    protected getComments (history: (Post | Comment)[], options?: HistoryOptions): Comment[] {
-        const filteredHistory = this.getContent(history, options);
-        return filteredHistory.filter(item => isCommentId(item.id)) as Comment[];
+    protected getComments (options?: HistoryOptions): Comment[] {
+        this.userComments ??= this.history.filter(item => isCommentId(item.id) && !this.ignoredSubs.has(item.subredditName)) as Comment[];
+        return this.getContent(this.userComments, options) as Comment[];
     }
 
-    protected getPosts (history: (Post | Comment)[], options?: HistoryOptions): Post[] {
-        const filteredHistory = this.getContent(history, options);
-        return filteredHistory.filter(item => isLinkId(item.id)) as Post[];
+    protected getPosts (options?: HistoryOptions): Post[] {
+        this.userPosts ??= this.history.filter(item => isLinkId(item.id) && !this.ignoredSubs.has(item.subredditName)) as Post[];
+        return this.getContent(this.userPosts, options) as Post[];
     }
 }

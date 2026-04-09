@@ -1,6 +1,6 @@
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { UserExtended } from "../extendedDevvit.js";
 import { compact, countBy } from "lodash";
 import { subWeeks } from "date-fns";
@@ -72,8 +72,8 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
         return user.commentKarma < 100;
     }
 
-    override evaluate (user: UserExtended, history: (Post | Comment)[]): boolean {
-        const nsfwPosts = this.getPosts(history, { since: subWeeks(new Date(), 2) })
+    override evaluate (user: UserExtended): boolean {
+        const nsfwPosts = this.getPosts({ since: subWeeks(new Date(), 2) })
             .filter(post => post.isNsfw() && !post.subredditName.toLowerCase().includes("roleplay") && !post.url.startsWith("/r/"));
 
         if (nsfwPosts.length < 4) {

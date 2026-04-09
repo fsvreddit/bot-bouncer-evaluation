@@ -1,6 +1,6 @@
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { subDays } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "../extendedDevvit.js";
@@ -41,13 +41,14 @@ export class EvaluateSuspiciousFirstPost extends UserEvaluatorBase {
         return user.createdAt > subDays(new Date(), maxAgeInDays) && user.commentKarma < maxCommentKarma;
     }
 
-    override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
-        const comments = this.getComments(history);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override evaluate (_: UserExtended): boolean {
+        const comments = this.getComments();
         if (comments.length > 1) {
             return false;
         }
 
-        const posts = this.getPosts(history, { omitRemoved: false });
+        const posts = this.getPosts({ omitRemoved: false });
         if (posts.length === 0) {
             return false;
         }

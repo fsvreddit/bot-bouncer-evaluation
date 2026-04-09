@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
@@ -69,8 +69,9 @@ export class EvaluateTGGroup extends UserEvaluatorBase {
             || user.linkKarma < 50;
     }
 
-    override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
-        const recentPosts = this.getPosts(history, { since: subWeeks(new Date(), 1) }).filter(post => post.nsfw);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override evaluate (_: UserExtended): boolean {
+        const recentPosts = this.getPosts({ since: subWeeks(new Date(), 1) }).filter(post => post.nsfw);
         if (recentPosts.length === 0) {
             return false;
         }

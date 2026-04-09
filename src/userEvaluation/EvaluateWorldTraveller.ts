@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { CONTROL_SUBREDDIT } from "../constants.js";
@@ -75,9 +75,10 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
         return user.nsfw && this.isInEligibleSubreddit();
     }
 
-    override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override evaluate (_: UserExtended): boolean {
         const nsfwOnly = this.getVariable<boolean>("nsfwonly", false);
-        const relevantHistory = this.getPosts(history, { since: subMonths(new Date(), 1) })
+        const relevantHistory = this.getPosts({ since: subMonths(new Date(), 1) })
             .filter(post => nsfwOnly ? post.nsfw : true)
             .filter(post => this.getSubList().includes(post.subredditName));
 

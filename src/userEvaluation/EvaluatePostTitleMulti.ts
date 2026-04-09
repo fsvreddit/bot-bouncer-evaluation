@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "../extendedDevvit.js";
@@ -70,10 +70,11 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
         return user.nsfw;
     }
 
-    override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override evaluate (_: UserExtended): boolean {
         const dateCutoff = this.getVariable<number>("dateCutoffWeeks", 4);
 
-        const userPosts = this.getPosts(history, { since: subWeeks(new Date(), dateCutoff) }).filter(post => post.nsfw && !post.url.startsWith("/r/"));
+        const userPosts = this.getPosts({ since: subWeeks(new Date(), dateCutoff) }).filter(post => post.nsfw && !post.url.startsWith("/r/"));
         if (userPosts.length === 0) {
             return false;
         }

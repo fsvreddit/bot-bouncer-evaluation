@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
@@ -61,8 +61,9 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
         return true;
     }
 
-    override evaluate (_: UserExtended, history: (Post | Comment)[]): boolean {
-        const stickyPosts = this.getPosts(history).filter(post => post.stickied);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override evaluate (_: UserExtended): boolean {
+        const stickyPosts = this.getPosts().filter(post => post.stickied);
         if (stickyPosts.length === 0) {
             return false;
         }

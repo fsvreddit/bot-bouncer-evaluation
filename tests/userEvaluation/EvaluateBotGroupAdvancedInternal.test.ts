@@ -22,7 +22,7 @@ group1:
 `;
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvancedInternal(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvancedInternal(fakeContext, [], undefined, variables);
     const errors = evaluator.validateVariables();
     expect(errors.length).toEqual(0);
 });
@@ -54,7 +54,7 @@ group1:
     const fakeUser: UserExtended = createFakeUser("Adjective_Noun1234");
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvancedInternal(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvancedInternal(fakeContext, [], undefined, variables);
     const preEvaluateResult = await evaluator.preEvaluateUser(fakeUser);
     expect(preEvaluateResult).toEqual(true);
 });
@@ -71,7 +71,7 @@ group1:
     const fakeUser = createFakeUser("spez");
 
     const variables = yamlToVariables(yaml);
-    const evaluator = new EvaluateBotGroupAdvancedInternal(fakeContext, undefined, variables);
+    const evaluator = new EvaluateBotGroupAdvancedInternal(fakeContext, [], undefined, variables);
     const preEvaluateResult = await evaluator.preEvaluateUser(fakeUser);
     expect(preEvaluateResult).toEqual(false);
 });

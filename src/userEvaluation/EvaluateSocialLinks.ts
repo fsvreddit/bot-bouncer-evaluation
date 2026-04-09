@@ -1,4 +1,4 @@
-import { Comment, Post } from "@devvit/public-api";
+import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { subMonths, subYears } from "date-fns";
@@ -85,13 +85,13 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
         return accountEligible;
     }
 
-    override async evaluate (user: UserExtended, history: (Post | Comment)[]): Promise<boolean> {
+    override async evaluate (user: UserExtended): Promise<boolean> {
         const badSocialLinks = this.getVariable<string[]>("badlinks", []);
         if (badSocialLinks.length === 0) {
             return false;
         }
 
-        const badLinksFromPosts = badSocialLinks.filter(badLink => this.getPosts(history).some(post => post.url.startsWith(badLink)));
+        const badLinksFromPosts = badSocialLinks.filter(badLink => this.getPosts().some(post => post.url.startsWith(badLink)));
         if (badLinksFromPosts.length > 0) {
             this.addHitReason(`User has bad links in posts: ${uniq(badLinksFromPosts).join(", ")}`);
             return true;
