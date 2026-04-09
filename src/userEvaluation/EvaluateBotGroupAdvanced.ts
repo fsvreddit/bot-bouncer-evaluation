@@ -1313,7 +1313,9 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             return { matched: !matchesGroup.matched };
         } else if ("every" in criteria) {
             const matchReasons: MatchReason[] = [];
-            for (const subCriteria of criteria.every) {
+
+            // check "not" groups first to allow for early exits
+            for (const subCriteria of criteria.every.sort((a, b) => ("not" in a ? -1 : 1))) {
                 const criteriaResult = await this.historyMatchesCriteriaGroup(subCriteria);
                 if (!criteriaResult.matched) {
                     return { matched: false };
