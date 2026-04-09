@@ -1307,9 +1307,9 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return false;
     }
 
-    private async historyMatchesCriteriaGroup (criteria: CriteriaGroup): Promise<CriteriaMatchResult> {
+    private async historyMatchesCriteriaGroup (criteria: CriteriaGroup, inNot = false): Promise<CriteriaMatchResult> {
         if ("not" in criteria) {
-            const matchesGroup = await this.historyMatchesCriteriaGroup(criteria.not);
+            const matchesGroup = await this.historyMatchesCriteriaGroup(criteria.not, true);
             return { matched: !matchesGroup.matched };
         } else if ("every" in criteria) {
             const matchReasons: MatchReason[] = [];
@@ -1333,40 +1333,58 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
             return { matched: true, reasons: someMatch.filter(item => item.matched).flatMap(result => result.reasons ?? []) };
         } else if ("type" in criteria) {
-            let matches: CriteriaMatchResult[];
-            let subredditsMatched: string[];
+            const matches: CriteriaMatchResult[] = [];
+            const subredditsMatched = new Set<string>();
+            const matchesNeeded = criteria.matchesNeeded ?? 1;
+            const maxMatchesNeeded = Math.max(matchesNeeded, 5);
+            const distinctSubredditsNeeded = criteria.distinctSubsNeeded ?? 1;
 
             if (criteria.type === "post") {
                 const posts = this.getPosts();
 
-                const matchResults = posts.map(post => ({
-                    subredditName: post.subredditName,
-                    matchResult: this.postMatchesCondition(post, criteria),
-                })).filter(result => result.matchResult.matched);
+                for (const post of posts) {
+                    if (subredditsMatched.size >= distinctSubredditsNeeded && matches.length >= maxMatchesNeeded) {
+                        break;
+                    }
 
-                matches = matchResults.map(result => result.matchResult);
-                subredditsMatched = uniq(matchResults.map(result => result.subredditName));
+                    if (inNot && matches.length >= matchesNeeded && subredditsMatched.size >= distinctSubredditsNeeded) {
+                        break;
+                    }
+
+                    const matchResult = this.postMatchesCondition(post, criteria);
+                    if (matchResult.matched) {
+                        matches.push(matchResult);
+                        subredditsMatched.add(post.subredditName);
+                    }
+                }
             } else { // comments
                 const comments = this.getComments();
 
                 const currentSubreddit = this.context.subredditName ?? await this.context.reddit.getCurrentSubredditName();
 
-                const matchResults = await Promise.all(comments.map(async comment => ({
-                    subredditName: "subredditName" in comment ? comment.subredditName : currentSubreddit,
-                    matchResult: await this.commentMatchesCondition(comment, criteria),
-                }))).then(results => results.filter(result => result.matchResult.matched));
+                for (const comment of comments) {
+                    if (subredditsMatched.size >= distinctSubredditsNeeded && matches.length >= maxMatchesNeeded) {
+                        break;
+                    }
 
-                matches = matchResults.map(result => result.matchResult);
-                subredditsMatched = uniq(matchResults.map(result => result.subredditName));
+                    if (inNot && matches.length >= matchesNeeded && subredditsMatched.size >= distinctSubredditsNeeded) {
+                        break;
+                    }
+
+                    const matchResult = await this.commentMatchesCondition(comment, criteria);
+                    if (matchResult.matched) {
+                        matches.push(matchResult);
+                        const subredditName = "subredditName" in comment ? comment.subredditName : currentSubreddit;
+                        subredditsMatched.add(subredditName);
+                    }
+                }
             }
 
-            const matchesNeeded = criteria.matchesNeeded ?? 1;
             if (matches.length < matchesNeeded) {
                 return { matched: false };
             }
 
-            const distinctSubredditsNeeded = criteria.distinctSubsNeeded ?? 1;
-            if (subredditsMatched.length < distinctSubredditsNeeded) {
+            if (subredditsMatched.size < distinctSubredditsNeeded) {
                 return { matched: false };
             }
 
