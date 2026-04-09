@@ -1414,6 +1414,8 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (!socialLinksMatches.matched) {
                 this.logEvaluationTime(startTime, user.username, group.name);
                 continue;
+            } else {
+                matchReasons.push(...(socialLinksMatches.reasons ?? []));
             }
 
             if (group.hasMoreThanOneCommentOnPosts !== undefined) {

@@ -136,14 +136,18 @@ export abstract class UserEvaluatorBase {
     abstract evaluate (user: UserExtended): boolean | Promise<boolean>;
 
     private getContent (history: (Post | Comment)[], options?: HistoryOptions): (Post | Comment)[] {
+        if (!options) {
+            return history;
+        }
+
         const filteredHistory = history.filter((item) => {
-            if (options?.since && item.createdAt < options.since) {
+            if (options.since && item.createdAt < options.since) {
                 return false;
             }
-            if (options?.omitRemoved && item.body === "[removed]") {
+            if (options.omitRemoved && item.body === "[removed]") {
                 return false;
             }
-            if (options?.edited !== undefined) {
+            if (options.edited !== undefined) {
                 return item.edited === options.edited;
             }
             return true;
