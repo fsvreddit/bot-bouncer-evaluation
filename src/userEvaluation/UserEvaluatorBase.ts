@@ -61,6 +61,10 @@ export abstract class UserEvaluatorBase {
         this.userComments = undefined;
     }
 
+    public setSocialLinks (socialLinks: UserSocialLink[]) {
+        this.socialLinks = socialLinks;
+    }
+
     public evaluatorDisabled () {
         return this.getVariable("killswitch", false);
     }
