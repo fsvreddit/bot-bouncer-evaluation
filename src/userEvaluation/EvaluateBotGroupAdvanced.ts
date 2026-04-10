@@ -1312,11 +1312,20 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             const matchesGroup = await this.historyMatchesCriteriaGroup(criteria.not, true);
             return { matched: !matchesGroup.matched };
         } else if ("every" in criteria) {
+            // Check "not" groups first to allow for early exits before doing more expensive checks for reasons
+            const notCriteria = criteria.every.filter(subCriteria => "not" in subCriteria);
+            if (notCriteria.length > 0) {
+                const notMatches = await Promise.all(notCriteria.map(subCriteria => this.historyMatchesCriteriaGroup(subCriteria)));
+                if (notMatches.some(result => !result.matched)) {
+                    return { matched: false };
+                }
+            }
+
             const matchReasons: MatchReason[] = [];
 
-            // check "not" groups first to allow for early exits
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            for (const subCriteria of criteria.every.sort((a, _) => ("not" in a ? -1 : 1))) {
+            // Check remaining criteria.
+            const remainingCriteria = criteria.every.filter(subCriteria => !("not" in subCriteria));
+            for (const subCriteria of remainingCriteria) {
                 const criteriaResult = await this.historyMatchesCriteriaGroup(subCriteria);
                 if (!criteriaResult.matched) {
                     return { matched: false };
