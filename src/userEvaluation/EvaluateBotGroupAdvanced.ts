@@ -1065,7 +1065,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         if (condition.isCommentOnOwnPost !== undefined) {
-            if (!history || !(comment instanceof Comment)) {
+            if (!history || !("authorName" in comment)) {
                 return { matched: false };
             }
             const posts = this.getPosts();
@@ -1383,7 +1383,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                         break;
                     }
 
-                    const matchResult = await this.commentMatchesCondition(comment, criteria);
+                    const matchResult = await this.commentMatchesCondition(comment, criteria, this.history);
                     if (matchResult.matched) {
                         matches.push(matchResult);
                         const subredditName = "subredditName" in comment ? comment.subredditName : currentSubreddit;

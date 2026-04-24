@@ -1423,3 +1423,59 @@ group1:
     const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(false);
 });
+
+test("Validate Self-Comment Only criteria matches", async () => {
+    const yaml = `
+
+name: botgroupadvanced
+killswitch: false
+
+group_AskRedditOnlyWithSelfTopComment:
+  name: AskReddit post with TLC comment on own post, no other content
+  age:
+    maxAgeInDays: 28
+  criteria:
+    every:
+      - type: post
+        subredditName:
+          - AskReddit
+      - type: comment
+        isTopLevel: true
+        isCommentOnOwnPost: true
+        subredditName:
+          - AskReddit
+      - not:
+          type: post
+          notSubredditName:
+            - AskReddit
+      - not:
+          type: comment
+          isTopLevel: false
+      - not:
+          type: comment
+          isCommentOnOwnPost: false
+      - not:
+          type: comment
+          notSubredditName:
+            - AskReddit
+`;
+
+    const user = {
+        username: "testuser43",
+        createdAt: subDays(new Date(), 1),
+    } as unknown as UserExtended;
+
+    const history = [
+        { subredditName: "AskReddit", createdAt: subDays(new Date(), 1), id: "t3_123", authorName: "testuser43", title: "Test Post", body: "Test Body" } as unknown as Post,
+        { subredditName: "AskReddit", createdAt: subDays(new Date(), 1), id: "t1_123", authorName: "testuser43", postId: "t3_123", parentId: "t3_123", body: "This is a top-level comment on own post" } as unknown as Comment,
+    ];
+
+    const variables = yamlToVariables(yaml);
+    console.log(variables);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, history, undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const evaluationResult = await evaluator.evaluate(user);
+    expect(evaluationResult).toBe(true);
+});
