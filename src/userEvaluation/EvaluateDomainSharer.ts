@@ -25,7 +25,23 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
 
         const redditDomains = this.getGenericVariable<string[]>("redditdomains", []);
         const ignoredDomains = this.getVariable<string[]>("ignoreddomains", []);
-        return uniq(compact((domains)).filter(domain => !redditDomains.includes(domain) && !ignoredDomains.includes(domain)));
+        const ignoredDomainSuffixes = this.getVariable<string[]>("ignoredDomainSuffixes", []);
+
+        return uniq(compact((domains)).filter((domain) => {
+            if (redditDomains.includes(domain)) {
+                return false;
+            }
+
+            if (ignoredDomains.includes(domain)) {
+                return false;
+            }
+
+            if (ignoredDomainSuffixes.some(suffix => domain.endsWith(suffix))) {
+                return false;
+            }
+
+            return true;
+        }));
     }
 
     private ignoredSubreddits () {
@@ -44,7 +60,23 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
 
         const redditDomains = this.getGenericVariable<string[]>("redditdomains", []);
         const ignoredDomains = this.getVariable<string[]>("ignoreddomains", []);
-        return uniq(compact(domains).filter(domain => !redditDomains.includes(domain) && !ignoredDomains.includes(domain)));
+        const ignoredDomainSuffixes = this.getVariable<string[]>("ignoredDomainSuffixes", []);
+
+        return uniq(compact((domains)).filter((domain) => {
+            if (redditDomains.includes(domain)) {
+                return false;
+            }
+
+            if (ignoredDomains.includes(domain)) {
+                return false;
+            }
+
+            if (ignoredDomainSuffixes.some(suffix => domain.endsWith(suffix))) {
+                return false;
+            }
+
+            return true;
+        }));
     }
 
     override preEvaluateComment (event: CommentCreate): boolean {
