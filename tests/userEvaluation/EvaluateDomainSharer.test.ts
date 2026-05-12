@@ -108,6 +108,13 @@ test("preEvaluatePost: fails for post in an ignored subreddit", () => {
     expect(evaluator.preEvaluatePost(post)).toBe(false);
 });
 
+test("preEvaluatePost: fails for post in a subreddit matching ignoredSubredditRegexes", () => {
+    const variables = { ...baseVariables, "domainsharer:ignoredSubredditRegexes": ["^Ignored.*$"] };
+    const post = createPost("https://spammy.biz/article", "IgnoredSub");
+    const evaluator = new EvaluateDomainSharer({} as unknown as TriggerContext, [], undefined, variables);
+    expect(evaluator.preEvaluatePost(post)).toBe(false);
+});
+
 // ---------------------------------------------------------------------------
 // preEvaluateComment
 // ---------------------------------------------------------------------------
@@ -129,6 +136,16 @@ test("preEvaluateComment: fails when no comment object", () => {
 
 test("preEvaluateComment: fails for comment in ignored subreddit", () => {
     const variables = { ...baseVariables, "domainsharer:ignoredsubreddits": ["IgnoredSub"] };
+    const event: CommentCreate = {
+        comment: { body: "Check this out: https://spammy.biz/page/" },
+        subreddit: { name: "IgnoredSub" },
+    } as unknown as CommentCreate;
+    const evaluator = new EvaluateDomainSharer({} as unknown as TriggerContext, [], undefined, variables);
+    expect(evaluator.preEvaluateComment(event)).toBe(false);
+});
+
+test("preEvaluateComment: fails for comment in a subreddit matching ignoredSubredditRegexes", () => {
+    const variables = { ...baseVariables, "domainsharer:ignoredSubredditRegexes": ["^Ignored.*$"] };
     const event: CommentCreate = {
         comment: { body: "Check this out: https://spammy.biz/page/" },
         subreddit: { name: "IgnoredSub" },
@@ -295,6 +312,30 @@ test("evaluate: content in ignored subreddits is excluded from evaluation", () =
     const history = [
         ...Array.from({ length: 4 }, (_, i) => createPost("https://spammy.biz/article", "AskReddit", "", i + 1)),
         ...Array.from({ length: 10 }, (_, i) => createPost("https://spammy.biz/article", "IgnoredSub", "", i + 5)),
+    ];
+    const evaluator = new EvaluateDomainSharer({} as unknown as TriggerContext, history, undefined, variables);
+    const result = evaluator.evaluate(createMockUser());
+    expect(result).toBe(false);
+});
+
+test("evaluate: content in regex-ignored subreddits is excluded from evaluation", () => {
+    const variables = { ...baseVariables, "domainsharer:ignoredSubredditRegexes": ["^Ignored.*$"] };
+    // Only 4 posts in non-ignored subs — below threshold after regex-matched posts are filtered out
+    const history = [
+        ...Array.from({ length: 4 }, (_, i) => createPost("https://spammy.biz/article", "AskReddit", "", i + 1)),
+        ...Array.from({ length: 10 }, (_, i) => createPost("https://spammy.biz/article", "IgnoredSub", "", i + 5)),
+    ];
+    const evaluator = new EvaluateDomainSharer({} as unknown as TriggerContext, history, undefined, variables);
+    const result = evaluator.evaluate(createMockUser());
+    expect(result).toBe(false);
+});
+
+test("evaluate: comments in regex-ignored subreddits are excluded from evaluation", () => {
+    const variables = { ...baseVariables, "domainsharer:ignoredSubredditRegexes": ["^Ignored.*$"] };
+    // Only 4 comments in non-ignored subs — below threshold after regex-matched comments are filtered out
+    const history = [
+        ...Array.from({ length: 4 }, (_, i) => createComment("Look at https://spammy.biz/comment/", "AskReddit", i + 1)),
+        ...Array.from({ length: 10 }, (_, i) => createComment("Look at https://spammy.biz/comment/", "IgnoredSub", i + 5)),
     ];
     const evaluator = new EvaluateDomainSharer({} as unknown as TriggerContext, history, undefined, variables);
     const result = evaluator.evaluate(createMockUser());

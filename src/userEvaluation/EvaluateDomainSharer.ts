@@ -1,6 +1,6 @@
 import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
+import { EvaluatorRegex, UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { compact, countBy, toPairs, uniq } from "lodash";
 import { subMonths } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
@@ -10,6 +10,14 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
     override name = "Domain Sharer";
     override shortname = "domainsharer";
     override canAutoBan = false;
+
+    override gatherRegexes (): EvaluatorRegex[] {
+        const ignoredSubredditRegexes = this.getVariable<string[]>("ignoredsubreddits", []);
+        return ignoredSubredditRegexes.map(regex => ({
+            evaluatorName: this.name,
+            regex,
+        }));
+    }
 
     private domainsFromContent (content: string): string[] {
         // eslint-disable-next-line no-useless-escape
@@ -46,6 +54,11 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
 
     private ignoredSubreddits () {
         return this.getVariable<string[]>("ignoredsubreddits", []);
+    }
+
+    private ignoredSubredditRegexes () {
+        const regexStrings = this.getVariable<string[]>("ignoredSubredditRegexes", []);
+        return regexStrings.map(str => new RegExp(str));
     }
 
     private domainsFromPost (post: Post): string[] {
@@ -88,11 +101,19 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
             return false;
         }
 
+        if (event.subreddit?.name && this.ignoredSubredditRegexes().some(regex => regex.test(event.subreddit?.name ?? ""))) {
+            return false;
+        }
+
         return this.domainsFromContent(event.comment.body).length > 0;
     }
 
     override preEvaluatePost (post: Post): boolean {
         if (this.ignoredSubreddits().includes(post.subredditName)) {
+            return false;
+        }
+
+        if (this.ignoredSubredditRegexes().some(regex => regex.test(post.subredditName))) {
             return false;
         }
 
@@ -105,8 +126,11 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override evaluate (_: UserExtended): boolean {
-        const recentPosts = this.getPosts({ since: subMonths(new Date(), 6) }).filter(post => !this.ignoredSubreddits().includes(post.subredditName));
-        const recentComments = this.getComments({ since: subMonths(new Date(), 6) }).filter(comment => !this.ignoredSubreddits().includes(comment.subredditName));
+        const recentPosts = this.getPosts({ since: subMonths(new Date(), 6) })
+            .filter(post => !this.ignoredSubreddits().includes(post.subredditName) && !this.ignoredSubredditRegexes().some(regex => regex.test(post.subredditName)));
+
+        const recentComments = this.getComments({ since: subMonths(new Date(), 6) })
+            .filter(comment => !this.ignoredSubreddits().includes(comment.subredditName) && !this.ignoredSubredditRegexes().some(regex => regex.test(comment.subredditName)));
 
         const recentContent = [...recentPosts, ...recentComments];
         if (recentContent.length < 5) {
