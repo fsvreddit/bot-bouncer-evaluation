@@ -2,7 +2,7 @@ import { Comment, Post, TriggerContext } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { subDays, subMonths } from "date-fns";
 import { EvaluateDomainSharer } from "../../src/userEvaluation/EvaluateDomainSharer.js";
-import { UserExtended } from "../../src/extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 
 const redditDomains = ["reddit.com", "redd.it", "i.redd.it", "v.redd.it"];
 

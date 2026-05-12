@@ -2,7 +2,7 @@ import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { UserExtended } from "../extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import markdownEscape from "markdown-escape";
 import { uniq } from "lodash";
 

@@ -1,6 +1,6 @@
 import { Post, TriggerContext } from "@devvit/public-api";
 import { EvaluatePostTitleMulti } from "../../src/userEvaluation/EvaluatePostTitleMulti";
-import { UserExtended } from "../../src/extendedDevvit";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { yamlToVariables } from "../../src";
 
 const variables = {

@@ -1,5 +1,5 @@
 import { JSONValue, Post, TriggerContext } from "@devvit/public-api";
-import { UserExtended } from "../../src/extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { EvaluateInconsistentAgeBot } from "../../src/userEvaluation/EvaluateInconsistentAgeBot.js";
 
 const mockContext = {} as unknown as TriggerContext;

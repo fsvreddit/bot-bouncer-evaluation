@@ -20,6 +20,7 @@
     "author": "fsv",
     "license": "BSD-3-Clause",
     "dependencies": {
+        "@fsvreddit/fsv-devvit-helpers": "github:fsvreddit/fsv-devvit-helpers",
         "date-fns": "^4.1.0",
         "devvit-helpers": "^0.8.0",
         "lodash": "^4.17.21",

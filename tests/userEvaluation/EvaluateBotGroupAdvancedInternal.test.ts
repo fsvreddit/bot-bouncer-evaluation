@@ -1,7 +1,7 @@
 import { TriggerContext } from "@devvit/public-api";
 import { EvaluateBotGroupAdvancedInternal } from "../../src/userEvaluation/EvaluateBotGroupAdvancedInternal";
 import { yamlToVariables } from "../../src/utility";
-import { UserExtended } from "../../src/extendedDevvit";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 
 const fakeContext: TriggerContext = {
     reddit: {

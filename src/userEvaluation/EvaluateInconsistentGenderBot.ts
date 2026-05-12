@@ -1,7 +1,7 @@
 import { CommentCreate } from "@devvit/protos";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { Post } from "@devvit/public-api";
-import { UserExtended } from "../extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { compact, countBy } from "lodash";
 import { subWeeks } from "date-fns";
 import { parse } from "regjsparser";

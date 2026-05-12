@@ -1,5 +1,5 @@
 import { JSONValue, TriggerContext } from "@devvit/public-api";
-import { UserExtended } from "../../src/extendedDevvit";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { subDays } from "date-fns";
 import { EvaluateBioTextDefinedHandles } from "../../src/userEvaluation/EvaluateBioTextDefinedHandles";
 

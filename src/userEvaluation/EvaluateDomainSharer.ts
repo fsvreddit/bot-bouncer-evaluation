@@ -4,7 +4,7 @@ import { EvaluatorRegex, UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { compact, countBy, toPairs, uniq } from "lodash";
 import { subMonths } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
-import { UserExtended } from "../extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 
 export class EvaluateDomainSharer extends UserEvaluatorBase {
     override name = "Domain Sharer";

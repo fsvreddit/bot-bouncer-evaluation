@@ -1,6 +1,6 @@
 import { Post, TriggerContext } from "@devvit/public-api";
 import { EvaluatePostTitle } from "../../src/userEvaluation/EvaluatePostTitle";
-import { UserExtended } from "../../src/extendedDevvit";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 
 const variables = {
     "posttitle:bantext": [

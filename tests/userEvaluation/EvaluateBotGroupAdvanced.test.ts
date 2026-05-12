@@ -1,5 +1,5 @@
 import { subDays } from "date-fns";
-import { UserExtended } from "../../src/extendedDevvit";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { EvaluateBotGroupAdvanced } from "../../src/userEvaluation/EvaluateBotGroupAdvanced";
 import { yamlToVariables } from "../../src/utility";
 import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-api";

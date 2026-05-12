@@ -1,6 +1,6 @@
 import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-api";
-import { UserExtended } from "../extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { isCommentId, isLinkId } from "@devvit/public-api/types/tid.js";
 import { getSocialLinksWithCache } from "./evaluatorHelpers.js";
 

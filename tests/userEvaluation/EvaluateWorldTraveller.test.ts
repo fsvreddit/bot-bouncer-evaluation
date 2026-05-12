@@ -1,6 +1,6 @@
 import { JSONValue, Post, TriggerContext } from "@devvit/public-api";
 import { EvaluateWorldTraveller } from "../../src/userEvaluation/EvaluateWorldTraveller.js";
-import { UserExtended } from "../../src/extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 
 const variables: Record<string, JSONValue> = {
     "worldtraveler:killswitch": false,

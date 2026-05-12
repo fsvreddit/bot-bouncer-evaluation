@@ -1,7 +1,7 @@
 import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
-import { UserExtended } from "../extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 
 export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
     override name = "Obfuscated Bio Keywords Bot";

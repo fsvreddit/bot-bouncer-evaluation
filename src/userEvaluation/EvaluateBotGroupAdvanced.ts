@@ -3,7 +3,7 @@ import { CommentCreate, CommentUpdate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
-import { UserExtended } from "../extendedDevvit.js";
+import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { addDays, endOfDay, parse, subDays, subMinutes } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { countBy, uniq } from "lodash";
