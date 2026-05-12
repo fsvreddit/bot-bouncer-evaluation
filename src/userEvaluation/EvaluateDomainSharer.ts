@@ -12,7 +12,7 @@ export class EvaluateDomainSharer extends UserEvaluatorBase {
     override canAutoBan = false;
 
     override gatherRegexes (): EvaluatorRegex[] {
-        const ignoredSubredditRegexes = this.getVariable<string[]>("ignoredsubreddits", []);
+        const ignoredSubredditRegexes = this.getVariable<string[]>("ignoredSubredditRegexes", []);
         return ignoredSubredditRegexes.map(regex => ({
             evaluatorName: this.name,
             regex,
