@@ -15,12 +15,16 @@ export class EvaluateTitleCopyBot extends UserEvaluatorBase {
             return false;
         }
 
+        if (event.comment.body.trim() === event.post.title.trim()) {
+            return true;
+        }
+
         const tlcOnly = this.getVariable<boolean>("tlcOnly", false);
         if (tlcOnly && !isLinkId(event.comment.parentId)) {
             return false;
         }
 
-        return event.comment.body.trim() === event.post.title.trim();
+        return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,19 +38,22 @@ export class EvaluateTitleCopyBot extends UserEvaluatorBase {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override async evaluate (_: UserExtended): Promise<boolean> {
-        const comments = this.getComments();
+        const ignoredSubs = this.getVariable<string[]>("ignoredSubs", []);
+
+        const comments = this.getComments().filter(comment => !ignoredSubs.includes(comment.subredditName));
+
         if (comments.some(comment => comment.body.includes("\n"))) {
+            return false;
+        }
+
+        const tlcOnly = this.getVariable<boolean>("tlcOnly", false);
+        if (tlcOnly && comments.some(comment => !isLinkId(comment.parentId))) {
             return false;
         }
 
         const commentsToCheck = this.getVariable<number>("numCommentsToCheck", 5);
         const mostRecentComments = comments.slice(0, commentsToCheck);
         if (mostRecentComments.length < commentsToCheck) {
-            return false;
-        }
-
-        const tlcOnly = this.getVariable<boolean>("tlcOnly", false);
-        if (tlcOnly && mostRecentComments.some(comment => !isLinkId(comment.parentId))) {
             return false;
         }
 
