@@ -15,16 +15,17 @@ export class EvaluateTitleCopyBot extends UserEvaluatorBase {
             return false;
         }
 
-        if (event.comment.body.trim() === event.post.title.trim()) {
-            return true;
-        }
-
         const tlcOnly = this.getVariable<boolean>("tlcOnly", false);
         if (tlcOnly && !isLinkId(event.comment.parentId)) {
             return false;
         }
 
-        return false;
+        const minCommentLength = this.getVariable<number>("minCommentLength", 1);
+        if (event.comment.body.trim().length < minCommentLength) {
+            return false;
+        }
+
+        return event.comment.body.trim() === event.post.title.trim();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -48,6 +49,11 @@ export class EvaluateTitleCopyBot extends UserEvaluatorBase {
 
         const tlcOnly = this.getVariable<boolean>("tlcOnly", false);
         if (tlcOnly && comments.some(comment => !isLinkId(comment.parentId))) {
+            return false;
+        }
+
+        const minCommentLength = this.getVariable<number>("minCommentLength", 1);
+        if (comments.some(comment => comment.body.trim().length < minCommentLength)) {
             return false;
         }
 
