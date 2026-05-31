@@ -6,7 +6,7 @@ import { subDays } from "date-fns";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 
 export class EvaluateTitleCopyBot extends UserEvaluatorBase {
-    override name = "TitleCopyBot";
+    override name = "Title Copy Bot";
     override shortname = "titlecopy";
     override banContentThreshold = 5;
 
