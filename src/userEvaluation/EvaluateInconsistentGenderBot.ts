@@ -65,7 +65,7 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
     }
 
     override preEvaluatePost (post: Post): boolean {
-        return this.getGenderFromTitle(post.title) !== undefined && post.isNsfw();
+        return this.getGenderFromTitle(post.title) !== undefined && post.isNsfw() && !post.crosspostParentId;
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -74,7 +74,7 @@ export class EvaluateInconsistentGenderBot extends UserEvaluatorBase {
 
     override evaluate (user: UserExtended): boolean {
         const nsfwPosts = this.getPosts({ since: subWeeks(new Date(), 2) })
-            .filter(post => post.isNsfw() && !post.subredditName.toLowerCase().includes("roleplay") && !post.url.startsWith("/r/"));
+            .filter(post => post.isNsfw() && !post.subredditName.toLowerCase().includes("roleplay") && !post.crosspostParentId);
 
         if (nsfwPosts.length < 4) {
             return false;

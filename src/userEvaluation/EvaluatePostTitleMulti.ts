@@ -62,6 +62,9 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
     }
 
     override preEvaluatePost (post: Post): boolean {
+        if (post.crosspostParentId) {
+            return false;
+        }
         const regexes = this.gatherRegexes();
         return regexes.some(regexObj => new RegExp(regexObj.regex, regexObj.flags).test(post.title));
     }
@@ -74,7 +77,7 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
     override evaluate (_: UserExtended): boolean {
         const dateCutoff = this.getVariable<number>("dateCutoffWeeks", 4);
 
-        const userPosts = this.getPosts({ since: subWeeks(new Date(), dateCutoff) }).filter(post => post.nsfw && !post.url.startsWith("/r/"));
+        const userPosts = this.getPosts({ since: subWeeks(new Date(), dateCutoff) }).filter(post => post.nsfw && !post.crosspostParentId);
         if (userPosts.length === 0) {
             return false;
         }

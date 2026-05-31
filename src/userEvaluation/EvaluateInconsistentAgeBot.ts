@@ -64,6 +64,10 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
             return false;
         }
 
+        if (post.crosspostParentId) {
+            return false;
+        }
+
         const regexes = this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
         return this.getAgeFromPostTitle(post.title, regexes) !== undefined;
     }
@@ -74,7 +78,7 @@ export class EvaluateInconsistentAgeBot extends UserEvaluatorBase {
 
     override evaluate (user: UserExtended): boolean {
         const nsfwPosts = this.getPosts({ since: subWeeks(new Date(), 2) })
-            .filter(post => post.isNsfw() && !post.subredditName.toLowerCase().includes("roleplay") && !post.url.startsWith("/r/"));
+            .filter(post => post.isNsfw() && !post.subredditName.toLowerCase().includes("roleplay") && !post.crosspostParentId);
 
         const contentThreshold = this.getVariable<number>("contentthreshold", 6);
         this.banContentThreshold = contentThreshold;

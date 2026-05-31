@@ -989,7 +989,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         if (condition.isCrossPost !== undefined) {
-            const isCrossPost = post.url.startsWith("/r/");
+            const isCrossPost = post.crosspostParentId !== undefined;
             if (isCrossPost !== condition.isCrossPost) {
                 return { matched: false };
             }

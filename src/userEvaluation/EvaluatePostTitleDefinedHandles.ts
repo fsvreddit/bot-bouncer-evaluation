@@ -62,6 +62,9 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
     }
 
     override preEvaluatePost (post: Post): boolean {
+        if (post.crosspostParentId) {
+            return false;
+        }
         const problematicTitles = this.gatherRegexes().map(r => r.regex);
         return problematicTitles.some(title => new RegExp(title, "u").test(post.title));
     }
@@ -79,7 +82,7 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override evaluate (_: UserExtended): boolean {
-        const userPosts = this.getPosts({ since: subWeeks(new Date(), 1) }).filter(post => post.isNsfw() && !post.url.startsWith("/r/"));
+        const userPosts = this.getPosts({ since: subWeeks(new Date(), 1) }).filter(post => post.isNsfw() && !post.crosspostParentId);
         if (userPosts.length === 0) {
             return false;
         }
