@@ -1,6 +1,6 @@
 {
     "name": "@fsvreddit/bot-bouncer-evaluation",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "description": "Evaluation code for Bot Bouncer, a Dev Platform app designed to hunt bots on Reddit",
     "main": "dist/index.js",
     "scripts": {
@@ -22,7 +22,7 @@
     "dependencies": {
         "@fsvreddit/fsv-devvit-helpers": "github:fsvreddit/fsv-devvit-helpers",
         "date-fns": "^4.1.0",
-        "devvit-helpers": "^0.9.0",
+        "devvit-helpers": "^0.10.0",
         "lodash": "^4.17.21",
         "markdown-escape": "^2.0.0",
         "regjsparser": "^0.13.0",
@@ -40,20 +40,6 @@
         "reddit",
         "devvit"
     ],
-    "overrides": {
-        "devvit-helpers": {
-            "@devvit/protos": "^0.13.0",
-            "@devvit/public-api": "^0.13.0",
-            "@devvit/shared-types": "^0.13.0"
-        },
-        "@fsvreddit/fsv-devvit-helpers": {
-            "devvit-helpers": "^0.9.0"
-        },
-        "@devvit/public-api": {
-            "@devvit/protos": "^0.13.0",
-            "@devvit/shared-types": "^0.13.0"
-        }
-    },
     "peerDependencies": {
         "@devvit/protos": "^0.13.0",
         "@devvit/public-api": "^0.13.0"
