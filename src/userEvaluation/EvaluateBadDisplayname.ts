@@ -11,12 +11,24 @@ export class EvaluateBadDisplayName extends UserEvaluatorBase {
 
     public override banContentThreshold = 0;
 
+    private badDisplayNameRegexes: string[] | undefined;
+
+    private getBadDisplayNameRegexes (): string[] {
+        if (this.badDisplayNameRegexes === undefined) {
+            const bannableDisplayNameRegexes = this.getVariable<string[]>("regexes", []);
+            const ignoredDisplayNameRegexes = this.getVariable<string[]>("ignoredRegexes", []);
+            this.badDisplayNameRegexes = bannableDisplayNameRegexes.filter(regex => !ignoredDisplayNameRegexes.includes(regex));
+        }
+
+        return this.badDisplayNameRegexes;
+    }
+
     private isBadDisplayName (displayName?: string) {
         if (!displayName) {
             return false;
         }
 
-        const regexes = this.getVariable<string[]>("regexes", []);
+        const regexes = this.getBadDisplayNameRegexes();
         const matchedRegex = regexes.find(regex => new RegExp(regex, "u").test(displayName));
         if (matchedRegex) {
             this.addHitReason(`Display name matches regex: ${markdownEscape(matchedRegex)}`);
