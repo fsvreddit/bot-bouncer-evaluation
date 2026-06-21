@@ -109,10 +109,7 @@ export abstract class UserEvaluatorBase {
     }
 
     protected async getSocialLinks (username: string): Promise<UserSocialLink[]> {
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        if (this.socialLinks === undefined) {
-            this.socialLinks = await getSocialLinksWithCache(username, this.context);
-        }
+        this.socialLinks ??= await getSocialLinksWithCache(username, this.context);
         return this.socialLinks;
     }
 

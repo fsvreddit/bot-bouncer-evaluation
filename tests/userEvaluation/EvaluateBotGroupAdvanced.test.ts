@@ -1479,3 +1479,182 @@ group_AskRedditOnlyWithSelfTopComment:
     const evaluationResult = await evaluator.evaluate(user);
     expect(evaluationResult).toBe(true);
 });
+
+test("gatherCommentConditions returns no conditions for comment criteria when a post is specified", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+group1:
+  name: 'Test Group'
+  criteria:
+    type: post
+    minParaCount: 3
+    age:
+      maxAgeInDays: 90
+    bodyRegex:
+      - 'BodyConditionRegex'
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const groups = evaluator.getBotGroups();
+    expect(groups.length).toEqual(1);
+
+    if (!groups[0].criteria) {
+        assert.fail("Criteria should not be undefined");
+    }
+
+    const commentConditions = evaluator.collectCommentConditionsForPreEvalation(groups[0].criteria);
+    expect(commentConditions.length).toEqual(0);
+});
+
+test("collectCommentConditionsForPreEvalation returns a single condition for comment criteria when a comment is specified", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+group1:
+  name: 'Test Group'
+  criteria:
+    type: comment
+    minParaCount: 3
+    age:
+      maxAgeInDays: 90
+    bodyRegex:
+      - 'BodyConditionRegex'
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const groups = evaluator.getBotGroups();
+    expect(groups.length).toEqual(1);
+
+    if (!groups[0].criteria) {
+        assert.fail("Criteria should not be undefined");
+    }
+
+    const commentConditions = evaluator.collectCommentConditionsForPreEvalation(groups[0].criteria);
+    expect(commentConditions.length).toEqual(1);
+});
+
+test("collectCommentConditionsForPreEvalation returns a two conditions for comment criteria when a comment is specified", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group_AwwCommentAndReps:
+  name: Aww comment and Haul content
+  criteria:
+    every:
+      - type: comment
+        age:
+          maxAgeInDays: 7
+        subredditName:
+          - aww
+          - cats
+      - some:
+          - type: comment
+            age:
+              minAgeInDays: 7
+            bodyRegex:
+              - 'weidian\\.com'
+          - type: post
+            age:
+              minAgeInDays: 7
+            bodyRegex:
+              - 'weidian\\.com'
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const groups = evaluator.getBotGroups();
+    expect(groups.length).toEqual(1);
+
+    if (!groups[0].criteria) {
+        assert.fail("Criteria should not be undefined");
+    }
+
+    const commentConditions = evaluator.collectCommentConditionsForPreEvalation(groups[0].criteria);
+    console.log("Comment Conditions:", JSON.stringify(commentConditions, null, 2));
+    expect(commentConditions.length).toEqual(2);
+});
+
+test("collectNegatedCommentConditionsForPreEvaluation returns a single condition for negated comment criteria when a comment is specified", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+  name: 'Test Group'
+  criteria:
+    not:
+      type: comment
+      minParaCount: 3
+      age:
+        maxAgeInDays: 90
+      bodyRegex:
+        - 'BodyConditionRegex'
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const groups = evaluator.getBotGroups();
+    expect(groups.length).toEqual(1);
+
+    if (!groups[0].criteria) {
+        assert.fail("Criteria should not be undefined");
+    }
+
+    const negatedCommentConditions = evaluator.collectNegatedCommentConditionsForPreEvaluation(groups[0].criteria);
+    expect(negatedCommentConditions.length).toEqual(1);
+});
+
+test("collectNegatedCommentConditionsForPreEvaluation returns two conditions for negated comment criteria when a comment is specified", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group1:
+  name: 'Test Group'
+  criteria:
+    every:
+      - type: comment
+        matchesNeeded: 5
+        bodyRegex:
+          - 'BodyConditionRegex'
+      - not:
+          type: post
+      - not:
+          type: comment
+          minParaCount: 2
+      - not:
+          type: comment
+          minBodyLength: 2000
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors).toEqual([]);
+
+    const groups = evaluator.getBotGroups();
+    expect(groups.length).toEqual(1);
+
+    if (!groups[0].criteria) {
+        assert.fail("Criteria should not be undefined");
+    }
+
+    const negatedCommentConditions = evaluator.collectNegatedCommentConditionsForPreEvaluation(groups[0].criteria);
+    expect(negatedCommentConditions.length).toEqual(2);
+});

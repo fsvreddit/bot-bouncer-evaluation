@@ -862,8 +862,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
 
             if (this.anyRegexMatches(item.body, condition.bodyRegex)) {
                 matchReasons.push({ key: "bodyRegex", value: item.body });
-            }
-            if (!this.anyRegexMatches(item.body, condition.bodyRegex)) {
+            } else {
                 return { matched: false };
             }
         }
@@ -871,7 +870,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return { matched: true, reasons: matchReasons };
     }
 
-    private collectCommentConditionsForPreEvalation (criteria: CriteriaGroup): CommentCondition[] {
+    public collectCommentConditionsForPreEvalation (criteria: CriteriaGroup): CommentCondition[] {
         const conditions: CommentCondition[] = [];
         if ("type" in criteria && criteria.type === "comment") {
             conditions.push(criteria);
@@ -882,6 +881,20 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         } else if ("some" in criteria) {
             for (const subCriteria of criteria.some) {
                 conditions.push(...this.collectCommentConditionsForPreEvalation(subCriteria));
+            }
+        }
+
+        return conditions;
+    }
+
+    public collectNegatedCommentConditionsForPreEvaluation (criteria: CriteriaGroup): CommentCondition[] {
+        const conditions: CommentCondition[] = [];
+
+        if ("not" in criteria) {
+            conditions.push(...this.collectCommentConditionsForPreEvalation(criteria.not));
+        } else if ("every" in criteria) {
+            for (const subCriteria of criteria.every) {
+                conditions.push(...this.collectNegatedCommentConditionsForPreEvaluation(subCriteria));
             }
         }
 
@@ -925,22 +938,34 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
 
             if (!group.criteria) {
-                continue;
+                if (this.verboseLogging) {
+                    console.log(`Pre-evaluation: Comment ${comment.comment.id} matches bot group with no criteria ${group.name}`);
+                }
+                return true;
             };
 
-            const commentConditions: CommentCondition[] = this.collectCommentConditionsForPreEvalation(group.criteria);
-            for (const condition of commentConditions) {
+            const negativeCommentConditions = this.collectNegatedCommentConditionsForPreEvaluation(group.criteria);
+            for (const condition of negativeCommentConditions) {
                 const conditionMatches = await this.commentMatchesCondition(comment.comment, condition);
-                if (!conditionMatches.matched) {
+                if (conditionMatches.matched) {
                     continue;
                 }
             }
 
-            if (this.verboseLogging) {
-                console.log(`Pre-evaluation: Comment ${comment.comment.id} matches bot group ${group.name}`);
-            }
+            const commentConditions = this.collectCommentConditionsForPreEvalation(group.criteria);
 
-            return true;
+            for (const condition of commentConditions) {
+                const conditionMatches = await this.commentMatchesCondition(comment.comment, condition);
+                if (conditionMatches.matched) {
+                    if (this.verboseLogging) {
+                        console.log(`Pre-evaluation: Comment ${comment.comment.id} matches bot group ${group.name}`);
+                        for (const reason of conditionMatches.reasons ?? []) {
+                            console.log(`- Matched reason: ${reason.key} = ${reason.value}`);
+                        }
+                    }
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -1156,6 +1181,20 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return conditions;
     }
 
+    private collectNegatedPostConditionsForPreEvaluation (criteria: CriteriaGroup): PostCondition[] {
+        const conditions: PostCondition[] = [];
+
+        if ("not" in criteria) {
+            conditions.push(...this.collectPostConditionsForPreEvalation(criteria.not));
+        } else if ("every" in criteria) {
+            for (const subCriteria of criteria.every) {
+                conditions.push(...this.collectNegatedPostConditionsForPreEvaluation(subCriteria));
+            }
+        }
+
+        return conditions;
+    }
+
     override preEvaluatePost (post: Post): boolean {
         const groups = this.getBotGroups();
         return groups.some((group) => {
@@ -1166,6 +1205,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (!group.criteria) {
                 return true;
             };
+
+            const negativePostConditions = this.collectNegatedPostConditionsForPreEvaluation(group.criteria);
+            for (const condition of negativePostConditions) {
+                const conditionMatches = this.postMatchesCondition(post, condition);
+                if (conditionMatches.matched) {
+                    return false;
+                }
+            }
 
             const postConditions: PostCondition[] = this.collectPostConditionsForPreEvalation(group.criteria);
             return postConditions.some(condition => this.postMatchesCondition(post, condition).matched);
