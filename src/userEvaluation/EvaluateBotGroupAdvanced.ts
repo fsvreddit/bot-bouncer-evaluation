@@ -936,6 +936,10 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 }
             }
 
+            if (this.verboseLogging) {
+                console.log(`Pre-evaluation: Comment ${comment.comment.id} matches bot group ${group.name}`);
+            }
+
             return true;
         }
 
