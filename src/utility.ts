@@ -1,4 +1,6 @@
 import { JSONValue, TriggerContext, User } from "@devvit/public-api";
+import { getUserExtended } from "@fsvreddit/fsv-devvit-helpers";
+import { addMinutes } from "date-fns";
 import { parseAllDocuments } from "yaml";
 
 export async function getUserOrUndefined (username: string, context: TriggerContext): Promise<User | undefined> {
@@ -88,4 +90,91 @@ export function yamlToVariables (input: string, extraSubstitutions: Record<strin
     variables.errors = errors;
 
     return variables;
+}
+
+interface AdditionalUserInfoSerialized {
+    createdAt: number;
+    userDescription?: string;
+    displayName?: string;
+    nsfw: boolean;
+    commentKarma: number;
+    linkKarma: number;
+    hasRedditPremium: boolean;
+    hasVerifiedEmail: boolean;
+    isSubredditModerator: boolean;
+}
+
+export interface AdditionalUserInfo {
+    createdAt: Date;
+    userDescription?: string;
+    displayName?: string;
+    nsfw: boolean;
+    commentKarma: number;
+    linkKarma: number;
+    hasRedditPremium: boolean;
+    hasVerifiedEmail: boolean;
+    isSubredditModerator: boolean;
+}
+
+export interface AdditionalUserInfo {
+    createdAt: Date;
+    userDescription?: string;
+    displayName?: string;
+    nsfw: boolean;
+    commentKarma: number;
+    linkKarma: number;
+    hasRedditPremium: boolean;
+    hasVerifiedEmail: boolean;
+    isSubredditModerator: boolean;
+}
+
+export async function getAdditionalUserInfo (username: string, context: TriggerContext): Promise<AdditionalUserInfo | undefined> {
+    const cacheKey = `bbe:additionalUserInfo:${username}`;
+    const cachedData = await context.redis.get(cacheKey);
+
+    if (cachedData) {
+        const parsedData = JSON.parse(cachedData) as AdditionalUserInfoSerialized;
+        return {
+            createdAt: new Date(parsedData.createdAt),
+            userDescription: parsedData.userDescription,
+            displayName: parsedData.displayName,
+            nsfw: parsedData.nsfw,
+            commentKarma: parsedData.commentKarma,
+            linkKarma: parsedData.linkKarma,
+            hasRedditPremium: parsedData.hasRedditPremium,
+            hasVerifiedEmail: parsedData.hasVerifiedEmail,
+            isSubredditModerator: parsedData.isSubredditModerator,
+        };
+    }
+
+    const user = await getUserExtended(username, context);
+    if (!user) {
+        return;
+    }
+
+    const dataToCache: AdditionalUserInfoSerialized = {
+        createdAt: user.createdAt.getTime(),
+        userDescription: user.userDescription,
+        displayName: user.displayName,
+        nsfw: user.nsfw,
+        commentKarma: user.commentKarma,
+        linkKarma: user.linkKarma,
+        hasRedditPremium: user.isGold,
+        hasVerifiedEmail: user.hasVerifiedEmail,
+        isSubredditModerator: user.isModerator,
+    };
+
+    await context.redis.set(cacheKey, JSON.stringify(dataToCache), { expiration: addMinutes(new Date(), 10) });
+
+    return {
+        createdAt: user.createdAt,
+        userDescription: user.userDescription,
+        displayName: user.displayName,
+        nsfw: user.nsfw,
+        commentKarma: user.commentKarma,
+        linkKarma: user.linkKarma,
+        hasRedditPremium: user.isGold,
+        hasVerifiedEmail: user.hasVerifiedEmail,
+        isSubredditModerator: user.isModerator,
+    };
 }

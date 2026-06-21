@@ -129,9 +129,9 @@ export abstract class UserEvaluatorBase {
         return this.preEvaluateComment(event);
     }
 
-    abstract preEvaluatePost (post: Post): boolean;
+    abstract preEvaluatePost (post: Post): boolean | Promise<boolean>;
 
-    public preEvaluatePostEdit (post: Post): boolean {
+    public preEvaluatePostEdit (post: Post): boolean | Promise<boolean> {
         return this.preEvaluatePost(post);
     }
 

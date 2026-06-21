@@ -8,6 +8,7 @@ import { addDays, endOfDay, parse, subDays, subMinutes } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { countBy, uniq } from "lodash";
 import { MAIN_APP_NAME } from "../constants.js";
+import { AdditionalUserInfo, getAdditionalUserInfo } from "../utility.js";
 
 interface AgeRange {
     dateFrom: string;
@@ -898,29 +899,26 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        return conditions;
+        return conditions.filter(condition => condition.matchesNeeded === undefined);
     }
 
     override async preEvaluateComment (comment: CommentCreate): Promise<boolean> {
-        if (!comment.comment) {
+        if (!comment.comment || !comment.author) {
             return false;
         }
 
         const groups = this.getBotGroups();
+        let userInfo: AdditionalUserInfo | undefined;
 
         for (const group of groups) {
             if (group.usernameRegex) {
-                if (!comment.author?.name) {
-                    continue;
-                }
-
                 if (!this.anyRegexMatches(comment.author.name, group.usernameRegex)) {
                     continue;
                 }
             }
 
             if (group.bioRegex) {
-                if (!comment.author?.description) {
+                if (!comment.author.description) {
                     continue;
                 }
 
@@ -929,43 +927,102 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 }
             }
 
-            if (group.maxCommentKarma !== undefined && comment.author?.karma !== undefined && comment.author.karma > group.maxCommentKarma) {
+            if (group.maxCommentKarma !== undefined && comment.author.karma > group.maxCommentKarma) {
                 continue;
             }
 
-            if (group.maxLinkKarma !== undefined && comment.author?.karma !== undefined && comment.author.karma > group.maxLinkKarma) {
+            if (group.maxLinkKarma !== undefined && comment.author.karma > group.maxLinkKarma) {
                 continue;
             }
 
             if (!group.criteria) {
                 if (this.verboseLogging) {
-                    console.log(`Pre-evaluation: Comment ${comment.comment.id} matches bot group with no criteria ${group.name}`);
+                    console.log(`Pre-evaluation: Comment ${comment.comment.id} for ${comment.author.name} matches bot group with no criteria ${group.name}`);
                 }
                 return true;
             };
 
             const negativeCommentConditions = this.collectNegatedCommentConditionsForPreEvaluation(group.criteria);
+            let negativeConditionMatched = false;
             for (const condition of negativeCommentConditions) {
                 const conditionMatches = await this.commentMatchesCondition(comment.comment, condition);
                 if (conditionMatches.matched) {
-                    continue;
+                    negativeConditionMatched = true;
+                    break;
                 }
+            }
+
+            if (negativeConditionMatched) {
+                continue;
             }
 
             const commentConditions = this.collectCommentConditionsForPreEvalation(group.criteria);
-
+            let commentConditionMatched = false;
+            const matchReasons: MatchReason[] = [];
             for (const condition of commentConditions) {
                 const conditionMatches = await this.commentMatchesCondition(comment.comment, condition);
                 if (conditionMatches.matched) {
+                    commentConditionMatched = true;
                     if (this.verboseLogging) {
-                        console.log(`Pre-evaluation: Comment ${comment.comment.id} matches bot group ${group.name}`);
-                        for (const reason of conditionMatches.reasons ?? []) {
-                            console.log(`- Matched reason: ${reason.key} = ${reason.value}`);
-                        }
+                        matchReasons.push(...(conditionMatches.reasons ?? []));
                     }
-                    return true;
+                    break;
                 }
             }
+
+            if (!commentConditionMatched) {
+                continue;
+            }
+
+            if (group.age || group.displayNameRegex || group.nsfw || group.hasRedditPremium || group.hasVerifiedEmail || group.isSubredditModerator) {
+                userInfo ??= await getAdditionalUserInfo(comment.author.name, this.context);
+                if (!userInfo) {
+                    continue;
+                }
+
+                if (group.age) {
+                    if (!this.matchesAgeCriteria(userInfo.createdAt, group.age)) {
+                        continue;
+                    }
+                }
+
+                if (group.displayNameRegex) {
+                    if (!userInfo.displayName || !this.anyRegexMatches(userInfo.displayName, group.displayNameRegex)) {
+                        continue;
+                    }
+                }
+
+                if (group.nsfw !== undefined) {
+                    if (userInfo.nsfw !== group.nsfw) {
+                        continue;
+                    }
+                }
+
+                if (group.hasRedditPremium !== undefined) {
+                    if (userInfo.hasRedditPremium !== group.hasRedditPremium) {
+                        continue;
+                    }
+                }
+
+                if (group.hasVerifiedEmail !== undefined) {
+                    if (userInfo.hasVerifiedEmail !== group.hasVerifiedEmail) {
+                        continue;
+                    }
+                }
+
+                if (group.isSubredditModerator !== undefined) {
+                    if (userInfo.isSubredditModerator !== group.isSubredditModerator) {
+                        continue;
+                    }
+                }
+            }
+
+            console.log(`Pre-evaluation: Comment ${comment.comment.id} for ${comment.author.name} matches bot group ${group.name}`);
+            for (const reason of matchReasons) {
+                console.log(`- Matched reason: ${reason.key} = ${reason.value}`);
+            }
+
+            return true;
         }
 
         return false;
@@ -1195,28 +1252,91 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         return conditions;
     }
 
-    override preEvaluatePost (post: Post): boolean {
+    override async preEvaluatePost (post: Post): Promise<boolean> {
         const groups = this.getBotGroups();
-        return groups.some((group) => {
+        let userInfo: AdditionalUserInfo | undefined;
+
+        for (const group of groups) {
             if (group.usernameRegex && !this.anyRegexMatches(post.authorName, group.usernameRegex)) {
-                return false;
+                continue;
             }
 
-            if (!group.criteria) {
-                return true;
+            if (group.criteria) {
+                const negativePostConditions = this.collectNegatedPostConditionsForPreEvaluation(group.criteria);
+                let negativeConditionMatched = false;
+                for (const condition of negativePostConditions) {
+                    const conditionMatches = this.postMatchesCondition(post, condition);
+                    if (conditionMatches.matched) {
+                        negativeConditionMatched = true;
+                        break;
+                    }
+                }
+
+                if (negativeConditionMatched) {
+                    continue;
+                }
+
+                const postConditions: PostCondition[] = this.collectPostConditionsForPreEvalation(group.criteria);
+                if (!postConditions.some(condition => this.postMatchesCondition(post, condition).matched)) {
+                    continue;
+                }
             };
 
-            const negativePostConditions = this.collectNegatedPostConditionsForPreEvaluation(group.criteria);
-            for (const condition of negativePostConditions) {
-                const conditionMatches = this.postMatchesCondition(post, condition);
-                if (conditionMatches.matched) {
-                    return false;
+            if (group.age || group.minCommentKarma || group.maxCommentKarma || group.minLinkKarma || group.maxLinkKarma || group.displayNameRegex || group.nsfw || group.hasRedditPremium || group.hasVerifiedEmail || group.isSubredditModerator) {
+                userInfo ??= await getAdditionalUserInfo(post.authorName, this.context);
+                if (!userInfo) {
+                    continue;
+                }
+
+                if (group.age && !this.matchesAgeCriteria(userInfo.createdAt, group.age)) {
+                    continue;
+                }
+
+                if (group.minCommentKarma !== undefined && userInfo.commentKarma < group.minCommentKarma) {
+                    continue;
+                }
+
+                if (group.maxCommentKarma !== undefined && userInfo.commentKarma > group.maxCommentKarma) {
+                    continue;
+                }
+
+                if (group.minLinkKarma !== undefined && userInfo.linkKarma < group.minLinkKarma) {
+                    continue;
+                }
+
+                if (group.maxLinkKarma !== undefined && userInfo.linkKarma > group.maxLinkKarma) {
+                    continue;
+                }
+
+                if (group.bioRegex && (!userInfo.userDescription || !this.anyRegexMatches(userInfo.userDescription, group.bioRegex))) {
+                    continue;
+                }
+
+                if (group.displayNameRegex && (!userInfo.displayName || !this.anyRegexMatches(userInfo.displayName, group.displayNameRegex))) {
+                    continue;
+                }
+
+                if (group.nsfw !== undefined && userInfo.nsfw !== group.nsfw) {
+                    continue;
+                }
+
+                if (group.hasRedditPremium !== undefined && userInfo.hasRedditPremium !== group.hasRedditPremium) {
+                    continue;
+                }
+
+                if (group.hasVerifiedEmail !== undefined && userInfo.hasVerifiedEmail !== group.hasVerifiedEmail) {
+                    continue;
+                }
+
+                if (group.isSubredditModerator !== undefined && userInfo.isSubredditModerator !== group.isSubredditModerator) {
+                    continue;
                 }
             }
 
-            const postConditions: PostCondition[] = this.collectPostConditionsForPreEvalation(group.criteria);
-            return postConditions.some(condition => this.postMatchesCondition(post, condition).matched);
-        });
+            return true;
+        }
+
+        return false;
     }
 
     private async accountMatchesSocialLinkCriteria (user: UserExtended, group: BotGroup): Promise<CriteriaMatchResult> {
