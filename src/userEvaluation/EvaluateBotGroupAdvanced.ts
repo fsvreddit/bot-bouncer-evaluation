@@ -1264,7 +1264,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (group.criteria) {
                 const negativePostConditions = this.collectNegatedPostConditionsForPreEvaluation(group.criteria);
                 let negativeConditionMatched = false;
-                for (const condition of negativePostConditions) {
+                for (const condition of negativePostConditions.filter(condition => condition.matchesNeeded === undefined)) {
                     const conditionMatches = this.postMatchesCondition(post, condition);
                     if (conditionMatches.matched) {
                         negativeConditionMatched = true;
