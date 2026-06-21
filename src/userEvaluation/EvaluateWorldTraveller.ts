@@ -58,7 +58,7 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
         if (!this.context.subredditName) {
             return false;
         }
-        return this.context.subredditName === CONTROL_SUBREDDIT || this.getSubList().includes(this.context.subredditName);
+        return this.context.subredditName.startsWith(CONTROL_SUBREDDIT) || this.getSubList().includes(this.context.subredditName);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -66,9 +66,12 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
         return false;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override preEvaluatePost (_: Post): boolean {
-        return this.isInEligibleSubreddit();
+    override preEvaluatePost (post: Post): boolean {
+        if (!post.nsfw) {
+            return false;
+        }
+
+        return this.getSubList().includes(post.subredditName);
     }
 
     override preEvaluateUser (user: UserExtended): boolean {

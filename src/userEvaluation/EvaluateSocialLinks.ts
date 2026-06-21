@@ -67,9 +67,7 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
     }
 
     override preEvaluatePost (post: Post): boolean {
-        const postDomain = domainFromUrl(post.url);
-
-        return postDomain !== undefined && (this.getDomains().includes(postDomain));
+        return post.nsfw;
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -91,7 +89,7 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
             return false;
         }
 
-        const badLinksFromPosts = badSocialLinks.filter(badLink => this.getPosts().some(post => post.url.startsWith(badLink)));
+        const badLinksFromPosts = badSocialLinks.filter(badLink => this.getPosts().some(post => post.url.startsWith(badLink) && !post.crosspostParentId));
         if (badLinksFromPosts.length > 0) {
             this.addHitReason(`User has bad links in posts: ${uniq(badLinksFromPosts).join(", ")}`);
             return true;

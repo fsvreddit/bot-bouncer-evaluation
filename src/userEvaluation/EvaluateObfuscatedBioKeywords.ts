@@ -16,7 +16,7 @@ export class EvaluateObfuscatedBioKeywords extends UserEvaluatorBase {
         return this.getVariable<string[]>("allowedterms", []);
     }
 
-    private bioTextMatches (bio: string | undefined): boolean {
+    private bioTextMatches (bio?: string): boolean {
         if (!bio) {
             return false;
         }

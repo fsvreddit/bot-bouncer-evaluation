@@ -128,12 +128,15 @@ export abstract class UserEvaluatorBase {
 
     abstract preEvaluateComment (event: CommentCreate): boolean | Promise<boolean>;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public preEvaluateCommentEdit (event: CommentUpdate): boolean | Promise<boolean> {
-        return false;
+        return this.preEvaluateComment(event);
     }
 
     abstract preEvaluatePost (post: Post): boolean;
+
+    public preEvaluatePostEdit (post: Post): boolean {
+        return this.preEvaluatePost(post);
+    }
 
     abstract preEvaluateUser (user: UserExtended): boolean | Promise<boolean>;
 

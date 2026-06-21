@@ -34,10 +34,11 @@ export class EvaluateSelfComment extends UserEvaluatorBase {
             return false;
         }
 
-        if (!event.comment) {
+        if (!event.comment || !event.author) {
             return false;
         }
-        return this.eligibleComment(event.comment);
+
+        return event.post?.authorId === event.author.id && this.eligibleComment(event.comment);
     }
 
     override preEvaluatePost (post: Post): boolean {

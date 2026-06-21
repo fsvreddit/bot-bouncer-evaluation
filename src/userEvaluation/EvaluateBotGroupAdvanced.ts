@@ -1,5 +1,5 @@
 import { Comment, Post, RedisClient, TriggerContext, UserSocialLink } from "@devvit/public-api";
-import { CommentCreate, CommentUpdate } from "@devvit/protos";
+import { CommentCreate } from "@devvit/protos";
 import { CommentV2 } from "@devvit/protos/types/devvit/reddit/v2alpha/commentv2.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { EvaluatorRegex, UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
@@ -940,10 +940,6 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
 
         return false;
-    }
-
-    override async preEvaluateCommentEdit (event: CommentUpdate): Promise<boolean> {
-        return this.preEvaluateComment(event);
     }
 
     private postMatchesCondition (post: Post, condition: PostCondition): CriteriaMatchResult {

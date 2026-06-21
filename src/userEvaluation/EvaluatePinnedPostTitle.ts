@@ -48,7 +48,7 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
 
     override preEvaluatePost (post: Post): boolean {
         const domain = domainFromUrl(post.url);
-        return domain === "reddit.com";
+        return domain === "reddit.com" && !post.crosspostParentId;
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -63,7 +63,7 @@ export class EvaluatePinnedPostTitles extends UserEvaluatorBase {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override evaluate (_: UserExtended): boolean {
-        const stickyPosts = this.getPosts().filter(post => post.stickied);
+        const stickyPosts = this.getPosts().filter(post => post.stickied && !post.crosspostParentId);
         if (stickyPosts.length === 0) {
             return false;
         }
