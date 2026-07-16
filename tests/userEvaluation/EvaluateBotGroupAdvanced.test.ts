@@ -1658,3 +1658,29 @@ group1:
     const negatedCommentConditions = evaluator.collectNegatedCommentConditionsForPreEvaluation(groups[0].criteria);
     expect(negatedCommentConditions.length).toEqual(2);
 });
+
+test("validateCriteriaGroup", () => {
+    const yaml = `
+name: botgroupadvanced
+killswitch: false
+
+group_IcedCoffee_12hours:
+  name: 'Commented in specified subreddit within 12 hours of account creation'
+  nsfw: false
+  age:
+    maxAgeInDays: 1
+    maxAgeInMinutes: 720
+  criteria:
+    every:
+      - type: comment
+         maxBodyLength: 20
+         maxParaCount: 1
+         subredditName:
+           - AskReddit
+`;
+
+    const variables = yamlToVariables(yaml);
+    const evaluator = new EvaluateBotGroupAdvanced(fakeContext, [], undefined, variables);
+    const errors = evaluator.validateVariables();
+    expect(errors.length).toEqual(1);
+});

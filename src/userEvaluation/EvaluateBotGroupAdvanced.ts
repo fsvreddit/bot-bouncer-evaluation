@@ -279,6 +279,10 @@ function validateCommentCondition (condition: CommentCondition): ValidationIssue
 function validateCondition (condition: PostCondition | CommentCondition): ValidationIssue[] {
     const errors: ValidationIssue[] = [];
 
+    if (typeof condition.type !== "string" || !["post", "comment"].includes(condition.type)) {
+        errors.push({ severity: "error", message: "type must be either 'post' or 'comment'. Check indents!" });
+    }
+
     if (condition.matchesNeeded !== undefined && typeof condition.matchesNeeded !== "number") {
         errors.push({ severity: "error", message: "matchesNeeded must be a number." });
     }
