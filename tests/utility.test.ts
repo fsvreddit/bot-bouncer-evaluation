@@ -59,7 +59,7 @@ group1:
 
     const errors = yamlToVariables(yaml).errors as string[] | undefined;
     expect(errors).toBeDefined();
-    expect(errors).toContain("Module name botgroupadvanced has duplicate keys");
+    expect(errors).toContain("Duplicate key \"group1\" found at path \"group1\" in module \"botgroupadvanced\".");
 });
 
 test("Duplicate keys 2", () => {
@@ -77,7 +77,8 @@ group1:
 
     const errors = yamlToVariables(yaml).errors as string[] | undefined;
     expect(errors).toBeDefined();
-    expect(errors).toContain("Module name botgroupadvanced has duplicate keys");
+    console.log(errors);
+    expect(errors).toContain("Duplicate key \"usernameRegex\" found at path \"group1.usernameRegex\" in module \"botgroupadvanced\".");
 });
 
 test("Duplicate modules", () => {

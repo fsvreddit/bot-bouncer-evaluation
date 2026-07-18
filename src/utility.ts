@@ -1,7 +1,7 @@
 import { JSONValue, TriggerContext, User } from "@devvit/public-api";
 import { getUserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { addMinutes } from "date-fns";
-import { parseAllDocuments } from "yaml";
+import { Document, Node, parseAllDocuments, Scalar, YAMLMap } from "yaml";
 
 export async function getUserOrUndefined (username: string, context: TriggerContext): Promise<User | undefined> {
     let user: User | undefined;
@@ -33,6 +33,55 @@ function getSubstitutionsListFromYaml (yaml: string): Record<string, string | st
     return substitutions;
 }
 
+export interface DuplicateKeyInfo {
+    key: string;
+    path: string;
+    line: number;
+    col: number;
+}
+
+export function findDuplicateKeysInDoc (doc: Document.Parsed): DuplicateKeyInfo[] {
+    const duplicates: DuplicateKeyInfo[] = [];
+
+    function walk (node: Node | null, path: string[]) {
+    // Only YAMLMap nodes have .items
+        if (!(node instanceof YAMLMap)) {
+            return;
+        }
+
+        const seen = new Map<string, boolean>();
+
+        for (const pair of node.items) {
+            const keyNode = pair.key as Scalar | null;
+            const key = keyNode?.value;
+
+            if (typeof key !== "string") {
+                continue;
+            }
+
+            const childPath = [...path, key];
+
+            if (seen.has(key)) {
+                const [line, col] = keyNode?.range ?? [0, 0];
+
+                duplicates.push({
+                    key,
+                    path: childPath.join("."),
+                    line,
+                    col,
+                });
+            } else {
+                seen.set(key, true);
+            }
+
+            walk(pair.value as Node | null, childPath);
+        }
+    }
+
+    walk(doc.contents, []);
+    return duplicates;
+}
+
 export function yamlToVariables (input: string, extraSubstitutions: Record<string, string | string[]> = {}): Record<string, JSONValue> {
     const substitutionsList = { ...getSubstitutionsListFromYaml(input), ...extraSubstitutions };
     let yaml = input;
@@ -47,7 +96,7 @@ export function yamlToVariables (input: string, extraSubstitutions: Record<strin
 
     const variables: Record<string, JSONValue> = {};
 
-    const yamlDocuments = parseAllDocuments(yaml, { uniqueKeys: true });
+    const yamlDocuments = parseAllDocuments(yaml);
 
     const modulesSeen = new Set<string>();
     const errors: string[] = [];
@@ -66,9 +115,11 @@ export function yamlToVariables (input: string, extraSubstitutions: Record<strin
             continue;
         }
 
-        if (doc.errors.length > 0) {
-            if (doc.errors.some(e => e.code === "DUPLICATE_KEY")) {
-                errors.push(`Module name ${root} has duplicate keys`);
+        const duplicates = findDuplicateKeysInDoc(doc);
+        if (duplicates.length > 0) {
+            for (const duplicate of duplicates) {
+                const error = `Duplicate key "${duplicate.key}" found at path "${duplicate.path}" in module "${root}".`;
+                errors.push(error);
             }
         }
 
