@@ -34,9 +34,13 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
         if (!post.nsfw) {
             return false;
         }
+
+        if (post.body?.startsWith("https://preview.redd.it/")) {
+            return true;
+        }
+
         const domain = domainFromUrl(post.url);
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        return post.body?.startsWith("https://preview.redd.it/") || (!post.body && domain === "i.redd.it");
+        return !post.body && domain === "i.redd.it";
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
