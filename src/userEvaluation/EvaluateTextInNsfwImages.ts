@@ -30,26 +30,14 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
         }));
     }
 
-    private isEligiblePost (post: Post): boolean {
-        if (!post.nsfw) {
-            return false;
-        }
-
-        if (post.body?.startsWith("https://preview.redd.it/")) {
-            return true;
-        }
-
-        const domain = domainFromUrl(post.url);
-        return !post.body && domain === "i.redd.it";
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
         return false;
     }
 
     override preEvaluatePost (post: Post): boolean {
-        return this.isEligiblePost(post);
+        const domain = domainFromUrl(post.url);
+        return post.nsfw && !post.body && domain === "i.redd.it";
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -132,11 +120,11 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
 
         const posts = this.getPosts();
 
-        if (posts.some(post => !this.isEligiblePost(post) && post.createdAt > subWeeks(new Date(), 1))) {
+        if (posts.some(post => !post.nsfw && domainFromUrl(post.url) !== "i.redd.it" && post.createdAt > subWeeks(new Date(), 1))) {
             return false;
         }
 
-        const recentPostsWithBody = posts.filter(post => !this.isEligiblePost(post) && post.createdAt > subWeeks(new Date(), 1));
+        const recentPostsWithBody = posts.filter(post => post.body && post.createdAt > subWeeks(new Date(), 1));
         if (recentPostsWithBody.length > 0) {
             return false;
         }
@@ -190,11 +178,6 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
         }
 
         const mostRecentNsfwPost = recentNsfwPosts[0];
-        const domain = domainFromUrl(mostRecentNsfwPost.url);
-        if (domain !== "i.redd.it") {
-            return false;
-        }
-
         const extractedText = await this.getTextFromImage(mostRecentNsfwPost.url);
 
         if (!extractedText) {
