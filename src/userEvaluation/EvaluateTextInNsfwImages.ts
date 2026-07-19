@@ -90,15 +90,12 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.error(`OpenAI Checks: API request failed for image ${url} with error: ${errorMessage}`);
-            throw new Error(`OpenAI API request failed with error: ${errorMessage}`);
+            return;
         }
 
         const result = JSON.parse(response.output_text) as z.infer<typeof responseFormat>;
 
-        const verboseLogs = this.getVariable<boolean>("verboseLogs", false);
-        if (verboseLogs) {
-            console.log(`OpenAI Checks: Tokens used: ${response.usage?.total_tokens}, Model: ${model}, Image URL: ${url}, Extracted Text: ${result.extractedText}`);
-        }
+        console.log(`OpenAI Checks: Tokens used: ${response.usage?.total_tokens}, Model: ${model}, Image URL: ${url}, Extracted Text: ${result.extractedText}`);
 
         if (!result.extractedText) {
             return;
