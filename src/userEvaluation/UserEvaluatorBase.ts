@@ -38,6 +38,9 @@ export abstract class UserEvaluatorBase {
 
     public socialLinks: UserSocialLink[] | undefined;
 
+    public readonly needsOpenAiKey: boolean = false;
+    protected openAiKey: string | undefined;
+
     public banContentThreshold = 10;
     public canAutoBan = true;
 
@@ -63,6 +66,10 @@ export abstract class UserEvaluatorBase {
 
     public setSocialLinks (socialLinks: UserSocialLink[]) {
         this.socialLinks = socialLinks;
+    }
+
+    public setOpenAiKey (key: string) {
+        this.openAiKey = key;
     }
 
     public evaluatorDisabled () {
