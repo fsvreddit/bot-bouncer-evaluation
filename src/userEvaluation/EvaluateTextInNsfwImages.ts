@@ -136,7 +136,7 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
             return false;
         }
 
-        const recentPostsWithBody = posts.filter(post => this.isEligiblePost(post) && post.body && post.createdAt > subWeeks(new Date(), 1));
+        const recentPostsWithBody = posts.filter(post => !this.isEligiblePost(post) && post.createdAt > subWeeks(new Date(), 1));
         if (recentPostsWithBody.length > 0) {
             return false;
         }
