@@ -188,6 +188,6 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
             }
         }
 
-        return true;
+        return false;
     }
 }
