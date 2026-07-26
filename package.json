@@ -43,7 +43,7 @@
         "devvit"
     ],
     "peerDependencies": {
-        "@devvit/protos": "^0.13.8",
-        "@devvit/public-api": "^0.13.8"
+        "@devvit/protos": "^0.13.9",
+        "@devvit/public-api": "^0.13.9"
     }
 }
