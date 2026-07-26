@@ -21,4 +21,5 @@ export * from "./EvaluateBotGroupAdvanced.js";
 export * from "./EvaluateBotGroupAdvancedInternal.js";
 export * from "./EvaluateTitleCopyBot.js";
 export * from "./EvaluateWorldTraveller.js";
+export * from "./EvaluateBotGroupSubmitters.js";
 export * from "./UserEvaluatorBase.js";
