@@ -1,12 +1,13 @@
 import { EvaluatorRegex, ValidationIssue } from "./UserEvaluatorBase";
 import { EvaluateBotGroupAdvanced } from "./EvaluateBotGroupAdvanced";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
-import { compareDesc, subWeeks } from "date-fns";
+import { addHours, compareDesc, subWeeks } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers";
 import OpenAI from "openai";
 import { ResponseInputMessageContentList } from "openai/resources/responses/responses.js";
 import z from "zod";
 import { zodTextFormat } from "openai/helpers/zod.js";
+import { MAIN_APP_NAME } from "../constants";
 
 export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
     override name = "Text in NSFW Images Bot";
@@ -71,6 +72,14 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
             return;
         }
 
+        const resultCacheKey = `imageText:${url}`;
+        const redis = this.context.subredditName === MAIN_APP_NAME ? this.context.redis.global : this.context.redis;
+        const cachedResult = await redis.get(resultCacheKey);
+        if (cachedResult) {
+            console.log(`OpenAI Checks: Using cached result for image ${url}`);
+            return JSON.parse(cachedResult) as string | undefined;
+        }
+
         const openAIClient = new OpenAI({
             apiKey: this.openAiKey,
         });
@@ -117,6 +126,8 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
         const result = JSON.parse(response.output_text) as z.infer<typeof responseFormat>;
 
         console.log(`OpenAI Checks: Tokens used: ${response.usage?.total_tokens}, Model: ${model}, Image URL: ${url}, Extracted Text: ${result.extractedText}`);
+
+        await redis.set(resultCacheKey, JSON.stringify(result.extractedText), { expiration: addHours(new Date(), 1) });
 
         if (!result.extractedText) {
             return;
