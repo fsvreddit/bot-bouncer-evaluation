@@ -455,6 +455,7 @@ interface BotGroup {
     displayNameRegex?: string[];
     socialLinkRegex?: string[];
     socialLinkTitleRegex?: string[];
+    hasNoSocialLinks?: boolean;
     hasVerifiedEmail?: boolean;
     hasRedditPremium?: boolean;
     isSubredditModerator?: boolean;
@@ -516,6 +517,10 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
         }
     }
 
+    if (group.hasNoSocialLinks !== undefined && typeof group.hasNoSocialLinks !== "boolean") {
+        errors.push({ severity: "error", message: "hasNoSocialLinks must be a boolean." });
+    }
+
     if (group.criteria) {
         errors.push(...validateCriteriaGroup(group.criteria));
     }
@@ -573,7 +578,7 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "descriptionForAI", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "hasMoreThanOneCommentOnPosts", "criteria"];
+    const expectedKeys = ["name", "descriptionForAI", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasNoSocialLinks", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "hasMoreThanOneCommentOnPosts", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in bot group: ${key}` });
@@ -1370,6 +1375,14 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (matchingSocialLink) {
                 matchReasons.push({ key: "socialLinkTitleRegex", value: matchingSocialLink.title });
             } else {
+                return { matched: false };
+            }
+        }
+
+        if (group.hasNoSocialLinks !== undefined) {
+            const userSocialLinks = await this.getSocialLinks(user.username);
+            const hasNoSocialLinks = userSocialLinks.length === 0;
+            if (group.hasNoSocialLinks !== hasNoSocialLinks) {
                 return { matched: false };
             }
         }

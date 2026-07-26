@@ -1,15 +1,14 @@
-import { CommentCreate } from "@devvit/protos";
-import { EvaluatorRegex, UserEvaluatorBase } from "./UserEvaluatorBase";
-import { Post } from "@devvit/public-api";
+import { EvaluatorRegex, ValidationIssue } from "./UserEvaluatorBase";
+import { EvaluateBotGroupAdvanced } from "./EvaluateBotGroupAdvanced";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
-import { compareDesc, differenceInSeconds, differenceInMonths, subWeeks } from "date-fns";
+import { compareDesc, subWeeks } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers";
 import OpenAI from "openai";
 import { ResponseInputMessageContentList } from "openai/resources/responses/responses.js";
 import z from "zod";
 import { zodTextFormat } from "openai/helpers/zod.js";
 
-export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
+export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
     override name = "Text in NSFW Images Bot";
     override shortname = "nsfwtext";
 
@@ -18,31 +17,53 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
     override readonly needsOpenAiKey = true;
 
     override gatherRegexes (): EvaluatorRegex[] {
+        const regexesFromSuper = super.gatherRegexes();
+
         const imageTextRegexes = this.getVariable<string[]>("imageTextRegexes", []);
         const requiredPostTitleRegexes = this.getVariable<string[]>("requiredPostTitleRegexes", []);
 
         const allRegexes = [...imageTextRegexes, ...requiredPostTitleRegexes];
 
-        return allRegexes.map(regex => ({
-            evaluatorName: this.name,
-            regex,
-            flags: "u",
-        }));
+        return [
+            ...regexesFromSuper,
+            ...allRegexes.map(regex => ({
+                evaluatorName: this.name,
+                regex,
+                flags: "u",
+            })),
+        ];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override preEvaluateComment (_: CommentCreate): boolean {
-        return false;
-    }
+    override validateVariables (): ValidationIssue[] {
+        const issues = super.validateVariables();
 
-    override preEvaluatePost (post: Post): boolean {
-        const domain = domainFromUrl(post.url);
-        return post.nsfw && !post.body && domain === "i.redd.it";
-    }
+        const imageTextRegexes = this.getVariable<string[]>("imageTextRegexes", []);
+        if (!Array.isArray(imageTextRegexes)) {
+            issues.push({ severity: "error", message: "imageTextRegexes must be an array." });
+        }
 
-    override preEvaluateUser (user: UserExtended): boolean {
-        const minAccountAgeInMonths = this.getVariable<number>("minAccountAgeInMonths", 0);
-        return user.nsfw && differenceInMonths(new Date(), user.createdAt) >= minAccountAgeInMonths;
+        for (const regex of imageTextRegexes) {
+            try {
+                new RegExp(regex, "u");
+            } catch {
+                issues.push({ severity: "error", message: `Invalid regex in imageTextRegexes: ${regex}` });
+            }
+        }
+
+        const requiredPostTitleRegexes = this.getVariable<string[]>("requiredPostTitleRegexes", []);
+        if (!Array.isArray(requiredPostTitleRegexes)) {
+            issues.push({ severity: "error", message: "requiredPostTitleRegexes must be an array." });
+        }
+
+        for (const regex of requiredPostTitleRegexes) {
+            try {
+                new RegExp(regex, "u");
+            } catch {
+                issues.push({ severity: "error", message: `Invalid regex in requiredPostTitleRegexes: ${regex}` });
+            }
+        }
+
+        return issues;
     }
 
     private async getTextFromImage (url: string): Promise<string | undefined> {
@@ -117,62 +138,20 @@ export class EvaluateTextInNsfwImages extends UserEvaluatorBase {
 
         const posts = this.getPosts();
 
-        if (posts.some(post => !post.nsfw && domainFromUrl(post.url) !== "i.redd.it" && post.createdAt > subWeeks(new Date(), 1))) {
-            return false;
-        }
-
-        const recentPostsWithBody = posts.filter(post => post.body && post.createdAt > subWeeks(new Date(), 1));
-        if (recentPostsWithBody.length > 0) {
-            return false;
-        }
-
-        const comments = this.getComments();
-        if (comments.some(comment => comment.createdAt > subWeeks(new Date(), 1))) {
-            return false;
-        }
-
         const recentNsfwPosts = posts.filter(post => post.nsfw && domainFromUrl(post.url) === "i.redd.it" && post.createdAt > subWeeks(new Date(), 1));
-
-        const requiredPostCount = this.getVariable<number>("requiredPostCount", 3);
-
-        if (recentNsfwPosts.length < requiredPostCount) {
+        if (recentNsfwPosts.length === 0) {
             return false;
-        }
-
-        const requiredPostTitleRegexes = this.getVariable<string[]>("requiredPostTitleRegexes", []);
-        if (requiredPostTitleRegexes.length > 0) {
-            const requiredPostTitleRegexObjects = requiredPostTitleRegexes.map(regex => new RegExp(regex, "u"));
-            if (!recentNsfwPosts.some(post => requiredPostTitleRegexObjects.some(regex => regex.test(post.title)))) {
-                return false;
-            }
         }
 
         recentNsfwPosts.sort((a, b) => compareDesc(a.createdAt, b.createdAt));
 
-        const requiredIntervalBetweenNsfwPosts = this.getVariable<number>("requiredIntervalBetweenNsfwPosts", 5 * 60); // 5 minutes
-
-        let previousPost: Post | undefined;
-        let postWithinIntervalFound = false;
-        for (const post of recentNsfwPosts.sort((a, b) => compareDesc(a.createdAt, b.createdAt))) {
-            if (!previousPost) {
-                previousPost = post;
-                continue;
-            }
-
-            if (differenceInSeconds(previousPost.createdAt, post.createdAt) < requiredIntervalBetweenNsfwPosts) {
-                postWithinIntervalFound = true;
-                break;
-            }
-        }
-
-        if (!postWithinIntervalFound) {
+        const anyGroupMatches = await super.evaluate(user);
+        if (!anyGroupMatches) {
             return false;
         }
 
-        const socialLinks = await this.getSocialLinks(user.username);
-        if (socialLinks.length > 0) {
-            return false;
-        }
+        // Clear hit reasons from the super.evaluate call, as we want to only report hits from this specific evaluation
+        this.hitReasons = undefined;
 
         const mostRecentNsfwPost = recentNsfwPosts[0];
         const extractedText = await this.getTextFromImage(mostRecentNsfwPost.url);
