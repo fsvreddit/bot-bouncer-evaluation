@@ -7,7 +7,7 @@ import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { addDays, endOfDay, parse, subDays, subMinutes } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { countBy, uniq } from "lodash";
-import { MAIN_APP_NAME } from "../constants.js";
+import { MAIN_APP_NAME, SUBMITTER_BOT_NAME } from "../constants.js";
 import { AdditionalUserInfo, getAdditionalUserInfo } from "../utility.js";
 
 interface AgeRange {
@@ -442,6 +442,7 @@ function validateCriteriaGroup (criteria: CriteriaGroup, level = 0): ValidationI
 
 interface BotGroup {
     name: string;
+    submitterName?: string | string[];
     descriptionForAI?: string;
     usernameRegex?: string[];
     matchesDefaultUsernameRegex?: boolean;
@@ -464,7 +465,7 @@ interface BotGroup {
     criteria?: CriteriaGroup;
 }
 
-function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): ValidationIssue[] {
+function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean, evaluatorName: string): ValidationIssue[] {
     const errors: ValidationIssue[] = [];
     if (group === null) {
         return [{ severity: "error", message: "Bot group contains no properties." }];
@@ -476,6 +477,18 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
 
     if (typeof group.name !== "string") {
         errors.push({ severity: "error", message: "Bot group name must be a string. You may need to enclose the group name in single quotes." });
+    }
+
+    if (group.submitterName !== undefined) {
+        if (typeof group.submitterName !== "string" && !Array.isArray(group.submitterName)) {
+            errors.push({ severity: "error", message: "submitterName must be a string or an array of strings." });
+        } else if (Array.isArray(group.submitterName) && group.submitterName.some(name => typeof name !== "string")) {
+            errors.push({ severity: "error", message: "All elements of submitterName array must be strings." });
+        }
+
+        if (evaluatorName !== SUBMITTER_BOT_NAME) {
+            errors.push({ severity: "error", message: "submitterName is not allowed in this evaluator." });
+        }
     }
 
     if (group.descriptionForAI !== undefined && typeof group.descriptionForAI !== "string") {
@@ -578,7 +591,7 @@ function validateBotGroup (group: BotGroup | null, allowNewFeatures: boolean): V
     }
 
     const keys = Object.keys(group);
-    const expectedKeys = ["name", "descriptionForAI", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasNoSocialLinks", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "hasMoreThanOneCommentOnPosts", "criteria"];
+    const expectedKeys = ["name", "submitterName", "descriptionForAI", "usernameRegex", "matchesDefaultUsernameRegex", "maxCommentKarma", "maxLinkKarma", "minCommentKarma", "minLinkKarma", "age", "nsfw", "bioRegex", "displayNameRegex", "socialLinkRegex", "socialLinkTitleRegex", "hasNoSocialLinks", "hasVerifiedEmail", "hasRedditPremium", "isSubredditModerator", "hasMoreThanOneCommentOnPosts", "criteria"];
     for (const key of keys) {
         if (!expectedKeys.includes(key)) {
             errors.push({ severity: "error", message: `Unexpected key in bot group: ${key}` });
@@ -639,7 +652,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         const errors: ValidationIssue[] = [];
         const groups = this.getAllVariables("group") as Record<string, BotGroup>;
         for (const [key, group] of Object.entries(groups)) {
-            errors.push(...validateBotGroup(group, this.allowNewFeatures).map(error => ({ severity: error.severity, message: `Bot group ${key}: ${error.message}` })));
+            errors.push(...validateBotGroup(group, this.allowNewFeatures, this.shortname).map(error => ({ severity: error.severity, message: `Bot group ${key}: ${error.message}` })));
         }
 
         return errors;
@@ -1601,11 +1614,28 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
         }
     }
 
+    private submitterName: string | undefined;
+    public setSubmitterName (submitterName: string) {
+        this.submitterName = submitterName;
+    }
+
     override async evaluate (user: UserExtended): Promise<boolean> {
         const botGroups = this.getBotGroups();
 
         for (const group of botGroups) {
             const startTime = Date.now();
+
+            if (group.submitterName !== undefined) {
+                if (this.submitterName === undefined) {
+                    continue;
+                }
+
+                const validSubmitterNames = new Set(Array.isArray(group.submitterName) ? group.submitterName : [group.submitterName]);
+                if (!validSubmitterNames.has(this.submitterName)) {
+                    continue;
+                }
+            }
+
             const accountMatches = await this.accountMatchesGroup(user, group, false);
             if (!accountMatches.matched) {
                 this.logEvaluationTime(startTime, user.username, group.name);
