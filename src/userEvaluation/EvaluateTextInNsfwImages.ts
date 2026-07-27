@@ -165,6 +165,10 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
         this.hitReasons = undefined;
 
         const mostRecentNsfwPost = recentNsfwPosts[0];
+        if (mostRecentNsfwPost.url.endsWith(".gif") || mostRecentNsfwPost.url.endsWith(".mp4")) {
+            return false;
+        }
+
         const extractedText = await this.getTextFromImage(mostRecentNsfwPost.url);
 
         if (!extractedText) {
