@@ -921,7 +921,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        return conditions.filter(condition => condition.matchesNeeded === undefined);
+        return conditions.filter(condition => condition.matchesNeeded === undefined || condition.matchesNeeded === 1);
     }
 
     override async preEvaluateComment (comment: CommentCreate): Promise<boolean> {
@@ -1271,7 +1271,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
         }
 
-        return conditions;
+        return conditions.filter(condition => condition.matchesNeeded === undefined || condition.matchesNeeded === 1);
     }
 
     override async preEvaluatePost (post: Post): Promise<boolean> {
@@ -1286,7 +1286,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             if (group.criteria) {
                 const negativePostConditions = this.collectNegatedPostConditionsForPreEvaluation(group.criteria);
                 let negativeConditionMatched = false;
-                for (const condition of negativePostConditions.filter(condition => condition.matchesNeeded === undefined)) {
+                for (const condition of negativePostConditions.filter(condition => condition.matchesNeeded === undefined || condition.matchesNeeded === 1)) {
                     const conditionMatches = this.postMatchesCondition(post, condition);
                     if (conditionMatches.matched) {
                         negativeConditionMatched = true;
