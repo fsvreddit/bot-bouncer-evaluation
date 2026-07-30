@@ -76,7 +76,7 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
         const redis = this.context.subredditName === MAIN_APP_NAME ? this.context.redis.global : this.context.redis;
         const cachedResult = await redis.get(resultCacheKey);
         if (cachedResult) {
-            console.log(`OpenAI Checks: Using cached result for image ${url}`);
+            console.log(`OpenAI Checks: Using cached result for image ${url}, Extracted Text: ${cachedResult}`);
             return JSON.parse(cachedResult) as string | undefined;
         }
 
