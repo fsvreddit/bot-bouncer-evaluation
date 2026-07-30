@@ -1,4 +1,5 @@
 import { TriggerContext, UserSocialLink } from "@devvit/public-api";
+import { addMinutes } from "date-fns";
 import { getUserSocialLinks } from "devvit-helpers";
 
 export function domainFromUrl (url: string): string | undefined {
@@ -14,11 +15,14 @@ export function domainFromUrl (url: string): string | undefined {
 }
 
 export async function getSocialLinksWithCache (username: string, context: TriggerContext): Promise <UserSocialLink[]> {
-    return context.cache(
-        async () => await getUserSocialLinks(username, context.metadata),
-        {
-            key: `socialLinks:${username}`,
-            ttl: 5 * 60 * 1000, // 5 minutes
-        },
-    );
+    const cacheKey = `socialLinks:${username}`;
+    const cachedValue = await context.redis.get(cacheKey);
+    if (cachedValue) {
+        return JSON.parse(cachedValue) as UserSocialLink[];
+    }
+
+    const userSocialLinks = await getUserSocialLinks(username, context.metadata);
+    await context.redis.set(cacheKey, JSON.stringify(userSocialLinks), { expiration: addMinutes(new Date(), 5) });
+
+    return userSocialLinks;
 }
