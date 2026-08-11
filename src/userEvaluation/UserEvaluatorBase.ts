@@ -22,7 +22,7 @@ export interface EvaluatorRegex {
     flags?: string;
 }
 
-interface HitReasonDetailed {
+export interface HitReasonDetailed {
     reason: string;
     details: { key: string; value: string }[];
 }
