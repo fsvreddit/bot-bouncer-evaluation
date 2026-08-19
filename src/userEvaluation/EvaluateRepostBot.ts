@@ -119,6 +119,10 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             return false;
         }
 
+        if (posts.length === 0) {
+            return false;
+        }
+
         const maxPostCount = this.getVariable<number>("maxPostCount", 5);
         if (posts.length > maxPostCount) {
             return false;
