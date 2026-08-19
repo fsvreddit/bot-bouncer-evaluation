@@ -138,7 +138,7 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             subredditName: latestPost.subredditName,
             sort: "new",
             limit: 100,
-        }).all().then(posts => posts.filter(post => this.isEligiblePost(post) && post.title === latestPost.title && post.id !== latestPost.id));
+        }).all().then(posts => posts.filter(post => this.isEligiblePost(post) && post.title === latestPost.title && post.authorName !== latestPost.authorName));
 
         if (postDuplicates.length === 0) {
             return false;
