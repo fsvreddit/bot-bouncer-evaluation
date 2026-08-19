@@ -22,6 +22,7 @@ import { EvaluateWarmupBot } from "./userEvaluation/EvaluateWarmupBot.js";
 import { EvaluateBotGroupAdvancedInternal } from "./userEvaluation/EvaluateBotGroupAdvancedInternal.js";
 import { EvaluateTitleCopyBot } from "./userEvaluation/EvaluateTitleCopyBot.js";
 import { EvaluateTextInNsfwImages } from "./userEvaluation/EvaluateTextInNsfwImages.js";
+import { EvaluateRepostBot } from "./userEvaluation/EvaluateRepostBot.js";
 
 /**
  * Array of all evaluators.
@@ -61,6 +62,7 @@ export const ALL_EVALUATORS = [
     EvaluateBotGroupAdvanced,
     EvaluateTitleCopyBot,
     EvaluateTextInNsfwImages,
+    EvaluateRepostBot,
 ];
 
 // Evaluators that will only run on internal tools and not subreddits that may be out of date.
