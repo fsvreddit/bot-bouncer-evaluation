@@ -3,11 +3,13 @@ import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
-import { subMonths } from "date-fns";
+import { addHours, subDays, subMonths } from "date-fns";
 import OpenAI from "openai";
 import z from "zod";
 import { ResponseInputMessageContentList } from "openai/resources/responses/responses.js";
 import { zodTextFormat } from "openai/helpers/zod.js";
+import { MAIN_APP_NAME } from "../constants.js";
+import { count } from "@wordpress/wordcount";
 
 export class EvaluateRepostBot extends UserEvaluatorBase {
     override name = "Repost Bot";
@@ -15,8 +17,16 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
     override banContentThreshold = 1;
     override needsOpenAiKey = true;
 
+    private minWordsInTitle: number | undefined;
+
     private isEligiblePost (post: Post): boolean {
-        if (post.nsfw) {
+        if (post.nsfw || post.crosspostParentId) {
+            return false;
+        }
+
+        this.minWordsInTitle ??= this.getVariable<number>("minWordsInTitle", 2);
+
+        if (count(post.title, "words") < this.minWordsInTitle) {
             return false;
         }
 
@@ -50,6 +60,14 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
     }
 
     private async getPostSimilarity (postA: Post, postB: Post): Promise<number | undefined> {
+        const cacheKey = `bbe:RepostBot:similarity:${postA.id}:${postB.id}`;
+        const redis = this.context.appSlug === MAIN_APP_NAME ? this.context.redis.global : this.context.redis;
+        const cachedResult = await redis.get(cacheKey);
+        if (cachedResult) {
+            console.log(`Repost Checks: Using cached similarity between ${this.postIdToUrl(postA.id)} and ${this.postIdToUrl(postB.id)}: ${cachedResult}`);
+            return parseFloat(cachedResult);
+        }
+
         const openAI = new OpenAI({ apiKey: this.openAiKey });
 
         const responseFormat = z.object({
@@ -90,6 +108,7 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             });
 
             const result = JSON.parse(response.output_text) as z.infer<typeof responseFormat>;
+            await redis.set(cacheKey, result.similarity.toString(), { expiration: addHours(new Date(), 1) });
 
             console.log(`Repost Checks: Tokens used: ${response.usage?.total_tokens}, Similarity between ${this.postIdToUrl(postA.id)} and ${this.postIdToUrl(postB.id)}: ${result.similarity}`);
 
@@ -144,11 +163,21 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             return false;
         }
 
+        const maxDuplicatePostCount = this.getVariable<number>("maxDuplicatePostCount", 50);
+        if (postDuplicates.length > maxDuplicatePostCount) {
+            return false;
+        }
+
         // Sort duplicates, oldest first
         postDuplicates.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         const oldestDuplicate = postDuplicates[0];
 
         if (oldestDuplicate.createdAt > latestPost.createdAt) {
+            return false;
+        }
+
+        const minDuplicateAgeInDays = this.getVariable<number>("minDuplicateAgeInDays", 7);
+        if (oldestDuplicate.createdAt > subDays(new Date(), minDuplicateAgeInDays)) {
             return false;
         }
 
@@ -163,7 +192,7 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             return false;
         }
 
-        this.addHitReason(`User's post ${this.postIdToUrl(latestPost.id)} is a repost of ${this.postIdToUrl(oldestDuplicate.id)} with similarity ${postSimilarity.toFixed(2)}`);
+        this.addHitReason(`User's post ${this.postIdToUrl(latestPost.id)} is a repost of ${this.postIdToUrl(oldestDuplicate.id)} with similarity ${Math.round(postSimilarity * 100)}%`);
 
         return true;
     }
