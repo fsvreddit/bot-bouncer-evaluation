@@ -23,6 +23,7 @@ import { EvaluateBotGroupAdvancedInternal } from "./userEvaluation/EvaluateBotGr
 import { EvaluateTitleCopyBot } from "./userEvaluation/EvaluateTitleCopyBot.js";
 import { EvaluateTextInNsfwImages } from "./userEvaluation/EvaluateTextInNsfwImages.js";
 import { EvaluateRepostBot } from "./userEvaluation/EvaluateRepostBot.js";
+import { EvaluateLinkReuse } from "./userEvaluation/EvaluateLinkReuse.js";
 
 /**
  * Array of all evaluators.
@@ -61,6 +62,7 @@ export const ALL_EVALUATORS = [
     EvaluateSocialLinks,
     EvaluateBotGroupAdvanced,
     EvaluateTitleCopyBot,
+    EvaluateLinkReuse,
     EvaluateTextInNsfwImages,
     EvaluateRepostBot,
 ];

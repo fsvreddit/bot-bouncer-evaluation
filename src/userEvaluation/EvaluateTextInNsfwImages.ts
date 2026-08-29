@@ -8,6 +8,7 @@ import { ResponseInputMessageContentList } from "openai/resources/responses/resp
 import z from "zod";
 import { zodTextFormat } from "openai/helpers/zod.js";
 import { MAIN_APP_NAME } from "../constants";
+import { Post } from "@devvit/public-api";
 
 export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
     override name = "Text in NSFW Images Bot";
@@ -65,6 +66,16 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
         }
 
         return issues;
+    }
+
+    private getImageUrl (post: Post): string | undefined {
+        if (domainFromUrl(post.url) === "i.redd.it") {
+            return post.url;
+        }
+
+        if (post.gallery.length > 0) {
+            return post.gallery[0].url;
+        }
     }
 
     private async getTextFromImage (url: string): Promise<string | undefined> {
@@ -149,7 +160,7 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
 
         const posts = this.getPosts();
 
-        const recentNsfwPosts = posts.filter(post => post.nsfw && domainFromUrl(post.url) === "i.redd.it" && post.createdAt > subWeeks(new Date(), 1));
+        const recentNsfwPosts = posts.filter(post => post.nsfw && this.getImageUrl(post) && post.createdAt > subWeeks(new Date(), 1));
         if (recentNsfwPosts.length === 0) {
             return false;
         }
@@ -165,11 +176,12 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
         this.hitReasons = undefined;
 
         const mostRecentNsfwPost = recentNsfwPosts[0];
-        if (mostRecentNsfwPost.url.endsWith(".gif") || mostRecentNsfwPost.url.endsWith(".mp4")) {
+        const imageUrl = this.getImageUrl(mostRecentNsfwPost);
+        if (!imageUrl || imageUrl.endsWith(".gif") || imageUrl.endsWith(".mp4")) {
             return false;
         }
 
-        const extractedText = await this.getTextFromImage(mostRecentNsfwPost.url);
+        const extractedText = await this.getTextFromImage(imageUrl);
 
         if (!extractedText) {
             return false;
