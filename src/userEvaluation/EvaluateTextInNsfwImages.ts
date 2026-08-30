@@ -99,10 +99,12 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
             extractedText: z.string().optional().nullable(),
         });
 
+        const prompt = this.getVariable<string>("prompt", "You are given a list of image URLs. For each image, extract any text that appears in the image. If no text is present, return null.");
+
         const content: ResponseInputMessageContentList = [
             {
                 type: "input_text",
-                text: "You are given a list of image URLs. For each image, extract any text that appears in the image. If no text is present, return null.",
+                text: prompt,
             },
             {
                 type: "input_image",

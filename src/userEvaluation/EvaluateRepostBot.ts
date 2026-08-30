@@ -74,10 +74,12 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             similarity: z.number().min(0).max(1),
         });
 
+        const prompt = this.getVariable<string>("prompt", "You are provided with the URLs of two images. Your task is to determine how visually similar they are. Return the similarity from 0 to 1, where 0 is completely different and 1 is identical. Only return the similarity as a number in JSON format, do not include any other text.");
+
         const content: ResponseInputMessageContentList = [
             {
                 type: "input_text",
-                text: "You are provided with the URLs of two images. Your task is to determine how visually similar they are. Return the similarity from 0 to 1, where 0 is completely different and 1 is identical. Only return the similarity as a number in JSON format, do not include any other text.",
+                text: prompt,
             },
             {
                 type: "input_image",
