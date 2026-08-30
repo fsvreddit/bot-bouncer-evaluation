@@ -98,6 +98,8 @@ export class EvaluateLinkReuse extends EvaluateBotGroupAdvanced {
             return false;
         }
 
+        this.hitReasons = [];
+
         this.addHitReason({
             reason: `User has ${reusedOverThreshold.length} links reused by at least ${reuseThreshold} distinct users`,
             details: reusedOverThreshold.map(({ link, distinctUsers }) => ({
