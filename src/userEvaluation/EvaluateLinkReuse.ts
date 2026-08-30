@@ -1,12 +1,13 @@
 import { Post } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
+import { ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { MAIN_APP_NAME } from "../constants.js";
 import { addHours, subDays } from "date-fns";
 import pluralize from "pluralize";
+import { EvaluateBotGroupAdvanced } from "./EvaluateBotGroupAdvanced.js";
 
-export class EvaluateLinkReuse extends UserEvaluatorBase {
+export class EvaluateLinkReuse extends EvaluateBotGroupAdvanced {
     override name = "Link Reuse Bot";
     override shortname = "linkreuse";
 
@@ -28,34 +29,29 @@ export class EvaluateLinkReuse extends UserEvaluatorBase {
             }
         }
 
+        results.push(...super.validateVariables());
+
         return results;
     }
 
-    override preEvaluatePost (post: Post): boolean {
+    override async preEvaluatePost (post: Post): Promise<boolean> {
         const linkRegexes = this.getLinkRegexes();
-        return linkRegexes.some(regex => new RegExp(regex).test(post.url));
+        return linkRegexes.some(regex => new RegExp(regex).test(post.url))
+            && !post.crosspostParentId
+            && await super.preEvaluatePost(post);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override preEvaluateComment (_event: CommentCreate): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/require-await
+    override async preEvaluateComment (_event: CommentCreate): Promise<boolean> {
         return false;
-    }
-
-    override preEvaluateUser (user: UserExtended): boolean {
-        const nsfwOnly = this.getVariable<boolean>("nsfwOnly", false);
-        if (nsfwOnly && !user.nsfw) {
-            return false;
-        }
-
-        return true;
     }
 
     private async getDistinctUsersForLink (link: string): Promise<string[]> {
         const redis = this.context.appSlug === MAIN_APP_NAME ? this.context.redis.global : this.context.redis;
         const cacheKey = `bbe:linkreuse:distinctUsers:${link}`;
-        const cachedCount = await redis.get(cacheKey);
-        if (cachedCount !== undefined) {
-            return JSON.parse(cachedCount) as string[];
+        const cachedResults = await redis.get(cacheKey);
+        if (cachedResults !== undefined) {
+            return JSON.parse(cachedResults) as string[];
         }
 
         const results = await this.context.reddit.searchPosts({
@@ -65,20 +61,19 @@ export class EvaluateLinkReuse extends UserEvaluatorBase {
         }).all();
 
         const distinctUsers = Array.from(new Set(results.filter(post => post.url === link && post.authorName !== "[deleted]").map(post => post.authorName)));
-        await redis.set(cacheKey, JSON.stringify(distinctUsers), { expiration: addHours(new Date(), 6) });
+        await redis.set(cacheKey, JSON.stringify(distinctUsers), { expiration: addHours(new Date(), 1) });
         return distinctUsers;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override async evaluate (_user: UserExtended): Promise<boolean> {
-        const linkPrefixes = this.getLinkRegexes();
+    override async evaluate (user: UserExtended): Promise<boolean> {
+        const linkRegexes = this.getLinkRegexes();
 
         const requiredLinks = this.getVariable<number>("requiredLinks", 3);
         const reuseThreshold = this.getVariable<number>("reuseThreshold", 3);
         const daysToCheck = this.getVariable<number>("daysToCheck", 7);
 
         const matchingPosts = this.getPosts()
-            .filter(post => post.createdAt > subDays(new Date(), daysToCheck) && linkPrefixes.some(regex => new RegExp(regex).test(post.url)) && !post.crosspostParentId)
+            .filter(post => post.createdAt > subDays(new Date(), daysToCheck) && linkRegexes.some(regex => new RegExp(regex).test(post.url)) && !post.crosspostParentId)
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .slice(0, 10);
 
@@ -95,6 +90,11 @@ export class EvaluateLinkReuse extends UserEvaluatorBase {
 
         const reusedOverThreshold = reuseCounts.filter(({ distinctUsers }) => distinctUsers.length >= reuseThreshold);
         if (reusedOverThreshold.length < requiredLinks) {
+            return false;
+        }
+
+        const groupEvaluateResult = await super.evaluate(user);
+        if (!groupEvaluateResult) {
             return false;
         }
 
