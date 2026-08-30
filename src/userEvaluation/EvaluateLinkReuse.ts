@@ -1,13 +1,12 @@
-import { Post } from "@devvit/public-api";
+import { Post, UserSocialLink } from "@devvit/public-api";
 import { CommentCreate } from "@devvit/protos";
-import { ValidationIssue } from "./UserEvaluatorBase.js";
+import { UserEvaluatorBase, ValidationIssue } from "./UserEvaluatorBase.js";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { MAIN_APP_NAME } from "../constants.js";
 import { addHours, subDays } from "date-fns";
-import pluralize from "pluralize";
-import { EvaluateBotGroupAdvanced } from "./EvaluateBotGroupAdvanced.js";
+import { getSocialLinksWithCache } from "../index.js";
 
-export class EvaluateLinkReuse extends EvaluateBotGroupAdvanced {
+export class EvaluateLinkReuse extends UserEvaluatorBase {
     override name = "Link Reuse Bot";
     override shortname = "linkreuse";
 
@@ -18,32 +17,56 @@ export class EvaluateLinkReuse extends EvaluateBotGroupAdvanced {
     }
 
     override validateVariables (): ValidationIssue[] {
-        const linkRegexes = this.getLinkRegexes();
         const results: ValidationIssue[] = [];
+
+        const linkRegexes = this.getLinkRegexes();
+        if (linkRegexes.length === 0) {
+            results.push({ severity: "error", message: "No link regexes defined" });
+        }
 
         for (const regex of linkRegexes) {
             try {
-                new RegExp(regex);
+                const regexp = new RegExp(regex);
+                if (regexp.test("")) {
+                    results.push({ severity: "error", message: `Link regex in linkreuse matches empty string: ${regex}` });
+                }
             } catch {
                 results.push({ severity: "error", message: `Invalid link regex in linkreuse: ${regex}` });
             }
         }
 
-        results.push(...super.validateVariables());
+        const socialLinkRegexes = this.getVariable<string[]>("socialLinkRegexes", []);
+        if (socialLinkRegexes.length === 0) {
+            results.push({ severity: "error", message: "No social link regexes defined" });
+        }
+
+        for (const regex of socialLinkRegexes) {
+            try {
+                const regexp = new RegExp(regex);
+                if (regexp.test("")) {
+                    results.push({ severity: "error", message: `Social link regex in linkreuse matches empty string: ${regex}` });
+                }
+            } catch {
+                results.push({ severity: "error", message: `Invalid social link regex in linkreuse: ${regex}` });
+            }
+        }
 
         return results;
     }
 
-    override async preEvaluatePost (post: Post): Promise<boolean> {
+    override preEvaluatePost (post: Post): boolean {
         const linkRegexes = this.getLinkRegexes();
         return linkRegexes.some(regex => new RegExp(regex).test(post.url))
-            && !post.crosspostParentId
-            && await super.preEvaluatePost(post);
+            && !post.crosspostParentId;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/require-await
     override async preEvaluateComment (_event: CommentCreate): Promise<boolean> {
         return false;
+    }
+
+    override preEvaluateUser (user: UserExtended): boolean {
+        return user.nsfw;
     }
 
     private async getDistinctUsersForLink (link: string): Promise<string[]> {
@@ -65,6 +88,23 @@ export class EvaluateLinkReuse extends EvaluateBotGroupAdvanced {
         return distinctUsers;
     }
 
+    private async isEligibleUserForEvaluator (username: string, isSubject = false): Promise<boolean> {
+        let socialLinks: UserSocialLink[];
+        if (isSubject) {
+            socialLinks = await this.getSocialLinks(username);
+        } else {
+            socialLinks = await getSocialLinksWithCache(username, this.context);
+        }
+
+        if (socialLinks.length === 0) {
+            return false;
+        }
+
+        const socialLinkRegexes = this.getVariable<string[]>("socialLinkRegexes", []);
+
+        return socialLinks.some(link => socialLinkRegexes.some(regex => new RegExp(regex).test(link.outboundUrl)));
+    }
+
     override async evaluate (user: UserExtended): Promise<boolean> {
         const linkRegexes = this.getLinkRegexes();
 
@@ -83,28 +123,60 @@ export class EvaluateLinkReuse extends EvaluateBotGroupAdvanced {
 
         const distinctLinks = Array.from(new Set(matchingPosts.map(post => post.url)));
 
-        const reuseCounts = await Promise.all(distinctLinks.map(async (link) => {
+        const reuses = await Promise.all(distinctLinks.map(async (link) => {
             const distinctUsers = await this.getDistinctUsersForLink(link);
             return { link, distinctUsers };
         }));
 
-        const reusedOverThreshold = reuseCounts.filter(({ distinctUsers }) => distinctUsers.length >= reuseThreshold);
+        const reusedOverThreshold = reuses.filter(({ distinctUsers }) => distinctUsers.length >= reuseThreshold);
         if (reusedOverThreshold.length < requiredLinks) {
             return false;
         }
 
-        const groupEvaluateResult = await super.evaluate(user);
-        if (!groupEvaluateResult) {
+        if (!(await this.isEligibleUserForEvaluator(user.username, true))) {
             return false;
         }
 
-        this.hitReasons = [];
+        const eligibleUsers = new Map<string, boolean>();
+
+        // Now we need to check if any of the distinct users are eligible for this evaluator
+        const filteredReuses: { link: string; distinctUsers: string[] }[] = [];
+        for (const { link, distinctUsers } of reusedOverThreshold) {
+            const eligibleDistinctUsers: string[] = [];
+            for (const username of distinctUsers) {
+                if (username === user.username) {
+                    eligibleDistinctUsers.push(username);
+                    continue;
+                }
+
+                const isEligibleFromCache = eligibleUsers.get(username);
+                if (isEligibleFromCache !== undefined) {
+                    if (isEligibleFromCache) {
+                        eligibleDistinctUsers.push(username);
+                        continue;
+                    } else {
+                        const isEligible = await this.isEligibleUserForEvaluator(username);
+                        eligibleUsers.set(username, isEligible);
+                        if (isEligible) {
+                            eligibleDistinctUsers.push(username);
+                        }
+                    }
+                }
+            }
+
+            filteredReuses.push({ link, distinctUsers: eligibleDistinctUsers });
+        }
+
+        const filteredReusedOverThreshold = filteredReuses.filter(({ distinctUsers }) => distinctUsers.length >= reuseThreshold);
+        if (filteredReusedOverThreshold.length < requiredLinks) {
+            return false;
+        }
 
         this.addHitReason({
-            reason: `User has ${reusedOverThreshold.length} links reused by at least ${reuseThreshold} distinct users`,
-            details: reusedOverThreshold.map(({ link, distinctUsers }) => ({
+            reason: `User has ${filteredReusedOverThreshold.length} links reused by at least ${reuseThreshold} distinct users`,
+            details: filteredReusedOverThreshold.map(({ link, distinctUsers }) => ({
                 key: link,
-                value: `Reused by ${distinctUsers.length} ${pluralize("user", distinctUsers.length)}: ${distinctUsers.map(user => `u/${user}`).join(", ")}`,
+                value: `Also used by by: ${distinctUsers.filter(username => username !== user.username).map(username => `u/${username}`).join(", ")}`,
             })),
         });
 
