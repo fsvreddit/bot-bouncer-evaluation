@@ -2,6 +2,7 @@ import { JSONValue, TriggerContext } from "@devvit/public-api";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { subDays } from "date-fns";
 import { EvaluateBioTextDefinedHandles } from "../../src/userEvaluation/EvaluateBioTextDefinedHandles";
+import { yamlToVariables } from "../../src";
 
 const variables = JSON.parse(`{
     "substitutions:definedhandles": "handle1|handle2|handle3",
@@ -52,4 +53,26 @@ test("User with nonmatching bio text defined handle 3", () => {
     const mockUser = createMockUser("A very ordinary Redditor with no special interests.");
     const result = evaluator.evaluate(mockUser);
     expect(result).toBeFalsy();
+});
+
+test("Invalid defined handles list", () => {
+    const variablesYaml = `
+
+name: substitutions
+
+definedhandles: "handle1|handle2[a-b]{2,|handle3"
+
+---
+
+name: biotextdefinedhandles
+killswitch: false
+
+prefix: '^'
+suffix: '$'
+
+`;
+    const variables = yamlToVariables(variablesYaml);
+    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, [], undefined, variables);
+    const validationIssues = evaluator.validateVariables();
+    expect(validationIssues.length).toBeGreaterThan(0);
 });

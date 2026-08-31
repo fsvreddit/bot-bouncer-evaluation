@@ -50,8 +50,17 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
     }
 
     override validateVariables (): ValidationIssue[] {
-        const regexes = this.gatherRegexes().map(r => r.regex);
         const results: ValidationIssue[] = [];
+
+        let regexes: string[];
+        try {
+            regexes = this.gatherRegexes().map(r => r.regex);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            results.push({ severity: "error", message: `Invalid defined handles list: ${message}` });
+            return results;
+        }
+
         for (const regexVal of regexes) {
             let regex: RegExp;
             try {
