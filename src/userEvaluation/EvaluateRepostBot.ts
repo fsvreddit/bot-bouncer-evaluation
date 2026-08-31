@@ -117,7 +117,7 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             return result.similarity;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            console.error("Error getting post similarity:", message);
+            console.error(`Error getting post similarity for ${postA.id}: ${message}`);
             return;
         }
     }
