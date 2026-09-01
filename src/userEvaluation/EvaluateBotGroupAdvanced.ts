@@ -1631,7 +1631,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
                 }
 
                 const validSubmitterNames = new Set(Array.isArray(group.submitterName) ? group.submitterName : [group.submitterName]);
-                if (!validSubmitterNames.has(this.submitterName)) {
+                if (!validSubmitterNames.has(this.submitterName) && !validSubmitterNames.has("*")) {
                     continue;
                 }
             }

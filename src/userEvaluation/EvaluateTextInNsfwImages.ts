@@ -83,7 +83,7 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
             return;
         }
 
-        const resultCacheKey = `imageText:${url}`;
+        const resultCacheKey = `bbe:imageText:${url}`;
         const redis = this.context.subredditName === MAIN_APP_NAME ? this.context.redis.global : this.context.redis;
         const cachedResult = await redis.get(resultCacheKey);
         if (cachedResult) {
