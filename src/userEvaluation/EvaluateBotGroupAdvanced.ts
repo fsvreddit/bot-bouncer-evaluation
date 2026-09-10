@@ -650,19 +650,7 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     }
 
     private anyRegexMatches (input: string, regexes: string[]): boolean {
-        if (this.verboseLogging) {
-            return regexes.some((regex) => {
-                const start = Date.now();
-                const result = this.getCompiledRegex(regex).test(input);
-                const end = Date.now();
-                if (end - start > this.regexWarnThreshold) {
-                    console.warn(`Evaluation: Regex took ${end - start}ms: ${regex}`);
-                }
-                return result;
-            });
-        } else {
-            return regexes.some(regex => this.getCompiledRegex(regex).test(input));
-        }
+        return regexes.some(regex => this.getCompiledRegex(regex).test(input));
     }
 
     public getBotGroups (): BotGroup[] {
@@ -981,9 +969,6 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
             }
 
             if (!group.criteria) {
-                if (this.verboseLogging) {
-                    console.log(`Pre-evaluation: Comment ${comment.comment.id} for ${comment.author.name} matches bot group with no criteria ${group.name}`);
-                }
                 return true;
             };
 

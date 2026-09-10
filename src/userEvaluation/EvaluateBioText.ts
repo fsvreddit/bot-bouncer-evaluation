@@ -94,24 +94,7 @@ export class EvaluateBioText extends UserEvaluatorBase {
     }
 
     override evaluate (user: UserExtended): boolean {
-        let matchedRegex: RegExp | undefined;
-
-        if (this.verboseLogging) {
-            matchedRegex = this.getCompiledRegexes().find((regex) => {
-                if (!user.userDescription) {
-                    return false;
-                }
-                const start = Date.now();
-                const result = regex.test(user.userDescription);
-                const end = Date.now();
-                if (end - start > this.regexWarnThreshold) {
-                    console.log(`${this.name}: Regex took ${end - start}ms for regex: ${regex.source}`);
-                }
-                return result;
-            });
-        } else {
-            matchedRegex = this.getCompiledRegexes().find(regex => user.userDescription && regex.test(user.userDescription));
-        }
+        const matchedRegex = this.getCompiledRegexes().find(regex => user.userDescription && regex.test(user.userDescription));
 
         if (matchedRegex) {
             this.canAutoBan = true;

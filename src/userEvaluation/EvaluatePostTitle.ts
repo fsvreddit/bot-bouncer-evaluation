@@ -90,20 +90,7 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
                 continue;
             }
 
-            let matchedBanRegex: RegExp | undefined;
-            if (this.verboseLogging) {
-                matchedBanRegex = regexes.find((regex) => {
-                    const start = Date.now();
-                    const result = regex.test(title);
-                    const end = Date.now();
-                    if (end - start > this.regexWarnThreshold) {
-                        console.warn(`Evaluation: Regex took ${end - start}ms: ${regex.source}`);
-                    }
-                    return result;
-                });
-            } else {
-                matchedBanRegex = regexes.find(regex => regex.test(title));
-            }
+            const matchedBanRegex = regexes.find(regex => regex.test(title));
 
             if (!matchedBanRegex) {
                 nonMatchingTitles.add(title);
