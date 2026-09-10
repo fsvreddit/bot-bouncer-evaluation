@@ -16,13 +16,12 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
             return false;
         }
 
-        const regexes = this.gatherRegexes().map(r => r.regex);
-        const matchedRegexes = regexes.filter(regex => new RegExp(regex, "u").test(displayName));
+        const matchedRegexes = this.getCompiledRegexes().filter(regex => regex.test(displayName));
         if (matchedRegexes.length === 0) {
             return false;
         }
 
-        this.addHitReason(`Display name matches regexes: ${matchedRegexes.map(r => `\`${r}\``).join(", ")}`);
+        this.addHitReason(`Display name matches regexes: ${matchedRegexes.map(r => `\`${r.source}\``).join(", ")}`);
         return true;
     }
 
@@ -47,6 +46,12 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
             regex,
             flags: "u",
         })));
+    }
+
+    private compiledRegexes: RegExp[] | undefined;
+    private getCompiledRegexes (): RegExp[] {
+        this.compiledRegexes ??= this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
+        return this.compiledRegexes;
     }
 
     override validateVariables (): ValidationIssue[] {

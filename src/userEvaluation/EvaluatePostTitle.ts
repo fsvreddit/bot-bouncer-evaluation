@@ -47,16 +47,21 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
     }
 
     private getTitles () {
-        const prefixesToIgnore = this.getVariable<string[]>("ignoredRegexPrefixes", []);
-        return this.getVariable<string[]>("bantext", []).filter(title => !prefixesToIgnore.some(prefix => title.startsWith(prefix)));
+        return this.getVariable<string[]>("bantext", []);
+    }
+
+    private titleRegexes: RegExp[] | undefined;
+    private getTitleRegexes (): RegExp[] {
+        this.titleRegexes ??= this.getTitles().map(title => new RegExp(title, "u"));
+        return this.titleRegexes;
     }
 
     override preEvaluatePost (post: Post): boolean {
         if (post.crosspostParentId) {
             return false;
         }
-        const bannableTitles = this.getTitles();
-        return bannableTitles.some(title => new RegExp(title, "u").test(post.title));
+
+        return this.getTitleRegexes().some(title => title.test(post.title));
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -77,22 +82,35 @@ export class EvaluatePostTitle extends UserEvaluatorBase {
             return false;
         }
 
-        const bannableTitles = this.gatherRegexes().map(title => ({ pattern: title.regex, regex: new RegExp(title.regex, title.flags) }));
-
         const nonMatchingTitles = new Set<string>();
+        const regexes = this.getTitleRegexes();
 
         for (const title of userPosts.map(post => post.title)) {
             if (nonMatchingTitles.has(title)) {
                 continue;
             }
 
-            const matchedBanRegex = bannableTitles.find(bannable => bannable.regex.test(title));
+            let matchedBanRegex: RegExp | undefined;
+            if (this.verboseLogging) {
+                matchedBanRegex = regexes.find((regex) => {
+                    const start = Date.now();
+                    const result = regex.test(title);
+                    const end = Date.now();
+                    if (end - start > this.regexWarnThreshold) {
+                        console.warn(`Evaluation: Regex took ${end - start}ms: ${regex.source}`);
+                    }
+                    return result;
+                });
+            } else {
+                matchedBanRegex = regexes.find(regex => regex.test(title));
+            }
+
             if (!matchedBanRegex) {
                 nonMatchingTitles.add(title);
                 continue;
             }
 
-            this.addHitReason(`Post title "${title}" matched bannable regex: ${markdownEscape(matchedBanRegex.pattern)}`);
+            this.addHitReason(`Post title "${title}" matched bannable regex: ${markdownEscape(matchedBanRegex.source)}`);
             this.canAutoBan = true;
             return true;
         }

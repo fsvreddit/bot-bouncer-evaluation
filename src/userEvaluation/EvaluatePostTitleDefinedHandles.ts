@@ -64,6 +64,12 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
         })));
     }
 
+    private compiledRegexes: RegExp[] | undefined;
+    private getCompiledRegexes (): RegExp[] {
+        this.compiledRegexes ??= this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
+        return this.compiledRegexes;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
         return false;
@@ -73,8 +79,7 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
         if (post.crosspostParentId) {
             return false;
         }
-        const problematicTitles = this.gatherRegexes().map(r => r.regex);
-        return problematicTitles.some(title => new RegExp(title, "u").test(post.title));
+        return this.getCompiledRegexes().some(regex => regex.test(post.title));
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -95,7 +100,7 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
             return false;
         }
 
-        const regexes = this.gatherRegexes().map(r => ({ pattern: r.regex, regex: new RegExp(r.regex, r.flags) }));
+        const regexes = this.getCompiledRegexes();
         if (regexes.length === 0) {
             return false;
         }
@@ -107,13 +112,13 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
                 continue;
             }
 
-            const matchedRegex = regexes.find(r => r.regex.test(title));
+            const matchedRegex = regexes.find(r => r.test(title));
             if (!matchedRegex) {
                 nonMatchingTitles.add(title);
                 continue;
             }
 
-            this.addHitReason(`Post title "${title}" matched bannable regex: ${markdownEscape(matchedRegex.pattern)}`);
+            this.addHitReason(`Post title "${title}" matched bannable regex: ${markdownEscape(matchedRegex.source)}`);
             this.canAutoBan = true;
             return true;
         }

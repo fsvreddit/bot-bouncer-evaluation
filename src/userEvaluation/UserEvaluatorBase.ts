@@ -3,6 +3,7 @@ import { Comment, Post, TriggerContext, UserSocialLink } from "@devvit/public-ap
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
 import { isCommentId, isLinkId } from "@devvit/public-api/types/tid.js";
 import { getSocialLinksWithCache } from "./evaluatorHelpers.js";
+import { MAIN_APP_NAME } from "../constants.js";
 
 interface HistoryOptions {
     since?: Date;
@@ -49,10 +50,16 @@ export abstract class UserEvaluatorBase {
     private userComments: Comment[] | undefined;
     protected ignoredSubs: Set<string>;
 
+    protected verboseLogging: boolean;
+    protected regexWarnThreshold: number;
+
     constructor (context: TriggerContext, history: (Post | Comment)[], socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
         this.context = context;
         this.socialLinks = socialLinks;
         this.variables = variables;
+
+        this.verboseLogging = context.appSlug !== MAIN_APP_NAME;
+        this.regexWarnThreshold = this.getVariable("regexWarnThreshold", 100);
 
         this.ignoredSubs = new Set(this.getGenericVariable<string[]>("ignoredsubs", []));
         this.history = history;

@@ -12,19 +12,8 @@ export class EvaluateBioText extends UserEvaluatorBase {
     private bioText: string[] | undefined;
 
     private getBioText (): string[] {
-        if (this.bioText === undefined) {
-            const bannableBioText = this.getVariable<string[]>("bantext", []);
-            const ignoredBanText = this.getVariable<string[]>("ignoredBanText", []);
-            this.bioText = bannableBioText.filter(bioText => !ignoredBanText.includes(bioText));
-        }
-
+        this.bioText ??= this.getVariable<string[]>("bantext", []);
         return this.bioText;
-    }
-
-    override preEvaluateComment (event: CommentCreate): boolean {
-        const problematicBioText = this.getBioText();
-
-        return problematicBioText.some(bioText => event.author?.description && new RegExp(bioText, "u").test(event.author.description));
     }
 
     override validateVariables (): ValidationIssue[] {
@@ -71,6 +60,20 @@ export class EvaluateBioText extends UserEvaluatorBase {
         }));
     }
 
+    private compiledRegexes: RegExp[] | undefined;
+    private getCompiledRegexes (): RegExp[] {
+        this.compiledRegexes ??= this.getBioText().map(bio => new RegExp(bio, "u"));
+        return this.compiledRegexes;
+    }
+
+    override preEvaluateComment (event: CommentCreate): boolean {
+        if (!event.author?.description) {
+            return false;
+        }
+
+        return this.getCompiledRegexes().some(regex => event.author?.description && regex.test(event.author.description));
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluatePost (_: Post): boolean {
         const bannableBioText = this.getBioText();
@@ -79,9 +82,7 @@ export class EvaluateBioText extends UserEvaluatorBase {
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
-        const bannableBioText = this.getBioText();
-
-        if (bannableBioText.length === 0) {
+        if (!user.userDescription) {
             return false;
         }
 
@@ -89,21 +90,32 @@ export class EvaluateBioText extends UserEvaluatorBase {
             return false;
         }
 
-        return bannableBioText.some(bioText => user.userDescription && new RegExp(bioText, "u").test(user.userDescription));
+        return this.getCompiledRegexes().some(regex => user.userDescription && regex.test(user.userDescription));
     }
 
     override evaluate (user: UserExtended): boolean {
-        const bannableBioText = this.getBioText();
+        let matchedRegex: RegExp | undefined;
 
-        if (bannableBioText.length === 0) {
-            return false;
+        if (this.verboseLogging) {
+            matchedRegex = this.getCompiledRegexes().find((regex) => {
+                if (!user.userDescription) {
+                    return false;
+                }
+                const start = Date.now();
+                const result = regex.test(user.userDescription);
+                const end = Date.now();
+                if (end - start > this.regexWarnThreshold) {
+                    console.log(`${this.name}: Regex took ${end - start}ms for regex: ${regex.source}`);
+                }
+                return result;
+            });
+        } else {
+            matchedRegex = this.getCompiledRegexes().find(regex => user.userDescription && regex.test(user.userDescription));
         }
 
-        const bannableBioTextFound = bannableBioText.find(bio => user.userDescription && new RegExp(bio, "u").test(user.userDescription));
-
-        if (bannableBioTextFound) {
+        if (matchedRegex) {
             this.canAutoBan = true;
-            this.addHitReason(`Bio text matched regex: ${markdownEscape(bannableBioTextFound)}`);
+            this.addHitReason(`Bio text matched regex: ${markdownEscape(matchedRegex.source)}`);
         } else {
             return false;
         }

@@ -44,33 +44,3 @@ test("Post title does not match bannable regex", () => {
     const result = evaluator.evaluate({} as unknown as UserExtended);
     expect(result).toBe(false);
 });
-
-test("ignoredRegexPrefixes removes certain titles from bannable list", () => {
-    const history = fakePostHistory([
-        "free money for everyone",
-    ]);
-
-    const localVariables = {
-        ...variables,
-        "posttitle:ignoredRegexPrefixes": ["free"],
-    };
-
-    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, history, undefined, localVariables);
-    const result = evaluator.evaluate({} as unknown as UserExtended);
-    expect(result).toBe(false);
-});
-
-test("ignoredRegexPrefixes removes certain titles from bannable list but with another match", () => {
-    const history = fakePostHistory([
-        "act now to get free money",
-    ]);
-
-    const localVariables = {
-        ...variables,
-        "posttitle:ignoredRegexPrefixes": ["free"],
-    };
-
-    const evaluator = new EvaluatePostTitle({} as unknown as TriggerContext, history, undefined, localVariables);
-    const result = evaluator.evaluate({} as unknown as UserExtended);
-    expect(result).toBe(true);
-});

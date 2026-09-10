@@ -36,27 +36,6 @@ export class EvaluateSocialLinks extends UserEvaluatorBase {
         }
     }
 
-    private getDomains (): string[] {
-        const domains = new Set<string>(this.getGenericVariable<string[]>("redditdomains", []));
-        domains.add("redgifs.com");
-        domains.add("instagram.com");
-        domains.add("i.redd.it");
-
-        const badLinks = this.getVariable<string[]>("badlinks", []);
-        for (const link of badLinks) {
-            try {
-                const domain = domainFromUrl(link);
-                if (domain) {
-                    domains.add(domain);
-                }
-            } catch {
-                //
-            }
-        }
-
-        return Array.from(domains);
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
         if (this.socialLinks) {

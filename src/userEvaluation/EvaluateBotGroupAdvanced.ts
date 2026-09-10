@@ -624,7 +624,6 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     override shortname = "botgroupadvanced";
     override banContentThreshold = 0; // No content ban threshold for this evaluator to support account properties only checks
 
-    private verboseLogging = false;
     private redis: RedisClient | Omit<RedisClient, "global">;
 
     public allowNewFeatures = false;
@@ -634,12 +633,36 @@ export class EvaluateBotGroupAdvanced extends UserEvaluatorBase {
     constructor (context: TriggerContext, history: (Post | Comment)[], socialLinks: UserSocialLink[] | undefined, variables: Record<string, unknown>) {
         super(context, history, socialLinks, variables);
 
-        this.verboseLogging = this.getVariable("verboseLogging", false);
         this.redis = context.appSlug === MAIN_APP_NAME ? context.redis.global : context.redis;
     }
 
+    private compiledRegexes = new Map<string, RegExp>();
+
+    private getCompiledRegex (regex: string): RegExp {
+        const result = this.compiledRegexes.get(regex);
+        if (result) {
+            return result;
+        }
+
+        const compiledRegex = new RegExp(regex, "u");
+        this.compiledRegexes.set(regex, compiledRegex);
+        return compiledRegex;
+    }
+
     private anyRegexMatches (input: string, regexes: string[]): boolean {
-        return regexes.some(regex => new RegExp(regex, "u").test(input));
+        if (this.verboseLogging) {
+            return regexes.some((regex) => {
+                const start = Date.now();
+                const result = this.getCompiledRegex(regex).test(input);
+                const end = Date.now();
+                if (end - start > this.regexWarnThreshold) {
+                    console.warn(`Evaluation: Regex took ${end - start}ms: ${regex}`);
+                }
+                return result;
+            });
+        } else {
+            return regexes.some(regex => this.getCompiledRegex(regex).test(input));
+        }
     }
 
     public getBotGroups (): BotGroup[] {

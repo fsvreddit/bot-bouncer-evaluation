@@ -21,12 +21,12 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
             try {
                 regex = new RegExp(regexVal);
             } catch {
-                results.push({ severity: "error", message: `Invalid regex in biotext: ${regexVal}` });
+                results.push({ severity: "error", message: `Invalid regex in comment phrase: ${regexVal}` });
                 continue;
             }
 
             if (regex.test("")) {
-                results.push({ severity: "error", message: `Bio Text regex is too greedy: ${regexVal}` });
+                results.push({ severity: "error", message: `Comment phrase regex is too greedy: ${regexVal}` });
             }
         }
 
@@ -42,16 +42,20 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
         })));
     }
 
+    private compiledRegexes: RegExp[] | undefined;
+    private getCompiledRegexes (): RegExp[] {
+        this.compiledRegexes ??= this.gatherRegexes().map(r => new RegExp(r.regex));
+        return this.compiledRegexes;
+    }
+
     private eligibleComment (comment: Comment | CommentV2): boolean {
-        const phrases = this.getVariable<string[]>("phrases", []);
         const maxCommentAgeInDays = this.getVariable<number>("maxcommentageindays", 30);
 
-        if (phrases.length === 0) {
+        if (comment.createdAt <= subDays(new Date(), maxCommentAgeInDays)) {
             return false;
         }
 
-        return comment.createdAt > subDays(new Date(), maxCommentAgeInDays)
-            && phrases.some(phrase => new RegExp(phrase).test(comment.body));
+        return this.getCompiledRegexes().some(regex => regex.test(comment.body));
     }
 
     override preEvaluateComment (event: CommentCreate): boolean {
@@ -88,8 +92,7 @@ export class EvaluateCommentPhrase extends UserEvaluatorBase {
 
         const matchingComment = matchingComments[0];
 
-        const phrases = this.getVariable<string[]>("phrases", []);
-        const matchedPhrase = phrases.find(phrase => new RegExp(phrase).test(matchingComment.body));
+        const matchedPhrase = this.getCompiledRegexes().find(regex => regex.test(matchingComment.body))?.source;
 
         if (!matchedPhrase) {
             // Impossible to reach this point.

@@ -24,10 +24,18 @@ export class EvaluateBioTextDefinedHandles extends UserEvaluatorBase {
         return parsed.body.map(part => part.raw);
     }
 
-    override preEvaluateComment (event: CommentCreate): boolean {
-        const problematicBioText = this.gatherRegexes().map(r => r.regex);
+    private compiledRegexes: RegExp[] | undefined;
+    private getCompiledRegexes (): RegExp[] {
+        this.compiledRegexes ??= this.gatherRegexes().map(r => new RegExp(r.regex, "u"));
+        return this.compiledRegexes;
+    }
 
-        return problematicBioText.some(bioText => event.author?.description && new RegExp(bioText, "u").test(event.author.description));
+    override preEvaluateComment (event: CommentCreate): boolean {
+        if (!event.author?.description) {
+            return false;
+        }
+
+        return this.getCompiledRegexes().some(regex => event.author?.description && regex.test(event.author.description));
     }
 
     override validateVariables (): ValidationIssue[] {
@@ -80,17 +88,11 @@ export class EvaluateBioTextDefinedHandles extends UserEvaluatorBase {
             return false;
         }
 
-        const regexes = this.gatherRegexes().map(r => r.regex);
-
-        if (regexes.length === 0) {
-            return false;
-        }
-
         if (user.commentKarma > 2000 && user.linkKarma > 2000) {
             return false;
         }
 
-        return regexes.some(bioText => user.userDescription && new RegExp(bioText, "u").test(user.userDescription));
+        return this.getCompiledRegexes().some(regex => user.userDescription && regex.test(user.userDescription));
     }
 
     override evaluate (user: UserExtended): boolean {
@@ -98,19 +100,13 @@ export class EvaluateBioTextDefinedHandles extends UserEvaluatorBase {
             return false;
         }
 
-        const regexes = this.gatherRegexes().map(r => r.regex);
-
-        if (regexes.length === 0) {
-            return false;
-        }
-
-        const bannableBioTextFound = regexes.filter(bio => user.userDescription && new RegExp(bio, "u").test(user.userDescription));
+        const bannableBioTextFound = this.getCompiledRegexes().filter(regex => user.userDescription && regex.test(user.userDescription));
         if (bannableBioTextFound.length === 0) {
             return false;
         }
 
         this.canAutoBan = true;
-        this.addHitReason(`Bio text matched regexes: ${bannableBioTextFound.map(bio => `\`${bio}\``).join(", ")}`);
+        this.addHitReason(`Bio text matched regexes: ${bannableBioTextFound.map(regex => `\`${regex.source}\``).join(", ")}`);
 
         return user.nsfw || this.getPosts().some(post => post.isNsfw());
     }

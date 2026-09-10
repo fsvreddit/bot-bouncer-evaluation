@@ -14,12 +14,7 @@ export class EvaluateBadDisplayName extends UserEvaluatorBase {
     private badDisplayNameRegexes: string[] | undefined;
 
     private getBadDisplayNameRegexes (): string[] {
-        if (this.badDisplayNameRegexes === undefined) {
-            const bannableDisplayNameRegexes = this.getVariable<string[]>("regexes", []);
-            const ignoredDisplayNameRegexes = this.getVariable<string[]>("ignoredRegexes", []);
-            this.badDisplayNameRegexes = bannableDisplayNameRegexes.filter(regex => !ignoredDisplayNameRegexes.includes(regex));
-        }
-
+        this.badDisplayNameRegexes ??= this.getVariable<string[]>("regexes", []);
         return this.badDisplayNameRegexes;
     }
 

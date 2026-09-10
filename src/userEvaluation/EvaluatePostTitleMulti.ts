@@ -56,6 +56,12 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
         }));
     }
 
+    private compiledRegexes: RegExp[] | undefined;
+    private getCompiledRegexes (): RegExp[] {
+        this.compiledRegexes ??= this.gatherRegexes().map(r => new RegExp(r.regex, r.flags));
+        return this.compiledRegexes;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override preEvaluateComment (_: CommentCreate): boolean {
         return false;
@@ -65,8 +71,8 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
         if (post.crosspostParentId) {
             return false;
         }
-        const regexes = this.gatherRegexes();
-        return regexes.some(regexObj => new RegExp(regexObj.regex, regexObj.flags).test(post.title));
+        const regexes = this.getCompiledRegexes();
+        return regexes.some(regex => regex.test(post.title));
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -84,8 +90,8 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
 
         const distinctTitles = uniq(userPosts.map(post => post.title));
 
-        const regexes = this.gatherRegexes();
-        const matchedRegexes = regexes.filter(regexObj => distinctTitles.some(postTitle => new RegExp(regexObj.regex, regexObj.flags).test(postTitle)));
+        const regexes = this.getCompiledRegexes();
+        const matchedRegexes = regexes.filter(regex => distinctTitles.some(postTitle => regex.test(postTitle)));
 
         const matchesNeeded = this.getVariable<number>("matchesNeeded", 4);
 
@@ -94,7 +100,7 @@ export class EvaluatePostTitleMulti extends UserEvaluatorBase {
         }
 
         const regexesInOutput = this.getVariable<number>("regexesInOutput", 5);
-        this.addHitReason(`User has ${matchedRegexes.length} bad post titles: ${matchedRegexes.slice(0, regexesInOutput).map(r => `\`${r.regex}\``).join(", ")}`);
+        this.addHitReason(`User has ${matchedRegexes.length} bad post titles: ${matchedRegexes.slice(0, regexesInOutput).map(r => `\`${r.source}\``).join(", ")}`);
         return true;
     }
 }

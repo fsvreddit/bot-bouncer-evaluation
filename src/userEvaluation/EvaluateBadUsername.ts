@@ -17,10 +17,9 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
             return false;
         }
 
-        const regexes = this.getVariable<string[]>("regexes", []);
-        const matchedRegex = regexes.find(regex => new RegExp(regex).test(username));
+        const matchedRegex = this.getCompiledRegexes().find(regex => regex.test(username));
         if (matchedRegex) {
-            this.addHitReason(`Username matches regex: ${markdownEscape(matchedRegex)}`);
+            this.addHitReason(`Username matches regex: ${markdownEscape(matchedRegex.source)}`);
         }
         return matchedRegex !== undefined;
     }
@@ -51,6 +50,12 @@ export class EvaluateBadUsername extends UserEvaluatorBase {
             evaluatorName: this.name,
             regex,
         })));
+    }
+
+    private compiledRegexes: RegExp[] | undefined;
+    private getCompiledRegexes (): RegExp[] {
+        this.compiledRegexes ??= this.getVariable<string[]>("regexes", []).map(regex => new RegExp(regex));
+        return this.compiledRegexes;
     }
 
     override preEvaluateComment (event: CommentCreate): boolean {

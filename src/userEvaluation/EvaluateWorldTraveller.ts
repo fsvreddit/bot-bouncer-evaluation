@@ -8,7 +8,7 @@ import { subMonths } from "date-fns";
 
 interface SubGroup {
     group: string;
-    subs: string[];
+    subs: Set<string>;
 }
 
 export class EvaluateWorldTraveller extends UserEvaluatorBase {
@@ -45,20 +45,23 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
         return results;
     }
 
+    private subGroups: SubGroup[] | undefined;
     private getWTSubGroups (): SubGroup[] {
-        const subGroups = this.getVariable<string[]>("subgroups", []);
-        return subGroups.map(group => ({ group, subs: group.split(",").map(s => s.trim()) }));
+        this.subGroups ??= this.getVariable<string[]>("subgroups", []).map(group => ({ group, subs: new Set(group.split(",").map(s => s.trim())) }));
+        return this.subGroups;
     }
 
-    private getSubList (): string[] {
-        return this.getWTSubGroups().map(group => group.subs).flat();
+    private subList: Set<string> | undefined;
+    private getSubList (): Set<string> {
+        this.subList ??= new Set(this.getWTSubGroups().map(group => Array.from(group.subs)).flat());
+        return this.subList;
     }
 
     private isInEligibleSubreddit (): boolean {
         if (!this.context.subredditName) {
             return false;
         }
-        return this.context.subredditName.startsWith(CONTROL_SUBREDDIT) || this.getSubList().includes(this.context.subredditName);
+        return this.context.subredditName.startsWith(CONTROL_SUBREDDIT) || this.getSubList().has(this.context.subredditName);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -71,7 +74,7 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
             return false;
         }
 
-        return this.getSubList().includes(post.subredditName);
+        return this.getSubList().has(post.subredditName);
     }
 
     override preEvaluateUser (user: UserExtended): boolean {
@@ -83,12 +86,12 @@ export class EvaluateWorldTraveller extends UserEvaluatorBase {
         const nsfwOnly = this.getVariable<boolean>("nsfwonly", false);
         const relevantHistory = this.getPosts({ since: subMonths(new Date(), 1) })
             .filter(post => nsfwOnly ? post.nsfw : true)
-            .filter(post => this.getSubList().includes(post.subredditName));
+            .filter(post => this.getSubList().has(post.subredditName));
 
         const distinctSubreddits = uniq(relevantHistory.map(item => item.subredditName));
 
         const distinctSubGroups = uniq(this.getWTSubGroups()
-            .filter(group => distinctSubreddits.some(sub => group.subs.includes(sub)))
+            .filter(group => distinctSubreddits.some(sub => group.subs.has(sub)))
             .map(group => group.group));
 
         const requiredSubCount = this.getVariable<number>("distinctgroups", 5);
