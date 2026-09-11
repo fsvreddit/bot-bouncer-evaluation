@@ -12,7 +12,12 @@ export class EvaluateBioText extends UserEvaluatorBase {
     private bioText: string[] | undefined;
 
     private getBioText (): string[] {
-        this.bioText ??= this.getVariable<string[]>("bantext", []);
+        if (this.bioText === undefined) {
+            const bannableBioText = this.getVariable<string[]>("bantext", []);
+            const ignoredBanText = this.getVariable<string[]>("ignoredBanText", []);
+            this.bioText = bannableBioText.filter(bioText => !ignoredBanText.includes(bioText));
+        }
+
         return this.bioText;
     }
 
