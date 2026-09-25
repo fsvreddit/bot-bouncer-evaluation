@@ -1,7 +1,7 @@
 import { EvaluatorRegex, ValidationIssue } from "./UserEvaluatorBase";
 import { EvaluateBotGroupAdvanced } from "./EvaluateBotGroupAdvanced";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
-import { addHours, compareDesc, subWeeks } from "date-fns";
+import { addWeeks, compareDesc, subWeeks } from "date-fns";
 import { domainFromUrl } from "./evaluatorHelpers";
 import OpenAI from "openai";
 import { ResponseInputMessageContentList } from "openai/resources/responses/responses.js";
@@ -140,7 +140,7 @@ export class EvaluateTextInNsfwImages extends EvaluateBotGroupAdvanced {
 
         console.log(`OpenAI Checks: Tokens used: ${response.usage?.total_tokens}, Model: ${model}, Image URL: ${url}, Extracted Text: ${result.extractedText}`);
 
-        await redis.set(resultCacheKey, JSON.stringify(result.extractedText), { expiration: addHours(new Date(), 1) });
+        await redis.set(resultCacheKey, JSON.stringify(result.extractedText), { expiration: addWeeks(new Date(), 1) });
 
         if (!result.extractedText) {
             return;

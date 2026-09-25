@@ -3,7 +3,7 @@ import { CommentCreate } from "@devvit/protos";
 import { UserEvaluatorBase } from "./UserEvaluatorBase.js";
 import { domainFromUrl } from "./evaluatorHelpers.js";
 import { UserExtended } from "@fsvreddit/fsv-devvit-helpers";
-import { addHours, subDays, subMonths } from "date-fns";
+import { addWeeks, subDays, subMonths } from "date-fns";
 import OpenAI from "openai";
 import z from "zod";
 import { ResponseInputMessageContentList } from "openai/resources/responses/responses.js";
@@ -110,7 +110,7 @@ export class EvaluateRepostBot extends UserEvaluatorBase {
             });
 
             const result = JSON.parse(response.output_text) as z.infer<typeof responseFormat>;
-            await redis.set(cacheKey, result.similarity.toString(), { expiration: addHours(new Date(), 1) });
+            await redis.set(cacheKey, result.similarity.toString(), { expiration: addWeeks(new Date(), 1) });
 
             console.log(`Repost Checks: Tokens used: ${response.usage?.total_tokens}, Similarity between ${this.postIdToUrl(postA.id)} and ${this.postIdToUrl(postB.id)}: ${result.similarity}`);
 
