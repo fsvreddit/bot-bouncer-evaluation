@@ -50,6 +50,11 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
         const handles = this.getHandles();
         if (handles.some(handle => handle === "")) {
             results.push({ severity: "error", message: `Empty handle found in posttitledefinedhandles` });
+        } else {
+            const shortHandles = handles.filter(handle => handle.length < 4);
+            if (shortHandles.length > 0) {
+                results.push({ severity: "error", message: `Handle too short in posttitledefinedhandles: ${shortHandles.join(", ")}` });
+            }
         }
 
         return results;

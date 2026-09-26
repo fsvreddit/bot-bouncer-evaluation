@@ -81,8 +81,14 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
             }
         }
 
-        if (this.getHandles().some(handle => handle === "")) {
+        const handles = this.getHandles();
+        if (handles.some(handle => handle === "")) {
             results.push({ severity: "error", message: `Empty handle found in baddisplaynamedefinedhandles` });
+        } else {
+            const shortHandles = handles.filter(handle => handle.length < 4);
+            if (shortHandles.length > 0) {
+                results.push({ severity: "error", message: `Handle too short in baddisplaynamedefinedhandles: ${shortHandles.join(", ")}` });
+            }
         }
 
         return results;
