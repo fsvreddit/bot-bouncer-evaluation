@@ -76,3 +76,25 @@ suffix: '$'
     const validationIssues = evaluator.validateVariables();
     expect(validationIssues.length).toBeGreaterThan(0);
 });
+
+test("Empty handle in list", () => {
+    const variablesYaml = `
+
+name: substitutions
+
+definedhandles: "handle1|handle2||handle3"
+
+---
+
+name: biotextdefinedhandles
+killswitch: false
+
+prefix: '^'
+suffix: '$'
+
+`;
+    const variables = yamlToVariables(variablesYaml);
+    const evaluator = new EvaluateBioTextDefinedHandles({} as unknown as TriggerContext, [], undefined, variables);
+    const validationIssues = evaluator.validateVariables();
+    expect(validationIssues.length).toBe(1);
+});

@@ -11,6 +11,20 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
 
     public override banContentThreshold = 0;
 
+    private getHandles (): string[] {
+        const definedHandles = this.getModuleVariable<string>("substitutions", "definedhandles", "");
+        if (!definedHandles) {
+            return [];
+        }
+
+        const parsed = parse(definedHandles, "u");
+        if (parsed.type !== "disjunction") {
+            return [];
+        }
+
+        return parsed.body.map(part => part.raw);
+    }
+
     private isBadDisplayName (displayName?: string): boolean {
         if (!displayName) {
             return false;
@@ -29,17 +43,9 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
         const prefix = this.getVariable<string>("prefix", "");
         const suffix = this.getVariable<string>("suffix", "");
 
-        const definedHandles = this.getModuleVariable<string>("substitutions", "definedhandles", "");
-        if (!definedHandles) {
-            return [];
-        }
+        const handles = this.getHandles();
 
-        const parsed = parse(definedHandles, "u");
-        if (parsed.type !== "disjunction") {
-            return [];
-        }
-
-        const regexes = parsed.body.map(part => `${prefix}${part.raw}${suffix}`);
+        const regexes = handles.map(handle => `${prefix}${handle}${suffix}`);
 
         return uniq(regexes.map(regex => ({
             evaluatorName: this.name,
@@ -67,17 +73,18 @@ export class EvaluateBadDisplayNameDefinedHandles extends UserEvaluatorBase {
         }
 
         for (const regexVal of regexes) {
-            let regex: RegExp;
             try {
-                regex = new RegExp(regexVal, "u");
+                new RegExp(regexVal, "u");
             } catch {
                 results.push({ severity: "error", message: `Invalid regex in baddisplaynamedefinedhandles: ${regexVal}` });
                 continue;
             }
-            if (regex.test("")) {
-                results.push({ severity: "error", message: `Display name defined handle regex is too greedy: ${regexVal}` });
-            }
         }
+
+        if (this.getHandles().some(handle => handle === "")) {
+            results.push({ severity: "error", message: `Empty handle found in baddisplaynamedefinedhandles` });
+        }
+
         return results;
     }
 

@@ -51,17 +51,17 @@ export class EvaluateBioTextDefinedHandles extends UserEvaluatorBase {
         }
 
         for (const regexVal of regexes) {
-            let regex: RegExp;
             try {
-                regex = new RegExp(regexVal);
+                new RegExp(regexVal);
             } catch {
                 results.push({ severity: "error", message: `Invalid regex in biotextdefinedhandles: ${regexVal}` });
                 continue;
             }
+        }
 
-            if (regex.test("")) {
-                results.push({ severity: "error", message: `Bio Text Defined Handles regex is too greedy: ${regexVal}` });
-            }
+        const handles = this.getHandles();
+        if (handles.some(handle => handle === "")) {
+            results.push({ severity: "error", message: `Empty handle found in biotextdefinedhandles` });
         }
 
         return results;

@@ -12,6 +12,20 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
     override shortname = "posttitledefinedhandles";
     override banContentThreshold = 1;
 
+    private getHandles (): string[] {
+        const definedHandles = this.getModuleVariable<string>("substitutions", "definedhandles", "");
+        if (!definedHandles) {
+            return [];
+        }
+
+        const parsed = parse(definedHandles, "u");
+        if (parsed.type !== "disjunction") {
+            return [];
+        }
+
+        return parsed.body.map(part => part.raw);
+    }
+
     override validateVariables (): ValidationIssue[] {
         const results: ValidationIssue[] = [];
 
@@ -25,17 +39,17 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
         }
 
         for (const regexVal of regexes) {
-            let regex: RegExp;
             try {
-                regex = new RegExp(regexVal, "u");
+                new RegExp(regexVal, "u");
             } catch {
                 results.push({ severity: "error", message: `Invalid regex in post title: ${regexVal}` });
                 continue;
             }
+        }
 
-            if (regex.test("")) {
-                results.push({ severity: "error", message: `Post title regex is too greedy: ${regexVal}` });
-            }
+        const handles = this.getHandles();
+        if (handles.some(handle => handle === "")) {
+            results.push({ severity: "error", message: `Empty handle found in posttitledefinedhandles` });
         }
 
         return results;
@@ -45,17 +59,9 @@ export class EvaluatePostTitleDefinedHandles extends UserEvaluatorBase {
         const prefix = this.getVariable<string>("prefix", "");
         const suffix = this.getVariable<string>("suffix", "");
 
-        const definedHandles = this.getModuleVariable<string>("substitutions", "definedhandles", "");
-        if (!definedHandles) {
-            return [];
-        }
+        const handles = this.getHandles();
 
-        const parsed = parse(definedHandles, "u");
-        if (parsed.type !== "disjunction") {
-            return [];
-        }
-
-        const regexes = parsed.body.map(part => `${prefix}${part.raw}${suffix}`);
+        const regexes = handles.map(handle => `${prefix}${handle}${suffix}`);
 
         return uniq(regexes.map(regex => ({
             evaluatorName: this.name,
